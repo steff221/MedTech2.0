@@ -1,0 +1,33 @@
+spring:
+  datasource:
+    url: ${MEDTECH_DB_URL}
+    username: ${MEDTECH_DB_USER}
+    password: ${MEDTECH_DB_PASSWORD}
+  jpa:
+    properties:
+      hibernate:
+        format_sql: false
+  jackson:
+    serialization:
+      indent-output: false
+
+server:
+  error:
+    include-message: never
+    include-binding-errors: never
+    include-stacktrace: never
+
+medtech:
+  security:
+    jwt:
+      secret: ${MEDTECH_SECURITY_JWT_SECRET}
+    cors:
+      allowed-origins:
+        - https://medtech.mk
+        - https://www.medtech.mk
+
+logging:
+  level:
+    root: WARN
+    com.medtech: INFO
+    org.hibernate.SQL: WARN
