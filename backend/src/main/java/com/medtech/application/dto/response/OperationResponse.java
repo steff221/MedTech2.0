@@ -1,0 +1,33 @@
+package com.medtech.application.dto.response;
+
+import com.medtech.domain.vo.OperationStatus;
+import lombok.Builder;
+
+import java.time.Instant;
+import java.time.LocalDate;
+
+@Builder
+public record OperationResponse(
+        Long id,
+        Long patientId,
+        Long doctorId,
+        String doctorName,
+        Long hospitalId,
+        String hospitalName,
+        String operationName,
+        LocalDate operationDate,
+        String operationTime,
+        Integer durationMinutes,
+        String operationRoom,
+        String surgicalTeam,
+        String anesthesiaType,
+        String anesthesiologist,
+        String preOperativeNotes,
+        String intraOperativeNotes,
+        String postOperativeNotes,
+        String complications,
+        String outcome,
+        OperationStatus status,
+        String implantsUsed,
+        Instant createdAt
+) {}

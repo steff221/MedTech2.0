@@ -1,0 +1,102 @@
+spring:
+  application:
+    name: medtech-backend
+  profiles:
+    active: dev
+  datasource:
+    url: jdbc:postgresql://localhost:5433/medtech
+    username: medtech_app
+    password: MedTech123!@#
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      pool-name: MedTechHikariPool
+  jpa:
+    open-in-view: false
+    hibernate:
+      # Schema is owned by SQL migrations (medtech_schema_pg.sql); Hibernate must NOT touch DDL.
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          batch_size: 20
+          fetch_size: 50
+          time_zone: UTC
+        order_inserts: true
+        order_updates: true
+        format_sql: true
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: never
+    include-exception: false
+  compression:
+    enabled: true
+  forward-headers-strategy: framework
+
+# Application-specific configuration
+medtech:
+  security:
+    jwt:
+      # 32+ byte secret; OVERRIDE in production via env var MEDTECH_SECURITY_JWT_SECRET
+      secret: ${MEDTECH_SECURITY_JWT_SECRET:dev-only-medtech-jwt-secret-please-override-in-production-2026}
+      access-token-ttl-minutes: 60
+      refresh-token-ttl-days: 7
+      issuer: medtech-backend
+    cors:
+      allowed-origins:
+        - http://localhost:3000
+        - http://localhost:5173
+      allowed-methods: [GET, POST, PUT, PATCH, DELETE, OPTIONS]
+      allowed-headers: ["*"]
+      exposed-headers: [Authorization]
+      allow-credentials: true
+      max-age-seconds: 3600
+  appointment:
+    default-duration-minutes: 30
+    cancellation-window-hours: 24
+  pagination:
+    default-page-size: 20
+    max-page-size: 100
+
+# OpenAPI / Swagger
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
+
+# Management / Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+logging:
+  level:
+    root: INFO
+    com.medtech: DEBUG
+    org.hibernate.SQL: INFO
+    org.hibernate.orm.jdbc.bind: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n"
