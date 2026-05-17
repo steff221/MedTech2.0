@@ -53,3 +53,4 @@ docker/pgadmin_data/
 tmp/
 *.tmp
 *.bak
+*.tsbuildinfo
