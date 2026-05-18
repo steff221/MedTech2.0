@@ -74,7 +74,7 @@ public class SecurityConfig {
                         "/actuator/info"
                 ).permitAll()
                 // Public read-only directory endpoints — writes (e.g. /api/doctors/me) stay authenticated.
-                .requestMatchers(HttpMethod.GET, "/api/hospitals/**", "/api/doctors", "/api/doctors/{id:[0-9]+}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/hospitals/**", "/api/doctors", "/api/doctors/{id:[0-9]+}", "/api/stats/**").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

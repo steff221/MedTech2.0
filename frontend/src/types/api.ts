@@ -247,6 +247,16 @@ export interface IssuePrescriptionRequest {
   refillsAllowed?: number;
 }
 
+export interface StatsOverviewResponse {
+  date: string;
+  prescriptionsToday: number;
+  referralsToday: number;
+  activePatients: number;
+  activeDoctors: number;
+  appointmentsByHospital: Array<{ hospital: string; city: string; count: number }>;
+  prescriptionsByDay: Array<{ day: string; count: number }>;
+}
+
 export interface ApiError {
   timestamp: string;
   status: number;
