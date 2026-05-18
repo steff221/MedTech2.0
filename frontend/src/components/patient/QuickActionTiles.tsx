@@ -29,14 +29,14 @@ export function QuickActionTiles({ upcomingCount }: QuickActionTilesProps) {
       label: "Health records",
       value: "View",
       icon: FileText,
-      href: "/dashboard",
+      href: "/health-records",
       accent: "from-emerald-500 to-emerald-600",
     },
     {
       label: "Prescriptions",
       value: "View",
       icon: Pill,
-      href: "/dashboard",
+      href: "/prescriptions",
       accent: "from-violet-500 to-violet-600",
     },
     {

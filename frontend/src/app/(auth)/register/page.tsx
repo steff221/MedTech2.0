@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Button } from "@/components/common/Button";
 import { Input } from "@/components/common/Input";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -30,6 +29,9 @@ const schema = z.object({
 });
 
 type FormData = z.infer<typeof schema>;
+
+const DARK_INPUT =
+  "bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-cyan-400 focus:ring-cyan-400/30";
 
 export default function RegisterPage() {
   const { register: registerUser } = useAuth();
@@ -59,59 +61,121 @@ export default function RegisterPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-slate-900">Create your account</h1>
-      <p className="mt-1 text-sm text-slate-600">
-        Join MedTech to book appointments and manage your care.
+      <div className="flex items-center gap-2">
+        <span className="relative flex h-2 w-2">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-violet-400 opacity-75" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-violet-400" />
+        </span>
+        <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-violet-300">
+          Create account
+        </p>
+      </div>
+
+      <h1 className="mt-4 text-3xl font-bold tracking-tight text-white">
+        Join MedTech
+      </h1>
+      <p className="mt-1.5 text-sm text-white/50">
+        Book appointments and manage your care.
       </p>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="mt-7 space-y-4">
         <div className="grid grid-cols-2 gap-3">
-          <Input
-            label="First name"
-            autoComplete="given-name"
-            {...register("firstName")}
-            error={errors.firstName?.message}
-          />
-          <Input
-            label="Last name"
-            autoComplete="family-name"
-            {...register("lastName")}
-            error={errors.lastName?.message}
-          />
+          <Field label="First name" error={errors.firstName?.message}>
+            <Input
+              autoComplete="given-name"
+              {...register("firstName")}
+              error={errors.firstName?.message}
+              className={DARK_INPUT}
+            />
+          </Field>
+          <Field label="Last name" error={errors.lastName?.message}>
+            <Input
+              autoComplete="family-name"
+              {...register("lastName")}
+              error={errors.lastName?.message}
+              className={DARK_INPUT}
+            />
+          </Field>
         </div>
-        <Input
-          label="Email"
-          type="email"
-          autoComplete="email"
-          {...register("email")}
-          error={errors.email?.message}
-        />
-        <Input
-          label="Phone (optional)"
-          type="tel"
-          autoComplete="tel"
-          {...register("phoneNumber")}
-          error={errors.phoneNumber?.message}
-        />
-        <Input
+        <Field label="Email" error={errors.email?.message}>
+          <Input
+            type="email"
+            autoComplete="email"
+            placeholder="you@example.com"
+            {...register("email")}
+            error={errors.email?.message}
+            className={DARK_INPUT}
+          />
+        </Field>
+        <Field label="Phone (optional)" error={errors.phoneNumber?.message}>
+          <Input
+            type="tel"
+            autoComplete="tel"
+            {...register("phoneNumber")}
+            error={errors.phoneNumber?.message}
+            className={DARK_INPUT}
+          />
+        </Field>
+        <Field
           label="Password"
-          type="password"
-          autoComplete="new-password"
-          {...register("password")}
           error={errors.password?.message}
-          hint="12+ chars, upper + lower + digit + symbol."
-        />
-        <Button type="submit" loading={isSubmitting} fullWidth size="lg">
-          Create account
-        </Button>
+          hint="12+ chars · upper · lower · digit · symbol"
+        >
+          <Input
+            type="password"
+            autoComplete="new-password"
+            {...register("password")}
+            error={errors.password?.message}
+            className={DARK_INPUT}
+          />
+        </Field>
+
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="group relative mt-2 flex w-full items-center justify-center gap-2 overflow-hidden rounded-lg bg-gradient-to-r from-violet-500 to-cyan-500 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/30 transition-transform hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isSubmitting ? (
+            <>
+              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              Creating account…
+            </>
+          ) : (
+            <>Create account →</>
+          )}
+        </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-slate-600">
+      <p className="mt-6 text-center text-sm text-white/50">
         Already have an account?{" "}
-        <Link href="/login" className="font-semibold text-brand-600 hover:text-brand-700">
+        <Link
+          href="/login"
+          className="font-semibold text-cyan-300 underline-offset-4 hover:text-cyan-200 hover:underline"
+        >
           Sign in
         </Link>
       </p>
+    </div>
+  );
+}
+
+function Field({
+  label,
+  hint,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  error?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-white/60">
+        {label}
+      </label>
+      {children}
+      {hint && <p className="mt-1 text-[11px] text-white/40">{hint}</p>}
     </div>
   );
 }

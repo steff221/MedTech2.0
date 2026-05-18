@@ -1,16 +1,18 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Activity, Calendar, LayoutDashboard, Stethoscope, User } from "lucide-react";
+import { Activity, Calendar, FileText, LayoutDashboard, Pill, Stethoscope, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/utils/cn";
 
 const nav = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/appointments", label: "Appointments", icon: Calendar },
-  { href: "/doctors", label: "Find a doctor", icon: Stethoscope },
-  { href: "/profile", label: "Profile", icon: User },
+  { href: "/dashboard",      label: "Dashboard",      icon: LayoutDashboard },
+  { href: "/appointments",   label: "Appointments",   icon: Calendar },
+  { href: "/health-records", label: "Health records", icon: FileText },
+  { href: "/prescriptions",  label: "Prescriptions",  icon: Pill },
+  { href: "/doctors",        label: "Find a doctor",  icon: Stethoscope },
+  { href: "/profile",        label: "Profile",        icon: User },
 ];
 
 export function PatientSidebar() {
