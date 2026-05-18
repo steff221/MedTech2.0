@@ -39,7 +39,7 @@ public class AppointmentController {
     private final AppointmentMapper mapper;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('PATIENT', 'NURSE', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('PATIENT', 'NURSE')")
     @Operation(summary = "Book a new appointment")
     public ResponseEntity<AppointmentResponse> book(@Valid @RequestBody BookAppointmentRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -54,7 +54,7 @@ public class AppointmentController {
     }
 
     @GetMapping("/doctor/{doctorId}")
-    @PreAuthorize("hasAnyRole('DOCTOR', 'NURSE', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('DOCTOR', 'NURSE')")
     @Operation(summary = "List a doctor's appointments on a given date")
     public ResponseEntity<Page<AppointmentResponse>> byDoctorAndDate(
             @PathVariable Long doctorId,
@@ -65,7 +65,7 @@ public class AppointmentController {
     }
 
     @PutMapping("/{id}/reschedule")
-    @PreAuthorize("hasAnyRole('PATIENT', 'DOCTOR', 'NURSE', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('PATIENT', 'DOCTOR', 'NURSE')")
     @Operation(summary = "Move an appointment to a new date / time")
     public ResponseEntity<AppointmentResponse> reschedule(@PathVariable Long id,
                                                           @Valid @RequestBody RescheduleAppointmentRequest request) {

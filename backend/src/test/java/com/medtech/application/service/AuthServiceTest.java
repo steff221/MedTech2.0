@@ -9,7 +9,6 @@ import com.medtech.domain.vo.UserRole;
 import com.medtech.domain.vo.UserStatus;
 import com.medtech.infrastructure.exception.AppException;
 import com.medtech.infrastructure.exception.ConflictException;
-import com.medtech.infrastructure.exception.ValidationException;
 import com.medtech.infrastructure.security.JwtTokenProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,15 +42,6 @@ class AuthServiceTest {
         validRegister = new RegisterRequest(
                 "new.user@medtech.mk", "Str0ng!Passw0rd#2026",
                 "New", "User", "+38970000000", UserRole.PATIENT);
-    }
-
-    @Test
-    void register_rejectsAdminSelfRegistration() {
-        RegisterRequest adminAttempt = new RegisterRequest(
-                "x@y.mk", "Str0ng!Passw0rd#2026", "X", "Y", null, UserRole.ADMIN);
-
-        assertThatThrownBy(() -> authService.register(adminAttempt))
-                .isInstanceOf(ValidationException.class);
     }
 
     @Test

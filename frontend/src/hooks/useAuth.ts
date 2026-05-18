@@ -10,7 +10,6 @@ import type { LoginRequest, RegisterRequest, UserRole } from "@/types/api";
 
 function homeFor(role: UserRole): string {
   if (role === "DOCTOR") return "/doctor";
-  if (role === "ADMIN") return "/dashboard"; // no admin UI yet — land on patient dashboard
   return "/dashboard";
 }
 

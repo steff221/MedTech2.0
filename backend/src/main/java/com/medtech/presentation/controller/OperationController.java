@@ -34,7 +34,7 @@ public class OperationController {
     private final OperationMapper mapper;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('DOCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('DOCTOR')")
     @Operation(summary = "Schedule a surgical operation")
     public ResponseEntity<OperationResponse> schedule(@Valid @RequestBody ScheduleOperationRequest request) {
         Long surgeonUserId = SecurityUtils.currentUserId()
@@ -44,7 +44,7 @@ public class OperationController {
     }
 
     @PutMapping("/{id}/status")
-    @PreAuthorize("hasAnyRole('DOCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('DOCTOR')")
     @Operation(summary = "Update operation status + post-op notes")
     public ResponseEntity<OperationResponse> updateStatus(@PathVariable Long id,
                                                           @Valid @RequestBody UpdateOperationStatusRequest request) {

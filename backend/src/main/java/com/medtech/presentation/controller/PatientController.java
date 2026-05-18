@@ -72,14 +72,14 @@ public class PatientController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('DOCTOR', 'NURSE', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('DOCTOR', 'NURSE')")
     @Operation(summary = "Get any patient (clinicians and admins only)")
     public ResponseEntity<PatientResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(patientMapper.toResponse(patientService.getById(id)));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('PATIENT', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('PATIENT')")
     @Operation(summary = "Update patient demographics (self) or any (admin)")
     public ResponseEntity<PatientResponse> update(@PathVariable Long id,
                                                   @Valid @RequestBody UpdatePatientRequest request) {

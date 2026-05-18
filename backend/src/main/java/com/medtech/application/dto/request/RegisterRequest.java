@@ -8,10 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-/**
- * Self-registration payload. {@link UserRole#ADMIN} is rejected at the service
- * layer regardless of what the client sends.
- */
+/** Self-registration payload. */
 public record RegisterRequest(
         @NotBlank(message = ValidationMessages.EMAIL_REQUIRED)
         @Email(message = ValidationMessages.EMAIL_FORMAT)
