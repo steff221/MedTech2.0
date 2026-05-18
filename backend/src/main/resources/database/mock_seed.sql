@@ -203,6 +203,77 @@ FROM (SELECT id FROM patients ORDER BY id LIMIT 5) p
 CROSS JOIN (SELECT id FROM doctors ORDER BY id LIMIT 1) d
 ON CONFLICT DO NOTHING;
 
+-- -----------------------------------------------------------------------------
+-- 7. Simple-password accounts for demo logins
+-- -----------------------------------------------------------------------------
+-- admin@medtech.mk / admin123
+UPDATE users
+SET password_hash = '$2b$12$OmF/ATG10iT83eKux/ijb.5ZiLgKOaIgg2o.ODv4x8Ji6y2Q6v356',
+    failed_login_count = 0,
+    locked_until = NULL
+WHERE email = 'admin@medtech.mk';
+
+-- stefan@medtech.mk / magi1002 (DOCTOR at Универзитетска клиника, Skopje)
+WITH u AS (
+  INSERT INTO users (email, password_hash, first_name, last_name, phone_number, role, status, email_verified, created_by)
+  VALUES ('stefan@medtech.mk',
+          '$2b$12$P5yZXjEb0GC5MZuhVDm.SuqyIIK4/RVGLPHW7jjxXPzcbUJlLDsia',
+          'Stefan', 'Perovski', '+389 70 555 000',
+          'DOCTOR'::user_role_enum, 'ACTIVE'::user_status_enum, TRUE, 'MOCK_SEED')
+  ON CONFLICT (email) DO UPDATE
+    SET password_hash       = EXCLUDED.password_hash,
+        failed_login_count  = 0,
+        locked_until        = NULL
+  RETURNING id, email
+)
+INSERT INTO doctors (user_id, hospital_id, license_number, specialization, sub_specialization,
+                     experience_years, consultation_fee, bio, status)
+SELECT u.id,
+       (SELECT id FROM hospitals WHERE name = 'Универзитетска клиника' LIMIT 1),
+       'DR-STEFAN', 'Internal Medicine',
+       'Annual Physical, Wellness Check, Diabetes Management, Hypertension Care',
+       10, 1500,
+       'Board-certified Internal Medicine specialist.',
+       'ACTIVE'::user_status_enum
+FROM u
+WHERE NOT EXISTS (SELECT 1 FROM doctors d WHERE d.user_id = u.id);
+
+-- -----------------------------------------------------------------------------
+-- 8. Stefan's calendar — populates the doctor schedule so the demo never
+--    opens to an empty week. Uses CURRENT_DATE so the data stays "now".
+-- -----------------------------------------------------------------------------
+INSERT INTO appointments (patient_id, doctor_id, hospital_id, appointment_date, appointment_time,
+                          duration_minutes, status, appointment_type, reason, created_by)
+SELECT pid, s.did, s.hid, d, t, dur,
+       st::appointment_status_enum, ty::appointment_type_enum, r, 'STEFAN_SEED'
+FROM (SELECT id AS did, hospital_id AS hid FROM doctors WHERE license_number = 'DR-STEFAN') s,
+     (VALUES
+       (2,  CURRENT_DATE,     '09:00', 30, 'SCHEDULED', 'CONSULTATION', 'New patient consultation'),
+       (3,  CURRENT_DATE,     '09:40', 30, 'SCHEDULED', 'CHECKUP',      'Annual physical'),
+       (4,  CURRENT_DATE,     '10:20', 20, 'COMPLETED', 'FOLLOW_UP',    'Blood pressure follow-up'),
+       (5,  CURRENT_DATE,     '11:00', 30, 'SCHEDULED', 'CONSULTATION', 'Persistent headaches'),
+       (6,  CURRENT_DATE,     '13:00', 30, 'SCHEDULED', 'CHECKUP',      'Diabetes check'),
+       (7,  CURRENT_DATE,     '14:20', 20, 'SCHEDULED', 'FOLLOW_UP',    'Lab review'),
+       (8,  CURRENT_DATE + 1, '09:00', 30, 'SCHEDULED', 'CONSULTATION', 'Joint pain assessment'),
+       (9,  CURRENT_DATE + 1, '09:40', 30, 'SCHEDULED', 'CHECKUP',      'Wellness check'),
+       (10, CURRENT_DATE + 1, '11:00', 20, 'SCHEDULED', 'FOLLOW_UP',    'Medication review'),
+       (11, CURRENT_DATE + 1, '13:40', 30, 'SCHEDULED', 'PROCEDURE',    'Minor procedure'),
+       (12, CURRENT_DATE + 2, '09:00', 30, 'SCHEDULED', 'CONSULTATION', 'Initial consultation'),
+       (2,  CURRENT_DATE + 2, '10:20', 20, 'SCHEDULED', 'FOLLOW_UP',    'Recheck after antibiotics'),
+       (3,  CURRENT_DATE + 2, '13:00', 30, 'SCHEDULED', 'CHECKUP',      'Pre-operative consult'),
+       (4,  CURRENT_DATE + 3, '09:00', 30, 'SCHEDULED', 'CONSULTATION', 'Chest pain workup'),
+       (5,  CURRENT_DATE + 3, '10:20', 20, 'SCHEDULED', 'FOLLOW_UP',    'Cardiac follow-up'),
+       (6,  CURRENT_DATE + 3, '14:00', 30, 'SCHEDULED', 'CHECKUP',      'Diabetes check'),
+       (7,  CURRENT_DATE + 4, '09:00', 30, 'SCHEDULED', 'CONSULTATION', 'Skin lesion review'),
+       (8,  CURRENT_DATE + 4, '11:00', 30, 'SCHEDULED', 'FOLLOW_UP',    'Migraine therapy'),
+       (9,  CURRENT_DATE + 5, '10:00', 30, 'SCHEDULED', 'CHECKUP',      'Pediatric vaccination'),
+       (2,  CURRENT_DATE - 1, '10:20', 20, 'COMPLETED', 'FOLLOW_UP',    'Lab review'),
+       (3,  CURRENT_DATE - 2, '14:00', 30, 'COMPLETED', 'CHECKUP',      'Annual physical'),
+       (4,  CURRENT_DATE - 3, '09:40', 20, 'NO_SHOW',   'FOLLOW_UP',    NULL),
+       (5,  CURRENT_DATE - 4, '13:00', 30, 'COMPLETED', 'CONSULTATION', 'Initial consultation')
+     ) AS t(pid, d, t, dur, st, ty, r)
+ON CONFLICT DO NOTHING;
+
 COMMIT;
 
 -- Quick summary

@@ -15,6 +15,7 @@ import com.medtech.application.service.MedicalRecordService;
 import com.medtech.application.service.PatientService;
 import com.medtech.application.service.PrescriptionService;
 import com.medtech.infrastructure.exception.AuthorizationException;
+import com.medtech.infrastructure.security.PatientAccessGuard;
 import com.medtech.infrastructure.security.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -48,6 +49,8 @@ public class PatientController {
     private final AppointmentMapper appointmentMapper;
     private final MedicalRecordMapper medicalRecordMapper;
     private final PrescriptionMapper prescriptionMapper;
+
+    private final PatientAccessGuard accessGuard;
 
     @PostMapping("/me")
     @PreAuthorize("hasRole('PATIENT')")
@@ -86,18 +89,21 @@ public class PatientController {
     @GetMapping("/{id}/appointments")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<AppointmentResponse>> appointments(@PathVariable Long id, Pageable pageable) {
+        accessGuard.assertCanAccessPatient(id);
         return ResponseEntity.ok(appointmentService.listForPatient(id, pageable).map(appointmentMapper::toResponse));
     }
 
     @GetMapping("/{id}/medical-records")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<MedicalRecordResponse>> medicalRecords(@PathVariable Long id, Pageable pageable) {
+        accessGuard.assertCanAccessPatient(id);
         return ResponseEntity.ok(medicalRecordService.historyOf(id, pageable).map(medicalRecordMapper::toResponse));
     }
 
     @GetMapping("/{id}/prescriptions")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<PrescriptionResponse>> prescriptions(@PathVariable Long id, Pageable pageable) {
+        accessGuard.assertCanAccessPatient(id);
         return ResponseEntity.ok(prescriptionService.listFor(id, pageable).map(prescriptionMapper::toResponse));
     }
 }

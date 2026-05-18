@@ -24,6 +24,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.Instant;
 
 /**
@@ -41,6 +42,11 @@ import java.time.Instant;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+
+    /** Bad-password attempts before the account is temporarily locked. */
+    private static final int MAX_FAILED_ATTEMPTS = 5;
+    /** How long an account stays locked after exceeding MAX_FAILED_ATTEMPTS. */
+    private static final Duration LOCKOUT_WINDOW = Duration.ofMinutes(15);
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -84,7 +90,17 @@ public class AuthService {
                     "Account is not active") {};
         }
         if (!passwordEncoder.matches(req.password(), user.getPasswordHash())) {
+            int attempted = user.getFailedLoginCount() + 1;
             userRepository.incrementFailedLogins(user.getId());
+            if (attempted >= MAX_FAILED_ATTEMPTS) {
+                Instant until = Instant.now().plus(LOCKOUT_WINDOW);
+                userRepository.lockUntil(user.getId(), until);
+                log.warn("Locked user {} until {} after {} failed attempts",
+                        user.getId(), until, attempted);
+                throw new AppException(ErrorCode.AUTH_ACCOUNT_LOCKED, HttpStatus.UNAUTHORIZED,
+                        "Too many failed attempts. Account locked for "
+                                + LOCKOUT_WINDOW.toMinutes() + " minutes.") {};
+            }
             throw AuthorizationException.invalidCredentials();
         }
 

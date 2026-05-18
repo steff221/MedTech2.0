@@ -167,19 +167,7 @@ export function WeeklyCalendar({ doctorId }: WeeklyCalendarProps) {
                     style={{ minHeight: 32 }}
                   >
                     {apt ? (
-                      <motion.button
-                        layout
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.97 }}
-                        onClick={() => setSelected(apt)}
-                        className={cn(
-                          "absolute inset-0.5 flex items-center justify-start rounded-md px-1.5 text-[11px] font-medium shadow-sm transition-colors",
-                          statusBg(apt.status),
-                        )}
-                        title={`${apt.patientName} · ${formatTime(slot)}`}
-                      >
-                        <span className="truncate">{apt.patientName}</span>
-                      </motion.button>
+                      <SlotButton apt={apt} slot={slot} onClick={() => setSelected(apt)} />
                     ) : null}
                   </div>
                 );
@@ -226,6 +214,78 @@ export function WeeklyCalendar({ doctorId }: WeeklyCalendarProps) {
         )}
       </Modal>
     </div>
+  );
+}
+
+function SlotButton({
+  apt,
+  slot,
+  onClick,
+}: {
+  apt: AppointmentResponse;
+  slot: string;
+  onClick: () => void;
+}) {
+  const [hover, setHover] = useState(false);
+
+  return (
+    <>
+      <motion.button
+        layout
+        whileHover={{ scale: 1.04, zIndex: 5 }}
+        whileTap={{ scale: 0.96 }}
+        onClick={onClick}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+        className={cn(
+          "absolute inset-0.5 flex items-center justify-start overflow-hidden rounded-md px-1.5 text-[11px] font-medium shadow-sm transition-colors",
+          statusBg(apt.status),
+        )}
+      >
+        <span className="truncate">{apt.patientName}</span>
+      </motion.button>
+
+      <AnimatePresence>
+        {hover && (
+          <motion.div
+            initial={{ opacity: 0, y: 4, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 4, scale: 0.96 }}
+            transition={{ duration: 0.12 }}
+            className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-56 -translate-x-1/2 rounded-lg border border-slate-200 bg-white p-2.5 shadow-xl"
+            style={{ marginLeft: 0 }}
+          >
+            <div className="flex items-start gap-2">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-100 text-[10px] font-bold text-brand-700">
+                {apt.patientName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-semibold text-slate-900">
+                  {apt.patientName}
+                </p>
+                <p className="text-[10px] text-slate-500">
+                  {formatTime(slot)} · {apt.durationMinutes} min
+                </p>
+              </div>
+            </div>
+            {apt.reason && (
+              <p className="mt-2 line-clamp-2 text-[11px] text-slate-600">{apt.reason}</p>
+            )}
+            <div className="mt-2 flex items-center gap-1">
+              <Badge tone={appointmentStatusTone(apt.status)}>{apt.status}</Badge>
+              {apt.appointmentType && (
+                <span className="text-[10px] text-slate-400">{apt.appointmentType}</span>
+              )}
+            </div>
+            {/* Tooltip arrow */}
+            <div
+              className="absolute left-1/2 top-full h-2 w-2 -translate-x-1/2 -translate-y-1 rotate-45 border-b border-r border-slate-200 bg-white"
+              aria-hidden
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
