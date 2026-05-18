@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
  *
  * <p>Rule:
  * <ul>
- *   <li>{@code DOCTOR}, {@code NURSE}, {@code ADMIN} → always allowed.</li>
+ *   <li>{@code DOCTOR}, {@code NURSE} → always allowed.</li>
  *   <li>{@code PATIENT} → only when the patient's {@code userId} matches the
  *       currently authenticated user's id.</li>
  *   <li>Anyone else → denied.</li>
@@ -28,9 +28,7 @@ public class PatientAccessGuard {
         Long currentUserId = SecurityUtils.currentUserId()
                 .orElseThrow(() -> new AuthorizationException("Authentication required"));
 
-        if (SecurityUtils.hasRole("DOCTOR")
-                || SecurityUtils.hasRole("NURSE")
-                || SecurityUtils.hasRole("ADMIN")) {
+        if (SecurityUtils.hasRole("DOCTOR") || SecurityUtils.hasRole("NURSE")) {
             return;
         }
 

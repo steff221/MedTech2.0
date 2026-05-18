@@ -67,7 +67,7 @@ WHERE license_number IN ('LIC-MK-001', 'DR-0042') AND (sub_specialization IS NUL
 -- -----------------------------------------------------------------------------
 WITH new_patients AS (
   SELECT * FROM (VALUES
-    ('p.kostadinov@medtech.mk',  'Петар',     'Костадинов',   'M', '1988-03-12', 'O+',  'Скопје',    'ул. Партизанска 25'),
+    ('patient@medtech.mk',       'Петар',     'Костадинов',   'M', '1988-03-12', 'O+',  'Скопје',    'ул. Партизанска 25'),
     ('a.dimitrova@medtech.mk',   'Анастасија','Димитрова',   'F', '1992-07-08', 'A+',  'Битола',    'ул. Маршал Тито 47'),
     ('m.jovanovski@medtech.mk',  'Марко',     'Јовановски',   'M', '1975-11-23', 'B+',  'Охрид',     'ул. Гоце Делчев 12'),
     ('s.bogdanova@medtech.mk',   'Сара',      'Богданова',    'F', '2001-01-30', 'AB+', 'Тетово',    'ул. Илинденска 88'),
@@ -206,12 +206,12 @@ ON CONFLICT DO NOTHING;
 -- -----------------------------------------------------------------------------
 -- 7. Simple-password accounts for demo logins
 -- -----------------------------------------------------------------------------
--- admin@medtech.mk / admin123
+-- patient@medtech.mk / patient123 (renamed from p.kostadinov@medtech.mk above)
 UPDATE users
-SET password_hash = '$2b$12$OmF/ATG10iT83eKux/ijb.5ZiLgKOaIgg2o.ODv4x8Ji6y2Q6v356',
+SET password_hash = '$2b$12$UMuMzEQ8mRZ1nYuGdQdyL.2GCN5qAPg3ECYq.GbNV5OtDPe.pO5Jq',
     failed_login_count = 0,
     locked_until = NULL
-WHERE email = 'admin@medtech.mk';
+WHERE email = 'patient@medtech.mk';
 
 -- stefan@medtech.mk / magi1002 (DOCTOR at Универзитетска клиника, Skopje)
 WITH u AS (

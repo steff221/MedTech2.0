@@ -103,8 +103,11 @@ export function PatientDetailDrawer({
       <AnimatePresence>
         {open && (
           <>
+            {/* Overlay starts below the sticky top nav (h-24 = 96px) so the user
+                can always click another menu item to navigate away without
+                first dismissing the drawer. */}
             <motion.div
-              className="fixed inset-0 z-40 bg-slate-900/30 backdrop-blur-sm"
+              className="fixed inset-x-0 bottom-0 top-24 z-40 bg-slate-900/30 backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -117,7 +120,7 @@ export function PatientDetailDrawer({
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", stiffness: 320, damping: 32 }}
-              className="fixed right-0 top-0 z-50 flex h-full w-full flex-col bg-white shadow-2xl sm:w-[480px]"
+              className="fixed bottom-0 right-0 top-24 z-50 flex w-full flex-col bg-white shadow-2xl sm:w-[480px]"
             >
               {/* Header */}
               <div className="border-b border-slate-200 px-6 py-5">

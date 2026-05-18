@@ -9,7 +9,7 @@
 -- ============================================================================
 -- PART 1: ENUM TYPES (replace Oracle CHECK constraints)
 -- ============================================================================
-CREATE TYPE user_role_enum         AS ENUM ('PATIENT', 'DOCTOR', 'ADMIN', 'NURSE');
+CREATE TYPE user_role_enum         AS ENUM ('PATIENT', 'DOCTOR', 'NURSE');
 CREATE TYPE user_status_enum       AS ENUM ('ACTIVE', 'INACTIVE', 'SUSPENDED');
 CREATE TYPE gender_enum            AS ENUM ('M', 'F', 'O');
 CREATE TYPE blood_type_enum        AS ENUM ('O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-');
@@ -516,13 +516,6 @@ INSERT INTO hospitals (name, city, address, postal_code, phone_number, latitude,
 ('Клиничка болница Тетово', 'Тетово',  'ул. Болнична 1',     '1200', '+389 49 123 456', 41.9940, 20.9740, 'PRIMARY',   'Д-р Иван Петров',           200, 'ACTIVE'),
 ('Универзитетска клиника',  'Скопје',  'ул. Водњанска 17',   '1000', '+389 2 309 3000', 41.9973, 21.4280, 'TERTIARY',  'Проф. Д-р Марко Миланов',   500, 'ACTIVE'),
 ('Болница Куманово',        'Куманово','ул. Болнична 50',    '1300', '+389 31 245 123', 42.1327, 21.7156, 'SECONDARY', 'Д-р Александар Стојев',     150, 'ACTIVE');
-
--- Admin user -----------------------------------------------------------------
-INSERT INTO users (email, password_hash, first_name, last_name, phone_number, role, status, email_verified, created_by)
-VALUES ('admin@medtech.mk',
-        '$2a$10$dXJ3SW6G7P50eS6DmwzkKe.1Z7XvKRPZ9y.iR3dP8vJNuRpHKjYAO',
-        'Admin', 'System', '+389 2 123 4567',
-        'ADMIN', 'ACTIVE', TRUE, 'SYSTEM');
 
 -- Doctor (user + doctor in one CTE) -----------------------------------------
 WITH new_user AS (

@@ -8,13 +8,11 @@ import com.medtech.application.dto.response.UserResponse;
 import com.medtech.constant.ErrorCode;
 import com.medtech.domain.entity.User;
 import com.medtech.domain.repository.UserRepository;
-import com.medtech.domain.vo.UserRole;
 import com.medtech.domain.vo.UserStatus;
 import com.medtech.infrastructure.exception.AppException;
 import com.medtech.infrastructure.exception.AuthorizationException;
 import com.medtech.infrastructure.exception.ConflictException;
 import com.medtech.infrastructure.exception.ResourceNotFoundException;
-import com.medtech.infrastructure.exception.ValidationException;
 import com.medtech.infrastructure.security.JwtTokenProvider;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +31,6 @@ import java.time.Instant;
  * <p>Business rules:
  * <ul>
  *   <li>Email is unique (case-insensitive).</li>
- *   <li>Self-registration cannot grant {@link UserRole#ADMIN}.</li>
  *   <li>Locked or non-{@code ACTIVE} accounts cannot log in.</li>
  *   <li>Refresh tokens MUST carry {@code typ=refresh}; access tokens MUST carry {@code typ=access}.</li>
  * </ul>
@@ -54,9 +51,6 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(RegisterRequest req) {
-        if (req.role() == UserRole.ADMIN) {
-            throw new ValidationException("ADMIN accounts cannot be self-registered");
-        }
         if (userRepository.existsByEmailIgnoreCase(req.email())) {
             throw new ConflictException(ErrorCode.AUTH_EMAIL_TAKEN, "Email already registered");
         }
