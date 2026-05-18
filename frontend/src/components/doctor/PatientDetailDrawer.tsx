@@ -19,6 +19,12 @@ import { Skeleton } from "@/components/common/Skeleton";
 import { MedicalRecordForm } from "./MedicalRecordForm";
 import { PrescriptionForm } from "./PrescriptionForm";
 import { patientService } from "@/services/patient.service";
+import type {
+  AppointmentResponse,
+  MedicalRecordResponse,
+  PatientResponse,
+  PrescriptionResponse,
+} from "@/types/api";
 import { cn } from "@/utils/cn";
 import { formatDate, formatTime, initials } from "@/utils/format";
 
@@ -235,7 +241,7 @@ function OverviewPanel({
   patient,
   loading,
 }: {
-  patient: ReturnType<typeof Object> | null | undefined;
+  patient: PatientResponse | null | undefined;
   loading: boolean;
 }) {
   if (loading) return <Skeleton className="h-48" />;
@@ -287,7 +293,13 @@ function OverviewPanel({
   );
 }
 
-function AppointmentsPanel({ items, loading }: { items: any[]; loading: boolean }) {
+function AppointmentsPanel({
+  items,
+  loading,
+}: {
+  items: AppointmentResponse[];
+  loading: boolean;
+}) {
   if (loading) return <Skeleton className="h-32" />;
   if (items.length === 0)
     return <p className="text-sm text-slate-500">No appointments on record.</p>;
@@ -310,7 +322,13 @@ function AppointmentsPanel({ items, loading }: { items: any[]; loading: boolean 
   );
 }
 
-function RecordsPanel({ items, loading }: { items: any[]; loading: boolean }) {
+function RecordsPanel({
+  items,
+  loading,
+}: {
+  items: MedicalRecordResponse[];
+  loading: boolean;
+}) {
   if (loading) return <Skeleton className="h-32" />;
   if (items.length === 0)
     return <p className="text-sm text-slate-500">No medical records yet.</p>;
@@ -336,7 +354,13 @@ function RecordsPanel({ items, loading }: { items: any[]; loading: boolean }) {
   );
 }
 
-function PrescriptionsPanel({ items, loading }: { items: any[]; loading: boolean }) {
+function PrescriptionsPanel({
+  items,
+  loading,
+}: {
+  items: PrescriptionResponse[];
+  loading: boolean;
+}) {
   if (loading) return <Skeleton className="h-32" />;
   if (items.length === 0)
     return <p className="text-sm text-slate-500">No prescriptions on file.</p>;

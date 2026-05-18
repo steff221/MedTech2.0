@@ -1,6 +1,8 @@
-version: '3.8'
-
 services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL — schema + mock seed mounted as initdb scripts. On a clean
+  # volume both run automatically the first time the container starts.
+  # ---------------------------------------------------------------------------
   postgres:
     image: postgres:16-alpine
     container_name: medtech-postgres
@@ -15,6 +17,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ../backend/src/main/resources/database/medtech_schema_pg.sql:/docker-entrypoint-initdb.d/01_medtech_schema_pg.sql:ro
+      - ../backend/src/main/resources/database/mock_seed.sql:/docker-entrypoint-initdb.d/02_mock_seed.sql:ro
     networks:
       - medtech-network
     healthcheck:
@@ -24,6 +27,62 @@ services:
       retries: 10
       start_period: 20s
 
+  # ---------------------------------------------------------------------------
+  # Backend — Spring Boot. Inside the compose network the DB is at
+  # `postgres:5432`, so env vars override the dev defaults from application.yml.
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: medtech-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      MEDTECH_DB_URL: jdbc:postgresql://postgres:5432/medtech
+      MEDTECH_DB_USER: medtech_app
+      MEDTECH_DB_PASSWORD: MedTech123!@#
+      # Demo secret — rotate before any real deployment.
+      MEDTECH_SECURITY_JWT_SECRET: docker-compose-medtech-jwt-secret-rotate-before-real-deploy-2026
+      MEDTECH_SECURITY_CORS_ALLOWEDORIGINS_0: http://localhost:3000
+      JAVA_OPTS: -XX:+UseG1GC -XX:MaxRAMPercentage=75.0
+    ports:
+      - "8080:8080"
+    networks:
+      - medtech-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  # ---------------------------------------------------------------------------
+  # Frontend — Next.js standalone server. NEXT_PUBLIC_API_URL is the URL the
+  # *browser* uses to reach the backend, so it's the host's published port,
+  # not the compose-internal hostname.
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8080/api
+    container_name: medtech-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    networks:
+      - medtech-network
+
+  # ---------------------------------------------------------------------------
+  # pgAdmin — optional DB GUI at http://localhost:5050
+  # ---------------------------------------------------------------------------
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: medtech-pgadmin
