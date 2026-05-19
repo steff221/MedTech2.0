@@ -53,14 +53,18 @@ public class PrescriptionController {
     @PreAuthorize("hasAnyRole('PATIENT', 'DOCTOR')")
     @Operation(summary = "Increment refills_used (rejected when allowance exhausted or expired)")
     public ResponseEntity<PrescriptionResponse> refill(@PathVariable Long id) {
-        return ResponseEntity.ok(mapper.toResponse(prescriptionService.refill(id)));
+        Long callerUserId = SecurityUtils.currentUserId()
+                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+        return ResponseEntity.ok(mapper.toResponse(prescriptionService.refill(id, callerUserId)));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('DOCTOR')")
     @Operation(summary = "Cancel a prescription (soft delete via status change)")
     public ResponseEntity<PrescriptionResponse> cancel(@PathVariable Long id) {
-        return ResponseEntity.ok(mapper.toResponse(prescriptionService.cancel(id)));
+        Long callerUserId = SecurityUtils.currentUserId()
+                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+        return ResponseEntity.ok(mapper.toResponse(prescriptionService.cancel(id, callerUserId)));
     }
 
     @GetMapping("/patient/{patientId}/active")

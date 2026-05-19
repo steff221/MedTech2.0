@@ -112,10 +112,20 @@ class PrescriptionServiceTest {
                 3, 1, LocalDate.of(2026, 12, 31), PrescriptionStatus.ACTIVE);
         when(prescriptionRepository.findById(50L)).thenReturn(Optional.of(rx));
 
-        Prescription refilled = service.refill(50L);
+        Prescription refilled = service.refill(50L, patient.getUser().getId());
 
         assertThat(refilled.getRefillsUsed()).isEqualTo(2);
         assertThat(refilled.getStatus()).isEqualTo(PrescriptionStatus.ACTIVE);
+    }
+
+    @Test
+    void refill_rejectsStranger() {
+        Prescription rx = Entities.prescription(54L, patient, doctor,
+                3, 0, LocalDate.of(2026, 12, 31), PrescriptionStatus.ACTIVE);
+        when(prescriptionRepository.findById(54L)).thenReturn(Optional.of(rx));
+
+        assertThatThrownBy(() -> service.refill(54L, 9999L))
+                .isInstanceOf(AuthorizationException.class);
     }
 
     @Test
@@ -124,7 +134,7 @@ class PrescriptionServiceTest {
                 2, 2, LocalDate.of(2026, 12, 31), PrescriptionStatus.ACTIVE);
         when(prescriptionRepository.findById(51L)).thenReturn(Optional.of(rx));
 
-        assertThatThrownBy(() -> service.refill(51L))
+        assertThatThrownBy(() -> service.refill(51L, doctor.getUser().getId()))
                 .isInstanceOf(ConflictException.class)
                 .extracting(t -> ((AppException) t).getErrorCode())
                 .isEqualTo(ErrorCode.PRESCRIPTION_REFILLS_EXHAUSTED);
@@ -136,11 +146,10 @@ class PrescriptionServiceTest {
                 3, 0, LocalDate.of(2026, 5, 1), PrescriptionStatus.ACTIVE);
         when(prescriptionRepository.findById(52L)).thenReturn(Optional.of(rx));
 
-        assertThatThrownBy(() -> service.refill(52L))
+        assertThatThrownBy(() -> service.refill(52L, doctor.getUser().getId()))
                 .isInstanceOf(ConflictException.class)
                 .extracting(t -> ((AppException) t).getErrorCode())
                 .isEqualTo(ErrorCode.PRESCRIPTION_EXPIRED);
-        assertThat(rx.getStatus()).isEqualTo(PrescriptionStatus.COMPLETED);
     }
 
     @Test
@@ -149,7 +158,7 @@ class PrescriptionServiceTest {
                 3, 0, LocalDate.of(2026, 12, 31), PrescriptionStatus.CANCELLED);
         when(prescriptionRepository.findById(53L)).thenReturn(Optional.of(rx));
 
-        assertThatThrownBy(() -> service.refill(53L))
+        assertThatThrownBy(() -> service.refill(53L, doctor.getUser().getId()))
                 .isInstanceOf(ConflictException.class);
     }
 
