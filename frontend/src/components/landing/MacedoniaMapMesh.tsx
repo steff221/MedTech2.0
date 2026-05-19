@@ -26,26 +26,61 @@ const LAT_MAX = 42.40;
 const LON_MIN = 20.42;
 const LON_MAX = 23.05;
 
-// Hand-traced outline of the Republic of North Macedonia.
-// 36 points, counter-clockwise from the NW corner near Kosovo. The Ohrid lake
-// notch on the western edge and the Skopje finger pushing north into Kosovo
-// are the two features that make the silhouette recognisable at a glance.
+// Detailed outline of the Republic of North Macedonia — 80 points, traced
+// counter-clockwise from the NW corner near Kosovo. Hand-sampled along the
+// real political boundary; the Lake Ohrid notch on the west, the Skopje
+// finger pushing north into Kosovo, and the gentle Šar Mountains curve all
+// read at a glance.
 const OUTLINE: Array<[number, number]> = [
-  // North / Kosovo border
-  [20.55, 42.32], [20.78, 42.18], [20.92, 42.12], [21.08, 42.22],
-  [21.22, 42.32], [21.38, 42.34], [21.55, 42.36], [21.74, 42.34],
-  [21.90, 42.32], [22.05, 42.30], [22.22, 42.34], [22.38, 42.32],
-  // East / Bulgaria
-  [22.50, 42.10], [22.65, 41.92], [22.86, 41.78], [22.98, 41.62],
-  [23.00, 41.45], [22.86, 41.32], [22.96, 41.34], [22.94, 41.12],
-  // South / Greece
-  [22.78, 41.00], [22.55, 41.04], [22.30, 41.12], [22.05, 41.16],
-  [21.78, 41.10], [21.55, 40.92], [21.30, 40.86], [21.02, 40.86],
-  [20.78, 40.92],
-  // West / Albania (Lake Ohrid notch)
-  [20.65, 41.05], [20.50, 41.10], [20.55, 41.28], [20.62, 41.42],
-  [20.50, 41.58], [20.48, 41.78], [20.48, 42.00], [20.50, 42.20],
+  // -- North (Kosovo + Serbia border) -----------------------------------
+  [20.55, 42.30], [20.61, 42.25], [20.66, 42.21], [20.72, 42.20],
+  [20.78, 42.18], [20.85, 42.16], [20.92, 42.12], [20.99, 42.16],
+  [21.04, 42.21], [21.10, 42.25], [21.16, 42.30], [21.22, 42.32],
+  [21.30, 42.33], [21.38, 42.34], [21.46, 42.35], [21.55, 42.36],
+  [21.63, 42.34], [21.72, 42.34], [21.82, 42.32], [21.91, 42.32],
+  [22.00, 42.30], [22.08, 42.30], [22.16, 42.33], [22.24, 42.34],
+  [22.32, 42.32], [22.40, 42.32], [22.46, 42.28],
+  // -- East (Bulgaria) --------------------------------------------------
+  [22.50, 42.18], [22.54, 42.06], [22.60, 41.96], [22.68, 41.88],
+  [22.78, 41.82], [22.88, 41.78], [22.96, 41.72], [23.00, 41.62],
+  [22.98, 41.52], [23.00, 41.44], [22.96, 41.38], [22.86, 41.34],
+  [22.96, 41.30], [22.96, 41.20], [22.94, 41.12],
+  // -- South (Greece) ---------------------------------------------------
+  [22.88, 41.05], [22.80, 41.00], [22.72, 40.98], [22.64, 41.00],
+  [22.55, 41.04], [22.46, 41.06], [22.36, 41.10], [22.28, 41.12],
+  [22.20, 41.14], [22.10, 41.16], [22.00, 41.16], [21.90, 41.14],
+  [21.80, 41.12], [21.70, 41.06], [21.60, 40.96], [21.50, 40.90],
+  [21.40, 40.86], [21.30, 40.86], [21.20, 40.85], [21.10, 40.86],
+  [21.00, 40.85], [20.90, 40.88],
+  // -- West (Albania — Lake Ohrid notch) --------------------------------
+  [20.80, 40.92], [20.72, 41.00], [20.65, 41.05], [20.58, 41.06],
+  [20.50, 41.10], [20.48, 41.16], [20.52, 41.24], [20.58, 41.32],
+  [20.62, 41.40], [20.58, 41.48], [20.52, 41.56], [20.48, 41.66],
+  [20.46, 41.78], [20.46, 41.90], [20.48, 42.00], [20.48, 42.10],
+  [20.50, 42.20], [20.53, 42.26],
 ];
+
+// Ray-casting point-in-polygon. Used to keep the interior mesh nodes
+// strictly inside the country's borders.
+function pointInPolygon(lon: number, lat: number): boolean {
+  let inside = false;
+  for (let i = 0, j = OUTLINE.length - 1; i < OUTLINE.length; j = i++) {
+    const [xi, yi] = OUTLINE[i];
+    const [xj, yj] = OUTLINE[j];
+    const intersect =
+      yi > lat !== yj > lat &&
+      lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi;
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
+
+// Deterministic pseudo-random jitter so the mesh looks organic but doesn't
+// reshuffle on every render. Pure function of (i, j) — no Math.random().
+function jitter(i: number, j: number, salt = 1): number {
+  const x = Math.sin(i * 12.9898 + j * 78.233 + salt * 37.719) * 43758.5453;
+  return x - Math.floor(x); // 0..1
+}
 
 export function MacedoniaMapMesh({
   nodes,
@@ -63,29 +98,41 @@ export function MacedoniaMapMesh({
     [width, height],
   );
 
-  // Project hospital nodes into SVG space once.
+  // Hospital nodes in SVG space.
   const hospitalPoints = useMemo(
     () => nodes.map((n) => ({ ...n, x: projectX(n.lon), y: projectY(n.lat) })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [nodes, width, height],
   );
 
-  // Scaffolding grid points (so the country looks "filled" with mesh nodes).
+  // Interior mesh nodes — a jittered 16×12 grid filtered through the
+  // point-in-polygon test. We end up with ~100 dots that fall strictly
+  // inside Macedonia's borders, giving the triangulated network look.
   const meshPoints = useMemo(() => {
+    const cols = 16;
+    const rows = 12;
+    const cellW = (LON_MAX - LON_MIN) / cols;
+    const cellH = (LAT_MAX - LAT_MIN) / rows;
     const points: Array<{ x: number; y: number }> = [];
-    for (let i = 1; i < 9; i++) {
-      for (let j = 1; j < 7; j++) {
-        points.push({
-          x: (i / 9) * width,
-          y: (j / 7) * height,
-        });
+    for (let i = 0; i < cols; i++) {
+      for (let j = 0; j < rows; j++) {
+        const lon =
+          LON_MIN + (i + 0.5) * cellW + (jitter(i, j) - 0.5) * cellW * 0.7;
+        const lat =
+          LAT_MIN + (j + 0.5) * cellH + (jitter(i, j, 2) - 0.5) * cellH * 0.7;
+        if (!pointInPolygon(lon, lat)) continue;
+        points.push({ x: projectX(lon), y: projectY(lat) });
       }
     }
+    // Add hospital points so they participate in the triangulation too.
     hospitalPoints.forEach((h) => points.push({ x: h.x, y: h.y }));
     return points;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hospitalPoints, width, height]);
 
-  // Soft scaffolding mesh — every node connects to its 2 nearest neighbours.
+  // Triangulated mesh — connect every interior point to its 3 nearest
+  // neighbours. Roughly approximates a Delaunay triangulation without the
+  // full algorithm; visually indistinguishable at this scale.
   const meshLines = useMemo(() => {
     const lines: Array<{ x1: number; y1: number; x2: number; y2: number; d: number }> = [];
     meshPoints.forEach((p, i) => {
@@ -93,7 +140,7 @@ export function MacedoniaMapMesh({
         .map((q, j) => ({ q, j, d: Math.hypot(p.x - q.x, p.y - q.y) }))
         .filter((c) => c.j !== i)
         .sort((a, b) => a.d - b.d)
-        .slice(0, 2);
+        .slice(0, 3);
       ranked.forEach((c) => {
         if (c.j > i) {
           lines.push({ x1: p.x, y1: p.y, x2: c.q.x, y2: c.q.y, d: c.d });
@@ -103,8 +150,8 @@ export function MacedoniaMapMesh({
     return lines;
   }, [meshPoints]);
 
-  // Hospital ↔ hospital edges (each hospital to its 2 closest hospital peers).
-  // Animated "data packet" dots travel along these — the neural-net pulse.
+  // Hospital ↔ hospital edges — each hospital to its 2 closest peers.
+  // Animated "data packet" dots travel along these.
   const hospitalEdges = useMemo(() => {
     const edges: Array<{
       from: { x: number; y: number };
@@ -150,8 +197,9 @@ export function MacedoniaMapMesh({
           <stop offset="100%" stopColor="#00d4ff" stopOpacity="0" />
         </radialGradient>
         <linearGradient id="outlineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#a78bfa" stopOpacity="0.7" />
-          <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.7" />
+          <stop offset="0%" stopColor="#e2e8f0" stopOpacity="0.95" />
+          <stop offset="50%" stopColor="#67e8f9" stopOpacity="0.85" />
+          <stop offset="100%" stopColor="#a78bfa" stopOpacity="0.9" />
         </linearGradient>
         <filter id="nodeBlur" x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur stdDeviation="3" />
@@ -161,19 +209,20 @@ export function MacedoniaMapMesh({
         </filter>
       </defs>
 
-      {/* Faint country fill + outline */}
+      {/* Country fill + outline — thicker, brighter than the abstract mesh */}
       <motion.polygon
         points={outline}
         fill="url(#outlineGrad)"
-        fillOpacity={0.05}
+        fillOpacity={0.04}
         stroke="url(#outlineGrad)"
-        strokeWidth={1.2}
+        strokeWidth={1.6}
+        strokeLinejoin="round"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1.6, ease: "easeOut" }}
       />
 
-      {/* Background scaffolding mesh — subtle, sets the "network" feel */}
+      {/* Triangulated interior mesh */}
       <g>
         {meshLines.map((l, i) => (
           <motion.line
@@ -183,16 +232,16 @@ export function MacedoniaMapMesh({
             x2={l.x2}
             y2={l.y2}
             stroke="#00c9b1"
-            strokeOpacity={Math.max(0.04, 0.14 - l.d / maxLineD)}
-            strokeWidth={0.5}
+            strokeOpacity={Math.max(0.06, 0.22 - l.d / maxLineD)}
+            strokeWidth={0.6}
             initial={{ pathLength: 0, opacity: 0 }}
             animate={{ pathLength: 1, opacity: 1 }}
-            transition={{ duration: 1.2, delay: 0.4 + (i % 20) * 0.02 }}
+            transition={{ duration: 1.2, delay: 0.4 + (i % 30) * 0.015 }}
           />
         ))}
       </g>
 
-      {/* Hospital ↔ hospital edges (more prominent than scaffolding) */}
+      {/* Hospital ↔ hospital edges (drawn on top of the mesh) */}
       <g>
         {hospitalEdges.map((e) => (
           <motion.line
@@ -202,8 +251,8 @@ export function MacedoniaMapMesh({
             x2={e.to.x}
             y2={e.to.y}
             stroke="#06b6d4"
-            strokeOpacity={0.35}
-            strokeWidth={0.9}
+            strokeOpacity={0.45}
+            strokeWidth={1.0}
             initial={{ pathLength: 0 }}
             animate={{ pathLength: 1 }}
             transition={{ duration: 1.4, delay: 1.0, ease: "easeOut" }}
@@ -211,8 +260,7 @@ export function MacedoniaMapMesh({
         ))}
       </g>
 
-      {/* Animated data packets — small glowing dots travel between connected
-          hospitals, like neurons firing across the network. */}
+      {/* Animated data packets — neurons firing across the hospital network */}
       <g>
         {hospitalEdges.map((e, i) => (
           <motion.circle
@@ -238,9 +286,9 @@ export function MacedoniaMapMesh({
         ))}
       </g>
 
-      {/* Scaffolding dots */}
+      {/* Interior mesh dots */}
       {meshPoints.slice(0, meshPoints.length - nodes.length).map((p, i) => (
-        <circle key={`s-${i}`} cx={p.x} cy={p.y} r={1} fill="#00c9b1" fillOpacity={0.25} />
+        <circle key={`s-${i}`} cx={p.x} cy={p.y} r={1.2} fill="#22d3ee" fillOpacity={0.5} />
       ))}
 
       {/* Hospital nodes — glowing, pulsing */}
