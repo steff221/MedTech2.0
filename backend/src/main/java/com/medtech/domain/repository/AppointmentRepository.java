@@ -34,10 +34,10 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
            WHERE a.doctor.id = :doctorId
              AND a.appointmentDate = :date
              AND a.appointmentTime = :time
-             AND a.status IN (com.medtech.domain.vo.AppointmentStatus.SCHEDULED,
-                              com.medtech.domain.vo.AppointmentStatus.RESCHEDULED)
+             AND a.status IN :statuses
            """)
     List<Appointment> lockConflicting(@Param("doctorId") Long doctorId,
                                       @Param("date") LocalDate date,
-                                      @Param("time") String time);
+                                      @Param("time") String time,
+                                      @Param("statuses") java.util.Collection<AppointmentStatus> statuses);
 }
