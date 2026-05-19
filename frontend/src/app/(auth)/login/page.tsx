@@ -17,7 +17,7 @@ type FormData = z.infer<typeof schema>;
 // Tailwind override classes for the existing Input — keep the component generic
 // and just paint it for the dark surface here.
 const DARK_INPUT =
-  "bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-cyan-400 focus:ring-cyan-400/30";
+  "bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-emerald-400 focus:ring-emerald-400/30";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -42,10 +42,10 @@ export default function LoginPage() {
     <div>
       <div className="flex items-center gap-2">
         <span className="relative flex h-2 w-2">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75" />
-          <span className="relative inline-flex h-2 w-2 rounded-full bg-cyan-400" />
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
         </span>
-        <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-cyan-300">
+        <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-emerald-300">
           Sign in
         </p>
       </div>
@@ -88,7 +88,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="group relative mt-2 flex w-full items-center justify-center gap-2 overflow-hidden rounded-lg bg-gradient-to-r from-violet-500 to-cyan-500 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/30 transition-transform hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
+          className="group relative mt-2 flex w-full items-center justify-center gap-2 overflow-hidden rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition-transform hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSubmitting ? (
             <>
@@ -105,7 +105,7 @@ export default function LoginPage() {
         New to MedTech?{" "}
         <Link
           href="/register"
-          className="font-semibold text-cyan-300 underline-offset-4 hover:text-cyan-200 hover:underline"
+          className="font-semibold text-emerald-300 underline-offset-4 hover:text-emerald-200 hover:underline"
         >
           Create an account
         </Link>

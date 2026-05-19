@@ -31,7 +31,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 const DARK_INPUT =
-  "bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-cyan-400 focus:ring-cyan-400/30";
+  "bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-emerald-400 focus:ring-emerald-400/30";
 
 export default function RegisterPage() {
   const { register: registerUser } = useAuth();
@@ -63,10 +63,10 @@ export default function RegisterPage() {
     <div>
       <div className="flex items-center gap-2">
         <span className="relative flex h-2 w-2">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-violet-400 opacity-75" />
-          <span className="relative inline-flex h-2 w-2 rounded-full bg-violet-400" />
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-teal-400 opacity-75" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-teal-400" />
         </span>
-        <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-violet-300">
+        <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-teal-300">
           Create account
         </p>
       </div>
@@ -133,7 +133,7 @@ export default function RegisterPage() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="group relative mt-2 flex w-full items-center justify-center gap-2 overflow-hidden rounded-lg bg-gradient-to-r from-violet-500 to-cyan-500 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/30 transition-transform hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
+          className="group relative mt-2 flex w-full items-center justify-center gap-2 overflow-hidden rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition-transform hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSubmitting ? (
             <>
@@ -150,7 +150,7 @@ export default function RegisterPage() {
         Already have an account?{" "}
         <Link
           href="/login"
-          className="font-semibold text-cyan-300 underline-offset-4 hover:text-cyan-200 hover:underline"
+          className="font-semibold text-emerald-300 underline-offset-4 hover:text-emerald-200 hover:underline"
         >
           Sign in
         </Link>
