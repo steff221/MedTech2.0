@@ -43,7 +43,7 @@ export function LandingPage() {
         className="pointer-events-none absolute inset-0 opacity-60"
         style={{
           background:
-            "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(124,58,237,0.25), transparent 60%), radial-gradient(ellipse 60% 40% at 80% 100%, rgba(6,182,212,0.18), transparent 60%)",
+            "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(16,185,129,0.22), transparent 60%), radial-gradient(ellipse 60% 40% at 80% 100%, rgba(20,184,166,0.18), transparent 60%)",
         }}
       />
       <div
@@ -51,7 +51,7 @@ export function LandingPage() {
         className="pointer-events-none absolute inset-x-0 top-0 h-px"
         style={{
           background:
-            "linear-gradient(90deg, transparent, rgba(124,58,237,0.6), rgba(6,182,212,0.8), rgba(124,58,237,0.6), transparent)",
+            "linear-gradient(90deg, transparent, rgba(16,185,129,0.6), rgba(45,212,191,0.8), rgba(16,185,129,0.6), transparent)",
         }}
       />
 
@@ -59,7 +59,7 @@ export function LandingPage() {
         {/* Top bar */}
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-cyan-500">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500">
               <Activity className="h-4 w-4 text-white" />
             </div>
             <span className="text-base font-bold tracking-tight">MedTech</span>
@@ -70,13 +70,13 @@ export function LandingPage() {
           <div className="flex items-center gap-3">
             <Link
               href="/login"
-              className="rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 text-xs font-semibold text-white/80 backdrop-blur transition-colors hover:bg-white/10"
+              className="rounded-full border border-white/15 bg-white/[0.04] px-4 py-1.5 text-xs font-semibold text-white/80 transition-colors hover:border-emerald-400/50 hover:bg-white/[0.08] hover:text-white"
             >
               Sign in
             </Link>
             <Link
               href="/register"
-              className="rounded-full bg-gradient-to-r from-violet-500 to-cyan-500 px-4 py-1.5 text-xs font-semibold text-white shadow-lg shadow-cyan-500/20 transition-transform hover:scale-[1.03]"
+              className="rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-1.5 text-xs font-semibold text-white shadow-lg shadow-emerald-500/25 transition-transform hover:scale-[1.03]"
             >
               Create account
             </Link>
@@ -94,10 +94,10 @@ export function LandingPage() {
           >
             <div className="flex items-center gap-2">
               <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-cyan-400" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
               </span>
-              <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-cyan-300">
+              <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-emerald-300">
                 Live Data
               </h2>
             </div>
@@ -107,7 +107,7 @@ export function LandingPage() {
 
             <h1 className="mt-6 text-4xl font-bold leading-tight tracking-tight">
               National healthcare,{" "}
-              <span className="bg-gradient-to-r from-violet-300 via-fuchsia-300 to-cyan-300 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-emerald-300 via-teal-300 to-cyan-300 bg-clip-text text-transparent">
                 in real time.
               </span>
             </h1>
@@ -121,31 +121,31 @@ export function LandingPage() {
                 label="Prescriptions today"
                 value={stats.data?.prescriptionsToday ?? 0}
                 sub="Issued in last 24h"
-                accent="teal"
+                accent="emerald"
               />
               <KpiCounter
                 label="Referrals today"
                 value={stats.data?.referralsToday ?? 0}
                 sub="New appointments"
-                accent="violet"
+                accent="teal"
               />
               <KpiCounter
                 label="Active patients"
                 value={stats.data?.activePatients ?? 0}
                 sub="Across network"
-                accent="teal"
+                accent="emerald"
               />
               <KpiCounter
                 label="Active doctors"
                 value={stats.data?.activeDoctors ?? 0}
                 sub="On call & on duty"
-                accent="violet"
+                accent="teal"
               />
             </div>
 
             <Link
               href="/login"
-              className="mt-8 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-violet-500 to-cyan-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/30 transition-transform hover:scale-[1.02]"
+              className="mt-8 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition-transform hover:scale-[1.02]"
             >
               Enter the platform <ArrowRight className="h-4 w-4" />
             </Link>
@@ -158,7 +158,7 @@ export function LandingPage() {
             transition={{ duration: 0.6, ease: "easeOut", delay: 0.15 }}
             className="relative lg:col-span-8"
           >
-            <div className="relative h-[520px] overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-violet-500/5 via-transparent to-cyan-500/10">
+            <div className="relative h-[520px] overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-emerald-500/5 via-transparent to-teal-500/10">
               <div
                 aria-hidden
                 className="absolute inset-0 opacity-30"
@@ -172,7 +172,7 @@ export function LandingPage() {
 
               {/* HUD chip */}
               <div className="absolute left-5 top-5 flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-3 py-1.5 backdrop-blur">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-cyan-400" />
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
                 <span className="text-[10px] font-semibold uppercase tracking-widest text-white/80">
                   {nodes.length} hospitals online
                 </span>
@@ -200,7 +200,7 @@ export function LandingPage() {
             title="Appointments by hospital"
             subtitle="Last 30 days"
             orientation="horizontal"
-            gradient={["#7c3aed", "#06b6d4"]}
+            gradient={["#10b981", "#2dd4bf"]}
             data={(stats.data?.appointmentsByHospital ?? []).map((h) => ({
               label: h.hospital,
               sub: h.city,
@@ -211,7 +211,7 @@ export function LandingPage() {
             title="Prescriptions issued"
             subtitle="Last 7 days"
             orientation="vertical"
-            gradient={["#a855f7", "#22d3ee"]}
+            gradient={["#34d399", "#22d3ee"]}
             data={(stats.data?.prescriptionsByDay ?? []).map((d) => ({
               label: format(parseISO(d.day), "EEE"),
               sub: format(parseISO(d.day), "MMM d"),
@@ -234,7 +234,7 @@ export function LandingPage() {
             className="pointer-events-none absolute inset-0 -z-10 opacity-40 blur-3xl"
             style={{
               background:
-                "radial-gradient(ellipse 50% 60% at 50% 50%, rgba(124,58,237,0.25), transparent 70%)",
+                "radial-gradient(ellipse 50% 60% at 50% 50%, rgba(16,185,129,0.22), transparent 70%)",
             }}
           />
           {/* Opening quote mark */}
@@ -247,7 +247,7 @@ export function LandingPage() {
           <blockquote className="text-lg font-medium italic leading-relaxed text-white/75 sm:text-xl">
             With the world so set on tearing itself apart, it don&apos;t seem
             like such a bad thing to me to want to put a little bit of it{" "}
-            <span className="bg-gradient-to-r from-violet-300 via-fuchsia-300 to-cyan-300 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-emerald-300 via-teal-300 to-cyan-300 bg-clip-text text-transparent">
               back together.
             </span>
           </blockquote>
@@ -257,7 +257,7 @@ export function LandingPage() {
             className="mx-auto mt-6 h-px w-16"
             style={{
               background:
-                "linear-gradient(90deg, transparent, rgba(6,182,212,0.6), transparent)",
+                "linear-gradient(90deg, transparent, rgba(16,185,129,0.6), transparent)",
             }}
           />
         </motion.figure>

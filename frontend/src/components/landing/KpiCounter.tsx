@@ -7,7 +7,7 @@ interface KpiCounterProps {
   label: string;
   sub?: string;
   durationMs?: number;
-  accent?: "teal" | "violet";
+  accent?: "emerald" | "teal";
 }
 
 // easeOutCubic — fast start, gentle settle
@@ -18,7 +18,7 @@ export function KpiCounter({
   label,
   sub,
   durationMs = 1400,
-  accent = "teal",
+  accent = "emerald",
 }: KpiCounterProps) {
   const [display, setDisplay] = useState(0);
   const rafRef = useRef<number | null>(null);
@@ -41,9 +41,9 @@ export function KpiCounter({
   }, [value, durationMs]);
 
   const accentClass =
-    accent === "violet"
-      ? "from-violet-400 via-fuchsia-400 to-cyan-300"
-      : "from-cyan-300 via-teal-300 to-emerald-300";
+    accent === "teal"
+      ? "from-teal-300 via-emerald-300 to-cyan-300"
+      : "from-emerald-300 via-teal-300 to-cyan-300";
 
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-sm">
