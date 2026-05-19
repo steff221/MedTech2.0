@@ -1,12 +1,12 @@
 package com.medtech.domain.entity;
 
 import com.medtech.domain.vo.Gender;
-import com.medtech.infrastructure.persistence.PgEnumStringConverter;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.ColumnTransformer;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedDate;
@@ -45,19 +45,7 @@ public class Patient {
     @Column(columnDefinition = "gender_enum")
     private Gender gender;
 
-    /**
-     * Stored as the raw PG enum literal (e.g. {@code "O+"}); wrapped by
-     * {@link com.medtech.domain.vo.BloodType} in the service layer.
-     *
-     * <p>Routed through {@link PgEnumStringConverter} so reads come back as
-     * {@code String}. The previous {@code @JdbcTypeCode(SqlTypes.OTHER)}
-     * mapping wrote correctly but read back as {@code byte[]}, because pgjdbc
-     * returns a {@code PGobject} for unknown types and Hibernate's
-     * {@code StringJavaType} cannot wrap that. With the converter, both
-     * directions go through varchar and pgjdbc's implicit {@code varchar →
-     * blood_type_enum} cast handles writes.
-     */
-    @Convert(converter = PgEnumStringConverter.class)
+    @ColumnTransformer(write = "?::blood_type_enum")
     @Column(name = "blood_type", columnDefinition = "blood_type_enum")
     private String bloodType;
 

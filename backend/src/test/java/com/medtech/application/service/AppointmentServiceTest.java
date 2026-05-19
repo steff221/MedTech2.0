@@ -93,7 +93,7 @@ class AppointmentServiceTest {
         var existing = Entities.appointment(99L, patient, doctor,
                 LocalDate.of(2026, 6, 2), "09:00", AppointmentStatus.SCHEDULED);
         when(appointmentRepository.lockConflicting(eq(doctor.getId()),
-                eq(LocalDate.of(2026, 6, 2)), eq("09:00")))
+                eq(LocalDate.of(2026, 6, 2)), eq("09:00"), any()))
                 .thenReturn(new ArrayList<>(List.of(existing)));
 
         var req = new BookAppointmentRequest(
@@ -108,7 +108,7 @@ class AppointmentServiceTest {
 
     @Test
     void book_succeedsAndDefaultsDurationFromProps() {
-        when(appointmentRepository.lockConflicting(any(), any(), anyString()))
+        when(appointmentRepository.lockConflicting(any(), any(), anyString(), any()))
                 .thenReturn(new ArrayList<>());
 
         var req = new BookAppointmentRequest(
@@ -165,7 +165,7 @@ class AppointmentServiceTest {
         Appointment appt = Entities.appointment(60L, patient, doctor,
                 LocalDate.of(2026, 6, 5), "09:00", AppointmentStatus.SCHEDULED);
         when(appointmentRepository.findById(60L)).thenReturn(Optional.of(appt));
-        when(appointmentRepository.lockConflicting(any(), any(), anyString()))
+        when(appointmentRepository.lockConflicting(any(), any(), anyString(), any()))
                 .thenReturn(new ArrayList<>());
 
         Appointment moved = service.reschedule(60L, new RescheduleAppointmentRequest(

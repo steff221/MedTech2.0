@@ -28,6 +28,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 /**
  * Appointment lifecycle: booking, rescheduling, cancellation, completion.
@@ -70,7 +71,8 @@ public class AppointmentService {
         // Pessimistic lock on existing same-slot rows to prevent the classic
         // double-booking race between two concurrent transactions.
         var conflicts = appointmentRepository.lockConflicting(
-                doctor.getId(), req.appointmentDate(), req.appointmentTime());
+                doctor.getId(), req.appointmentDate(), req.appointmentTime(),
+                List.of(AppointmentStatus.SCHEDULED, AppointmentStatus.RESCHEDULED));
         if (!conflicts.isEmpty()) {
             throw new ConflictException(ErrorCode.APPOINTMENT_CONFLICT,
                     "Doctor already has an appointment at " + req.appointmentDate()
@@ -103,7 +105,8 @@ public class AppointmentService {
         rejectIfTerminal(appt);
 
         var conflicts = appointmentRepository.lockConflicting(
-                appt.getDoctor().getId(), req.newDate(), req.newTime());
+                appt.getDoctor().getId(), req.newDate(), req.newTime(),
+                List.of(AppointmentStatus.SCHEDULED, AppointmentStatus.RESCHEDULED));
         // Exclude self from conflict detection (e.g. moving inside same slot is a no-op but allowed)
         conflicts.removeIf(c -> c.getId().equals(appt.getId()));
         if (!conflicts.isEmpty()) {
