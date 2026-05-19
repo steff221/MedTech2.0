@@ -13,7 +13,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(124,58,237,0.25), transparent 60%), radial-gradient(ellipse 60% 40% at 80% 100%, rgba(6,182,212,0.18), transparent 60%)",
+            "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(16,185,129,0.22), transparent 60%), radial-gradient(ellipse 60% 40% at 80% 100%, rgba(20,184,166,0.18), transparent 60%)",
         }}
       />
       <div
@@ -21,7 +21,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         className="pointer-events-none absolute inset-x-0 top-0 h-px"
         style={{
           background:
-            "linear-gradient(90deg, transparent, rgba(124,58,237,0.6), rgba(6,182,212,0.8), rgba(124,58,237,0.6), transparent)",
+            "linear-gradient(90deg, transparent, rgba(16,185,129,0.6), rgba(45,212,191,0.8), rgba(16,185,129,0.6), transparent)",
         }}
       />
       <div
@@ -37,7 +37,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       {/* Top brand bar */}
       <div className="relative z-10 mx-auto flex max-w-7xl items-center justify-between px-6 pt-6">
         <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-cyan-500">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500">
             <Activity className="h-4 w-4 text-white" />
           </div>
           <span className="text-base font-bold tracking-tight">MedTech</span>
@@ -59,7 +59,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur-xl shadow-[0_0_60px_-15px_rgba(6,182,212,0.25)]"
+          className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 backdrop-blur-xl shadow-[0_0_60px_-15px_rgba(16,185,129,0.25)]"
         >
           {children}
         </motion.div>
