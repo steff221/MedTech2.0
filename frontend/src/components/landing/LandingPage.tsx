@@ -220,6 +220,48 @@ export function LandingPage() {
           />
         </motion.div>
 
+        {/* Personal quote — the reason this exists. */}
+        <motion.figure
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.4 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="relative mx-auto my-20 max-w-3xl px-6 text-center"
+        >
+          {/* Soft halo behind the quote */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 -z-10 opacity-40 blur-3xl"
+            style={{
+              background:
+                "radial-gradient(ellipse 50% 60% at 50% 50%, rgba(124,58,237,0.25), transparent 70%)",
+            }}
+          />
+          {/* Opening quote mark */}
+          <div
+            aria-hidden
+            className="mx-auto mb-4 font-serif text-6xl leading-none text-white/15"
+          >
+            “
+          </div>
+          <blockquote className="text-lg font-medium italic leading-relaxed text-white/75 sm:text-xl">
+            With the world so set on tearing itself apart, it don&apos;t seem
+            like such a bad thing to me to want to put a little bit of it{" "}
+            <span className="bg-gradient-to-r from-violet-300 via-fuchsia-300 to-cyan-300 bg-clip-text text-transparent">
+              back together.
+            </span>
+          </blockquote>
+          {/* Hairline divider */}
+          <div
+            aria-hidden
+            className="mx-auto mt-6 h-px w-16"
+            style={{
+              background:
+                "linear-gradient(90deg, transparent, rgba(6,182,212,0.6), transparent)",
+            }}
+          />
+        </motion.figure>
+
         <footer className="mb-8 mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-white/5 pt-5 text-[10px] uppercase tracking-widest text-white/30">
           <span>© MedTech 2026</span>
           <span>v2.0 · Build {format(today, "yyyy.MM.dd")}</span>

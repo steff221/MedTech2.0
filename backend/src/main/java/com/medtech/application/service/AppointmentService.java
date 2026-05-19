@@ -1,5 +1,6 @@
 package com.medtech.application.service;
 
+
 import com.medtech.application.dto.request.BookAppointmentRequest;
 import com.medtech.application.dto.request.CancelAppointmentRequest;
 import com.medtech.application.dto.request.RescheduleAppointmentRequest;
