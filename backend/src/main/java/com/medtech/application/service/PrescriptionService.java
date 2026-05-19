@@ -62,6 +62,9 @@ public class PrescriptionService {
         if (req.medicalRecordId() != null) {
             medicalRecord = medicalRecordRepository.findById(req.medicalRecordId())
                     .orElseThrow(() -> ResourceNotFoundException.of("MedicalRecord", req.medicalRecordId()));
+            if (!medicalRecord.getPatient().getId().equals(patient.getId())) {
+                throw new ValidationException("Medical record does not belong to the specified patient");
+            }
         }
         if (req.endDate() != null && req.endDate().isBefore(req.startDate())) {
             throw new ValidationException("Prescription end date must be on or after start date");
@@ -90,15 +93,14 @@ public class PrescriptionService {
     }
 
     @Transactional
-    public Prescription refill(Long prescriptionId) {
+    public Prescription refill(Long prescriptionId, Long callerUserId) {
         Prescription rx = getById(prescriptionId);
+        assertCallerCanRefill(rx, callerUserId);
 
         if (rx.getStatus() != PrescriptionStatus.ACTIVE) {
             throw new ConflictException("Prescription is not ACTIVE; cannot refill");
         }
         if (rx.getEndDate() != null && rx.getEndDate().isBefore(LocalDate.now(clock))) {
-            // Auto-expire and reject
-            rx.setStatus(PrescriptionStatus.COMPLETED);
             throw new ConflictException(ErrorCode.PRESCRIPTION_EXPIRED,
                     "Prescription expired on " + rx.getEndDate());
         }
@@ -113,13 +115,36 @@ public class PrescriptionService {
     }
 
     @Transactional
-    public Prescription cancel(Long prescriptionId) {
+    public Prescription cancel(Long prescriptionId, Long callerUserId) {
         Prescription rx = getById(prescriptionId);
+        assertCallerIsPrescribingDoctor(rx, callerUserId);
         if (rx.getStatus() == PrescriptionStatus.CANCELLED) {
             return rx;
         }
         rx.setStatus(PrescriptionStatus.CANCELLED);
         return rx;
+    }
+
+    /** Refill: only the prescribing doctor or the patient on the prescription. */
+    private void assertCallerCanRefill(Prescription rx, Long callerUserId) {
+        if (callerUserId == null) {
+            throw new AuthorizationException("Authentication required");
+        }
+        Long rxDoctorUserId = rx.getDoctor().getUser().getId();
+        Long rxPatientUserId = rx.getPatient().getUser().getId();
+        if (callerUserId.equals(rxDoctorUserId) || callerUserId.equals(rxPatientUserId)) {
+            return;
+        }
+        throw new AuthorizationException("Only the prescribing doctor or the patient may refill this prescription");
+    }
+
+    private void assertCallerIsPrescribingDoctor(Prescription rx, Long callerUserId) {
+        if (callerUserId == null) {
+            throw new AuthorizationException("Authentication required");
+        }
+        if (!callerUserId.equals(rx.getDoctor().getUser().getId())) {
+            throw new AuthorizationException("Only the prescribing doctor may cancel this prescription");
+        }
     }
 
     public Prescription getById(Long id) {
