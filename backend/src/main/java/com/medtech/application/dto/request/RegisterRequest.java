@@ -2,6 +2,7 @@ package com.medtech.application.dto.request;
 
 import com.medtech.constant.ValidationMessages;
 import com.medtech.domain.vo.UserRole;
+import com.medtech.infrastructure.validation.ValidPhone;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -30,6 +31,7 @@ public record RegisterRequest(
         String lastName,
 
         @Size(max = 20)
+        @ValidPhone
         String phoneNumber,
 
         @NotNull(message = ValidationMessages.ROLE_REQUIRED)

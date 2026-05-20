@@ -3,6 +3,7 @@ package com.medtech.infrastructure.config;
 import com.medtech.infrastructure.security.JwtAuthEntryPoint;
 import com.medtech.infrastructure.security.JwtAuthenticationFilter;
 import com.medtech.infrastructure.security.JwtTokenProvider;
+import com.medtech.infrastructure.security.RateLimitFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -44,6 +45,11 @@ public class SecurityConfig {
      * never instantiate this filter or its {@link JwtTokenProvider} dependency.
      */
     @Bean
+    public RateLimitFilter rateLimitFilter() {
+        return new RateLimitFilter();
+    }
+
+    @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter(JwtTokenProvider tokenProvider) {
         return new JwtAuthenticationFilter(tokenProvider);
     }
@@ -55,7 +61,8 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                                   JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+                                                   JwtAuthenticationFilter jwtAuthenticationFilter,
+                                                   RateLimitFilter rateLimitFilter) throws Exception {
         http
             .cors(c -> c.configurationSource(corsConfigurationSource))
             .csrf(csrf -> csrf.disable())
@@ -77,6 +84,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/hospitals/**", "/api/doctors", "/api/doctors/{id:[0-9]+}", "/api/stats/**").permitAll()
                 .anyRequest().authenticated()
             )
+            .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -92,6 +100,14 @@ public class SecurityConfig {
     public FilterRegistrationBean<JwtAuthenticationFilter> jwtAuthFilterRegistration(
             JwtAuthenticationFilter filter) {
         FilterRegistrationBean<JwtAuthenticationFilter> reg = new FilterRegistrationBean<>(filter);
+        reg.setEnabled(false);
+        return reg;
+    }
+
+    @Bean
+    public FilterRegistrationBean<RateLimitFilter> rateLimitFilterRegistration(
+            RateLimitFilter filter) {
+        FilterRegistrationBean<RateLimitFilter> reg = new FilterRegistrationBean<>(filter);
         reg.setEnabled(false);
         return reg;
     }

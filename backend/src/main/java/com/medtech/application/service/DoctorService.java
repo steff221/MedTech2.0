@@ -15,10 +15,15 @@ import com.medtech.infrastructure.exception.ResourceNotFoundException;
 import com.medtech.infrastructure.exception.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import static com.medtech.infrastructure.config.CacheConfig.DOCTOR_BY_ID;
+import static com.medtech.infrastructure.config.CacheConfig.DOCTORS_LIST;
 
 @Slf4j
 @Service
@@ -67,6 +72,7 @@ public class DoctorService {
         return saved;
     }
 
+    @Cacheable(value = DOCTOR_BY_ID, key = "#id")
     public Doctor getById(Long id) {
         return doctorRepository.findById(id)
                 .orElseThrow(() -> ResourceNotFoundException.of("Doctor", id));
@@ -77,11 +83,13 @@ public class DoctorService {
                 .orElseThrow(() -> ResourceNotFoundException.of("Doctor (by userId)", userId));
     }
 
+    @Cacheable(value = DOCTORS_LIST, key = "{#specialization, #hospitalId, #city, #pageable.pageNumber, #pageable.pageSize}")
     public Page<Doctor> search(String specialization, Long hospitalId, String city, Pageable pageable) {
         return doctorRepository.search(specialization, hospitalId, city, UserStatus.ACTIVE, pageable);
     }
 
     @Transactional
+    @CacheEvict(value = {DOCTORS_LIST, DOCTOR_BY_ID}, allEntries = true)
     public Doctor updateForUser(Long userId, UpdateDoctorRequest req) {
         Doctor doctor = doctorRepository.findByUserId(userId)
                 .orElseThrow(() -> ResourceNotFoundException.of("Doctor (by userId)", userId));
