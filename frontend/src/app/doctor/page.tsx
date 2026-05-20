@@ -14,69 +14,52 @@ import {
 import Link from "next/link";
 import { PageBanner } from "@/components/layout/PageBanner";
 import { useDoctorProfile } from "@/hooks/useDoctor";
-
-interface Tile {
-  label: string;
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-  iconBg: string;
-  description?: string;
-  featured?: boolean;
-}
-
-const PRIMARY: Tile[] = [
-  {
-    label: "Календар",
-    href: "/doctor/schedule",
-    icon: Calendar,
-    iconBg: "bg-emerald-500",
-    description: "Неделен распоред",
-    featured: true,
-  },
-  {
-    label: "Прием на пациенти",
-    href: "/doctor/patients",
-    icon: Users,
-    iconBg: "bg-violet-500",
-    description: "Активни пациенти",
-  },
-  {
-    label: "Издадени упати",
-    href: "/doctor/referrals",
-    icon: ClipboardList,
-    iconBg: "bg-sky-500",
-    description: "Историја и нови упати",
-  },
-  {
-    label: "Документи",
-    href: "/doctor/medical-journal",
-    icon: FileText,
-    iconBg: "bg-amber-500",
-    description: "Медицински дневник",
-  },
-];
-
-const SECONDARY: Tile[] = [
-  {
-    label: "Јавен портал",
-    href: "/doctors",
-    icon: Globe,
-    iconBg: "bg-slate-400",
-  },
-  {
-    label: "Е-здравство",
-    href: "/doctor/mkb10",
-    icon: ShieldPlus,
-    iconBg: "bg-emerald-600",
-  },
-];
+import { useT } from "@/hooks/useT";
 
 export default function DoctorHomePage() {
   const { data: doctor } = useDoctorProfile();
+  const t = useT();
+
+  const PRIMARY = [
+    {
+      label:    t.doctorHome.calendarLabel,
+      href:     "/doctor/schedule",
+      icon:     Calendar,
+      iconBg:   "bg-emerald-500",
+      description: t.doctorHome.calendarDesc,
+      featured: true,
+    },
+    {
+      label:    t.doctorHome.patientsLabel,
+      href:     "/doctor/patients",
+      icon:     Users,
+      iconBg:   "bg-violet-500",
+      description: t.doctorHome.patientsDesc,
+    },
+    {
+      label:    t.doctorHome.referralsLabel,
+      href:     "/doctor/referrals",
+      icon:     ClipboardList,
+      iconBg:   "bg-sky-500",
+      description: t.doctorHome.referralsDesc,
+    },
+    {
+      label:    t.doctorHome.documentsLabel,
+      href:     "/doctor/medical-journal",
+      icon:     FileText,
+      iconBg:   "bg-amber-500",
+      description: t.doctorHome.documentsDesc,
+    },
+  ];
+
+  const SECONDARY = [
+    { label: t.doctorHome.publicPortal, href: "/doctors",     icon: Globe,      iconBg: "bg-slate-400" },
+    { label: t.doctorHome.eHealth,      href: "/doctor/mkb10", icon: ShieldPlus, iconBg: "bg-emerald-600" },
+  ];
 
   return (
     <>
-      <PageBanner title="Почетна" />
+      <PageBanner title={t.doctorNav.home} />
 
       <div className="mx-auto max-w-7xl px-6 py-10">
         {/* Greeting */}
@@ -90,8 +73,11 @@ export default function DoctorHomePage() {
             <HeartPulse className="h-6 w-6" />
           </div>
           <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-emerald-600">
+              {t.doctorHome.welcomeLabel}
+            </p>
             <h2 className="text-xl font-bold text-slate-900">
-              Добредојде, Dr. {doctor?.firstName ?? ""} {doctor?.lastName ?? ""}
+              Dr. {doctor?.firstName ?? ""} {doctor?.lastName ?? ""}
             </h2>
             {doctor && (
               <p className="text-sm text-slate-500">
@@ -102,7 +88,7 @@ export default function DoctorHomePage() {
           </div>
         </motion.section>
 
-        {/* Primary tiles — Calendar is featured (spans 2 cols on md+) */}
+        {/* Primary tiles */}
         <motion.div
           variants={{ visible: { transition: { staggerChildren: 0.07 } } }}
           initial="hidden"
@@ -117,7 +103,7 @@ export default function DoctorHomePage() {
         {/* Secondary tiles */}
         <div className="mt-10">
           <p className="mb-3 text-sm font-medium text-slate-400">
-            Поврзани сервиси
+            {t.doctorHome.relatedServices}
           </p>
           <motion.div
             variants={{ visible: { transition: { staggerChildren: 0.07, delayChildren: 0.25 } } }}
@@ -135,9 +121,18 @@ export default function DoctorHomePage() {
   );
 }
 
+interface Tile {
+  label: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  iconBg: string;
+  description?: string;
+  featured?: boolean;
+}
+
 function TileLink({ tile, small }: { tile: Tile; small?: boolean }) {
   const item = {
-    hidden: { opacity: 0, y: 14 },
+    hidden:  { opacity: 0, y: 14 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] } },
   };
 
@@ -152,12 +147,13 @@ function TileLink({ tile, small }: { tile: Tile; small?: boolean }) {
             small ? "p-4" : tile.featured ? "p-7" : "p-6"
           }`}
         >
+          {/* Fixed icon sizes — h-13 is not a valid Tailwind class, use h-12/h-14 */}
           <div
             className={`mb-4 inline-flex items-center justify-center rounded-xl ${tile.iconBg} text-white ${
-              tile.featured ? "h-13 w-13" : small ? "h-8 w-8" : "h-11 w-11"
+              tile.featured ? "h-14 w-14" : small ? "h-8 w-8" : "h-11 w-11"
             }`}
           >
-            <tile.icon className={tile.featured ? "h-6 w-6" : small ? "h-4 w-4" : "h-5 w-5"} />
+            <tile.icon className={tile.featured ? "h-7 w-7" : small ? "h-4 w-4" : "h-5 w-5"} />
           </div>
           <p className={`font-semibold text-slate-900 ${tile.featured ? "text-lg" : small ? "text-sm" : "text-base"}`}>
             {tile.label}

@@ -11,22 +11,24 @@ import { EmptyState } from "@/components/common/EmptyState";
 import { Skeleton } from "@/components/common/Skeleton";
 import { cn } from "@/utils/cn";
 import { usePatientProfile } from "@/hooks/usePatient";
+import { useT } from "@/hooks/useT";
 import { patientService } from "@/services/patient.service";
 import type { AppointmentResponse, AppointmentStatus } from "@/types/api";
 
 type Filter = "ALL" | "SCHEDULED" | "COMPLETED" | "CANCELLED";
 
-const FILTERS: { value: Filter; label: string }[] = [
-  { value: "ALL",       label: "Сите" },
-  { value: "SCHEDULED", label: "Претстојни" },
-  { value: "COMPLETED", label: "Завршени" },
-  { value: "CANCELLED", label: "Откажани" },
-];
-
 export default function AppointmentsPage() {
   const profile = usePatientProfile();
+  const t = useT();
   const [filter, setFilter] = useState<Filter>("ALL");
   const [bookOpen, setBookOpen] = useState(false);
+
+  const FILTERS: { value: Filter; label: string }[] = [
+    { value: "ALL",       label: t.appointments.all },
+    { value: "SCHEDULED", label: t.appointments.upcoming },
+    { value: "COMPLETED", label: t.appointments.completed },
+    { value: "CANCELLED", label: t.appointments.cancelled },
+  ];
 
   const appointmentsQuery = useQuery({
     queryKey: ["appointments", profile.data?.id],
@@ -42,12 +44,12 @@ export default function AppointmentsPage() {
     <div className="mx-auto max-w-5xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Прегледи</h1>
-          <p className="text-sm text-slate-500">Закажани посети, историја и резервации.</p>
+          <h1 className="text-2xl font-bold text-slate-900">{t.appointments.title}</h1>
+          <p className="text-sm text-slate-500">{t.appointments.subtitle}</p>
         </div>
         <Button onClick={() => setBookOpen(true)} disabled={!profile.data}>
           <Plus className="h-4 w-4" />
-          Нов преглед
+          {t.appointments.newBtn}
         </Button>
       </div>
 
@@ -85,24 +87,21 @@ export default function AppointmentsPage() {
         </div>
       ) : !profile.data ? (
         <EmptyState
-          title="Профилот не е поставен"
-          description="Пополни го профилот од почетната страна пред да закажеш преглед."
+          title={t.appointments.noProfileTitle}
+          description={t.appointments.noProfileDesc}
         />
       ) : filtered.length === 0 ? (
         <EmptyState
-          title="Нема прегледи"
+          title={t.appointments.noApptsTitle}
           description={
-            filter === "ALL"
-              ? "Сè уште немаш закажано ниеден преглед."
-              : filter === "SCHEDULED"
-              ? "Нема претстојни прегледи."
-              : filter === "COMPLETED"
-              ? "Нема завршени прегледи."
-              : "Нема откажани прегледи."
+            filter === "ALL"       ? t.appointments.noAll :
+            filter === "SCHEDULED" ? t.appointments.noUpcoming :
+            filter === "COMPLETED" ? t.appointments.noCompleted :
+            t.appointments.noCancelled
           }
           action={
             filter === "ALL" ? (
-              <Button onClick={() => setBookOpen(true)}>Закажи преглед</Button>
+              <Button onClick={() => setBookOpen(true)}>{t.appointments.newBtn}</Button>
             ) : undefined
           }
         />
