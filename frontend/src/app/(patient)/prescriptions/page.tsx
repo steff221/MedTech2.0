@@ -48,7 +48,7 @@ export default function PrescriptionsPage() {
     enabled: !!profile.data?.id,
   });
 
-  const all = rx.data?.content ?? [];
+  const all = useMemo(() => rx.data?.content ?? [], [rx.data]);
 
   const filtered = useMemo(() => {
     if (filter === "ALL") return all;
