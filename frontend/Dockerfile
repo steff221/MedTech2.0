@@ -18,6 +18,8 @@ FROM node:20-alpine AS build
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# Guarantee public/ exists even if the directory was empty in the repo
+RUN mkdir -p ./public
 
 # NEXT_PUBLIC_* vars are baked into the bundle at build time — the value
 # matters here, not at runtime.
