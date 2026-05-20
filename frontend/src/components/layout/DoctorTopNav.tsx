@@ -19,34 +19,37 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type ComponentType } from "react";
+import { LanguageToggle } from "@/components/common/LanguageToggle";
 import { useAuth } from "@/hooks/useAuth";
 import { useDoctorProfile } from "@/hooks/useDoctor";
+import { useT } from "@/hooks/useT";
 import { cn } from "@/utils/cn";
 import { initials } from "@/utils/format";
 
 type NavItem = {
-  label: string;
+  labelKey: keyof ReturnType<typeof useT>["doctorNav"];
   href: string;
   icon: ComponentType<{ className?: string }>;
 };
 
 const NAV: NavItem[] = [
-  { label: "Упати",                href: "/doctor/referrals",          icon: ClipboardList  },
-  { label: "Календар",             href: "/doctor/schedule",            icon: Calendar       },
-  { label: "Пациенти",             href: "/doctor/patients",            icon: Users          },
-  { label: "Операции",             href: "/doctor/operations",          icon: Scissors       },
-  { label: "Медицински дневник",   href: "/doctor/medical-journal",     icon: Notebook       },
-  { label: "Индивидуални пријави", href: "/doctor/individual-reports",  icon: FileSpreadsheet},
-  { label: "МКБ10 Дијагноза",     href: "/doctor/mkb10",               icon: ShieldPlus     },
-  { label: "Упатства",             href: "/doctor/guidelines",          icon: FileText       },
-  { label: "Поставки",             href: "/doctor/settings",            icon: Wrench         },
-  { label: "COVID19 пациенти",     href: "/doctor/patients?tag=covid",  icon: Shield         },
+  { labelKey: "referrals",      href: "/doctor/referrals",          icon: ClipboardList   },
+  { labelKey: "schedule",       href: "/doctor/schedule",            icon: Calendar        },
+  { labelKey: "patients",       href: "/doctor/patients",            icon: Users           },
+  { labelKey: "operations",     href: "/doctor/operations",          icon: Scissors        },
+  { labelKey: "medicalJournal", href: "/doctor/medical-journal",     icon: Notebook        },
+  { labelKey: "reports",        href: "/doctor/individual-reports",  icon: FileSpreadsheet },
+  { labelKey: "mkb10",          href: "/doctor/mkb10",               icon: ShieldPlus      },
+  { labelKey: "guidelines",     href: "/doctor/guidelines",          icon: FileText        },
+  { labelKey: "settings",       href: "/doctor/settings",            icon: Wrench          },
+  { labelKey: "covid",          href: "/doctor/patients?tag=covid",  icon: Shield          },
 ];
 
 export function DoctorTopNav() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const { data: doctor } = useDoctorProfile();
+  const t = useT();
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white shadow-sm">
@@ -57,10 +60,12 @@ export function DoctorTopNav() {
             <Activity className="h-3.5 w-3.5" />
           </div>
           <span className="text-sm font-bold text-slate-900">MedTech</span>
-          <span className="text-xs font-medium text-slate-400">· Лекарски портал</span>
+          <span className="text-xs font-medium text-slate-400">· {t.doctorNav.portal}</span>
         </Link>
 
         <div className="flex items-center gap-3">
+          <LanguageToggle size="sm" />
+
           {user && (
             <>
               <div className="hidden items-center gap-2 sm:flex">
@@ -81,7 +86,7 @@ export function DoctorTopNav() {
                 onClick={logout}
                 className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
               >
-                <LogOut className="h-3.5 w-3.5" /> Одјава
+                <LogOut className="h-3.5 w-3.5" /> {t.common.signOut}
               </button>
             </>
           )}
@@ -94,23 +99,21 @@ export function DoctorTopNav() {
           href="/doctor"
           className={cn(
             "flex h-12 items-center px-3 text-sm font-medium transition-colors",
-            pathname === "/doctor"
-              ? "text-emerald-700"
-              : "text-slate-600 hover:text-slate-900",
+            pathname === "/doctor" ? "text-emerald-700" : "text-slate-600 hover:text-slate-900",
           )}
-          aria-label="Почетна"
+          aria-label={t.doctorNav.home}
         >
           <Stethoscope className="h-4 w-4" />
         </Link>
         {NAV.map((item) => (
-          <NavEntry key={item.label} item={item} pathname={pathname ?? ""} />
+          <NavEntry key={item.labelKey} item={item} pathname={pathname ?? ""} label={t.doctorNav[item.labelKey]} />
         ))}
       </nav>
     </header>
   );
 }
 
-function NavEntry({ item, pathname }: { item: NavItem; pathname: string }) {
+function NavEntry({ item, pathname, label }: { item: NavItem; pathname: string; label: string }) {
   const isActive = pathname.startsWith(item.href.split("?")[0]);
 
   return (
@@ -128,7 +131,7 @@ function NavEntry({ item, pathname }: { item: NavItem; pathname: string }) {
           transition={{ type: "spring", stiffness: 380, damping: 30 }}
         />
       )}
-      {item.label}
+      {label}
     </Link>
   );
 }

@@ -13,11 +13,13 @@ import { EmptyState } from "@/components/common/EmptyState";
 import { Skeleton } from "@/components/common/Skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { usePatientProfile } from "@/hooks/usePatient";
+import { useT } from "@/hooks/useT";
 import { patientService } from "@/services/patient.service";
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const profile = usePatientProfile();
+  const t = useT();
   const [bookOpen, setBookOpen] = useState(false);
 
   const appointments = useQuery({
@@ -36,12 +38,10 @@ export default function DashboardPage() {
         transition={{ duration: 0.4 }}
       >
         <p className="text-sm font-medium text-brand-600">
-          {greet()}, {user?.firstName ?? ""}
+          {greet(t)}, {user?.firstName ?? ""}
         </p>
-        <h1 className="mt-1 text-3xl font-bold text-slate-900">Твоето здравје, на едно место.</h1>
-        <p className="mt-1 text-slate-500">
-          Закажи прегледи, следи рецепти и пристапи до медицинската историја.
-        </p>
+        <h1 className="mt-1 text-3xl font-bold text-slate-900">{t.dashboard.title}</h1>
+        <p className="mt-1 text-slate-500">{t.dashboard.subtitle}</p>
       </motion.div>
 
       {profile.isLoading ? (
@@ -55,14 +55,14 @@ export default function DashboardPage() {
           <section>
             <div className="mb-4 flex items-end justify-between">
               <div>
-                <h2 className="text-xl font-bold text-slate-900">Претстојни прегледи</h2>
+                <h2 className="text-xl font-bold text-slate-900">{t.dashboard.upcomingTitle}</h2>
                 <p className="text-sm text-slate-500">
-                  {upcoming.length} закажани
+                  {upcoming.length} {t.dashboard.upcomingCount}
                 </p>
               </div>
               <Button onClick={() => setBookOpen(true)}>
                 <Plus className="h-4 w-4" />
-                Закажи преглед
+                {t.dashboard.bookBtn}
               </Button>
             </div>
 
@@ -74,9 +74,9 @@ export default function DashboardPage() {
               </div>
             ) : upcoming.length === 0 ? (
               <EmptyState
-                title="Нема закажани прегледи"
-                description="Закажи го твојот прв преглед."
-                action={<Button onClick={() => setBookOpen(true)}>Закажи преглед</Button>}
+                title={t.dashboard.noApptTitle}
+                description={t.dashboard.noApptDesc}
+                action={<Button onClick={() => setBookOpen(true)}>{t.dashboard.bookBtn}</Button>}
               />
             ) : (
               <motion.div
@@ -113,9 +113,9 @@ export default function DashboardPage() {
   );
 }
 
-function greet(): string {
+function greet(t: ReturnType<typeof import("@/hooks/useT").useT>): string {
   const h = new Date().getHours();
-  if (h < 12) return "Добро утро";
-  if (h < 18) return "Добар ден";
-  return "Добра вечер";
+  if (h < 12) return t.dashboard.greetMorning;
+  if (h < 18) return t.dashboard.greetAfternoon;
+  return t.dashboard.greetEvening;
 }

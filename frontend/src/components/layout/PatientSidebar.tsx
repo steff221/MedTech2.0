@@ -1,22 +1,25 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Activity, Calendar, FileText, LayoutDashboard, Pill, Stethoscope, User } from "lucide-react";
+import { Activity, Bell, Calendar, FileText, LayoutDashboard, Pill, Stethoscope, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useT } from "@/hooks/useT";
 import { cn } from "@/utils/cn";
-
-const nav = [
-  { href: "/dashboard",      label: "Dashboard",      icon: LayoutDashboard },
-  { href: "/appointments",   label: "Appointments",   icon: Calendar },
-  { href: "/health-records", label: "Health records", icon: FileText },
-  { href: "/prescriptions",  label: "Prescriptions",  icon: Pill },
-  { href: "/doctors",        label: "Find a doctor",  icon: Stethoscope },
-  { href: "/profile",        label: "Profile",        icon: User },
-];
 
 export function PatientSidebar() {
   const pathname = usePathname();
+  const t = useT();
+
+  const nav = [
+    { href: "/dashboard",      label: t.nav.dashboard,     icon: LayoutDashboard },
+    { href: "/appointments",   label: t.nav.appointments,  icon: Calendar },
+    { href: "/health-records", label: t.nav.healthRecords, icon: FileText },
+    { href: "/prescriptions",  label: t.nav.prescriptions, icon: Pill },
+    { href: "/doctors",        label: t.nav.findDoctor,    icon: Stethoscope },
+    { href: "/notifications",  label: t.nav.notifications, icon: Bell },
+    { href: "/profile",        label: t.nav.profile,       icon: User },
+  ];
 
   return (
     <aside className="hidden w-64 shrink-0 border-r border-slate-200 bg-white lg:flex lg:flex-col">

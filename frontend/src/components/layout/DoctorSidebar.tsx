@@ -5,22 +5,26 @@ import {
   Activity,
   CalendarDays,
   LayoutDashboard,
+  Pill,
   Settings,
   Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useT } from "@/hooks/useT";
 import { cn } from "@/utils/cn";
-
-const nav = [
-  { href: "/doctor/schedule", label: "Schedule", icon: CalendarDays },
-  { href: "/doctor/patients", label: "Patients", icon: Users },
-  { href: "/doctor/overview", label: "Overview", icon: LayoutDashboard },
-  { href: "/doctor/settings", label: "Settings", icon: Settings },
-];
 
 export function DoctorSidebar() {
   const pathname = usePathname();
+  const t = useT();
+
+  const nav = [
+    { href: "/doctor/schedule",      label: t.doctorNav.schedule,      icon: CalendarDays },
+    { href: "/doctor/patients",      label: t.doctorNav.patients,      icon: Users },
+    { href: "/doctor/prescriptions", label: t.doctorNav.prescriptions, icon: Pill },
+    { href: "/doctor/overview",      label: t.doctorNav.overview,      icon: LayoutDashboard },
+    { href: "/doctor/settings",      label: t.doctorNav.settings,      icon: Settings },
+  ];
 
   return (
     <aside className="hidden w-64 shrink-0 border-r border-slate-200 bg-white lg:flex lg:flex-col">
@@ -59,7 +63,6 @@ export function DoctorSidebar() {
           );
         })}
       </nav>
-
     </aside>
   );
 }

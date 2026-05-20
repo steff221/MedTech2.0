@@ -13,6 +13,26 @@ concurrency:
 
 jobs:
   # ============================================================================
+  # LINT — fast feedback before heavier jobs run
+  # ============================================================================
+  lint:
+    name: Lint · frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint -- --max-warnings 0
+
+  # ============================================================================
   # CI
   # ============================================================================
   backend:
@@ -37,6 +57,8 @@ jobs:
       # `services.postgres` block and SPRING_DATASOURCE_* env vars here.
       - name: Run tests
         run: mvn -B test --no-transfer-progress
+        env:
+          MEDTECH_SECURITY_JWT_SECRET: ${{ secrets.JWT_SECRET || 'ci-test-only-secret-not-for-production-use' }}
 
       - name: Upload surefire reports on failure
         if: failure()
@@ -49,6 +71,7 @@ jobs:
     name: Frontend · type-check + build
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    needs: [lint]
     defaults:
       run:
         working-directory: frontend
@@ -71,15 +94,11 @@ jobs:
       - name: Next.js build
         run: npm run build
         env:
-          # Production build doesn't need a live backend, but Next still
-          # evaluates this var. Point at the dev default.
           NEXT_PUBLIC_API_URL: http://localhost:8080/api
 
   # ============================================================================
-  # CD — only runs on push to main, only after CI is green.
+  # CD — staging auto-deploy on merge to main, production requires manual approval.
   #   Builds + pushes both Docker images to GitHub Container Registry.
-  #   No external services or secrets needed — uses the auto-provided
-  #   GITHUB_TOKEN with package-write permission.
   # ============================================================================
   publish:
     name: Publish · ${{ matrix.service }} image to GHCR
@@ -107,8 +126,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # GHCR requires the image path to be lowercase. Owner names already are,
-      # but be defensive in case of forks.
       - name: Compute image name
         id: img
         run: echo "name=ghcr.io/$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')/medtech-${{ matrix.service }}" >> $GITHUB_OUTPUT
@@ -134,8 +151,6 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # Frontend bakes NEXT_PUBLIC_API_URL at build time; default to the
-          # local docker-compose value so the image runs out-of-the-box.
           build-args: |
             NEXT_PUBLIC_API_URL=http://localhost:8080/api
           cache-from: type=gha,scope=${{ matrix.service }}
@@ -154,3 +169,49 @@ jobs:
           echo '```bash' >> $GITHUB_STEP_SUMMARY
           echo "docker pull ${{ steps.img.outputs.name }}:latest" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
+
+  # ============================================================================
+  # DEPLOY-STAGING — runs automatically after publish succeeds on main.
+  #   In a real environment this would SSH into the staging server and run
+  #   `docker compose pull && docker compose up -d`. The step is structured
+  #   so replacing "echo" with a real deploy command needs one-line change.
+  # ============================================================================
+  deploy-staging:
+    name: Deploy · staging
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [publish]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: staging
+      url: https://staging.medtech.mk
+    steps:
+      - name: Trigger staging deploy
+        run: |
+          echo "Deploying to staging..."
+          echo "Image: ghcr.io/$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')/medtech-backend:sha-$(echo ${{ github.sha }} | cut -c1-7)"
+          # Replace the echo commands below with your actual deploy steps, e.g.:
+          # ssh deploy@staging.medtech.mk "cd /opt/medtech && docker compose pull && docker compose up -d"
+          echo "Staging deploy complete."
+
+  # ============================================================================
+  # DEPLOY-PRODUCTION — requires manual approval via GitHub Environments.
+  #   Configure a 'production' environment in Settings > Environments with
+  #   required reviewers to enforce the manual gate.
+  # ============================================================================
+  deploy-production:
+    name: Deploy · production
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [deploy-staging]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: production
+      url: https://medtech.mk
+    steps:
+      - name: Trigger production deploy
+        run: |
+          echo "Deploying to production (manual approval required via GitHub Environment gate)..."
+          echo "Image: ghcr.io/$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')/medtech-backend:sha-$(echo ${{ github.sha }} | cut -c1-7)"
+          # Replace with: ssh deploy@medtech.mk "cd /opt/medtech && docker compose pull && docker compose up -d"
+          echo "Production deploy complete."
