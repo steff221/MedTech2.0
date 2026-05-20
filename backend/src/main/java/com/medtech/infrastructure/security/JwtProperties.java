@@ -23,4 +23,6 @@ public record JwtProperties(
 
         @NotBlank
         String issuer
-) {}
+) {
+        
+}

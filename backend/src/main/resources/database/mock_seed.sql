@@ -19,7 +19,8 @@ SELECT * FROM (VALUES
   ('Општа болница Прилеп',     'Прилеп',   'ул. 11 Октомври бб',     '7500', '+389 48 200 000', 41.34640::numeric, 21.55440::numeric, 'SECONDARY'::hospital_type_enum, 'Маја Петковска',   200, 'ACTIVE'::hospital_status_enum),
   ('Општа болница Струмица',   'Струмица', 'ул. Млечен Пат бб',      '2400', '+389 34 200 000', 41.43780::numeric, 22.64110::numeric, 'SECONDARY'::hospital_type_enum, 'Никола Атанасов',  180, 'ACTIVE'::hospital_status_enum),
   ('Општа болница Гостивар',   'Гостивар', 'ул. Браќа Гиноски бб',   '1230', '+389 42 200 000', 41.79720::numeric, 20.90280::numeric, 'SECONDARY'::hospital_type_enum, 'Ариф Незири',      160, 'ACTIVE'::hospital_status_enum),
-  ('Општа болница Велес',      'Велес',    'ул. Шефки Сали бб',      '1400', '+389 43 200 000', 41.71560::numeric, 21.77580::numeric, 'SECONDARY'::hospital_type_enum, 'Љубомир Андонов',  170, 'ACTIVE'::hospital_status_enum)
+  ('Општа болница Велес',      'Велес',    'ул. Шефки Сали бб',      '1400', '+389 43 200 000', 41.71560::numeric, 21.77580::numeric, 'SECONDARY'::hospital_type_enum, 'Љубомир Андонов',  170, 'ACTIVE'::hospital_status_enum),
+  ('Општа болница Кичево',     'Кичево',   'ул. Маршал Тито бб',     '6250', '+389 45 220 000', 41.51300::numeric, 20.95800::numeric, 'SECONDARY'::hospital_type_enum, 'Билјана Трајкоска', 120, 'ACTIVE'::hospital_status_enum)
 ) AS v(name, city, address, postal_code, phone_number, latitude, longitude, type, director_name, bed_count, status)
 WHERE NOT EXISTS (SELECT 1 FROM hospitals WHERE hospitals.name = v.name);
 
