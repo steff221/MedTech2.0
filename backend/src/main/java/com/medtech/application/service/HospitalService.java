@@ -15,6 +15,8 @@ import org.springframework.util.StringUtils;
 
 import java.util.List;
 
+import static com.medtech.infrastructure.config.CacheConfig.HOSPITALS_LIST;
+
 /**
  * Read-mostly directory of healthcare facilities. Cached because the data
  * changes rarely but is fetched on nearly every doctor / appointment view.
@@ -26,7 +28,7 @@ public class HospitalService {
 
     private final HospitalRepository hospitalRepository;
 
-    @Cacheable(value = "hospitals", key = "'active'")
+    @Cacheable(value = HOSPITALS_LIST, key = "'active'")
     public List<Hospital> findAllActive() {
         return hospitalRepository.findByStatus(HospitalStatus.ACTIVE);
     }

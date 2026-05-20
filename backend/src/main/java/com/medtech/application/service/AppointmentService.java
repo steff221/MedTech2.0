@@ -55,6 +55,7 @@ public class AppointmentService {
     private final DoctorRepository doctorRepository;
     private final AppointmentProperties props;
     private final Clock clock;
+    private final EmailService emailService;
 
     @Transactional
     public Appointment book(BookAppointmentRequest req) {
@@ -96,6 +97,13 @@ public class AppointmentService {
         log.info("Booked appointment id={} doctor={} patient={} at {} {}",
                 saved.getId(), doctor.getId(), patient.getId(),
                 saved.getAppointmentDate(), saved.getAppointmentTime());
+
+        String patientEmail = patient.getUser().getEmail();
+        String patientName  = patient.getUser().getFirstName() + " " + patient.getUser().getLastName();
+        String doctorName   = "д-р " + doctor.getUser().getFirstName() + " " + doctor.getUser().getLastName();
+        emailService.sendAppointmentConfirmation(patientEmail, patientName, doctorName,
+                saved.getAppointmentDate(), saved.getAppointmentTime());
+
         return saved;
     }
 
@@ -137,6 +145,13 @@ public class AppointmentService {
         appt.setStatus(AppointmentStatus.CANCELLED);
         appt.setCancelledBy(cancelledBy);
         appt.setCancellationReason(req.reason());
+
+        String patientEmail = appt.getPatient().getUser().getEmail();
+        String patientName  = appt.getPatient().getUser().getFirstName()
+                + " " + appt.getPatient().getUser().getLastName();
+        emailService.sendAppointmentCancellation(patientEmail, patientName,
+                appt.getAppointmentDate(), appt.getAppointmentTime());
+
         return appt;
     }
 
