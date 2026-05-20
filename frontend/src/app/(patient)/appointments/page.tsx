@@ -17,10 +17,10 @@ import type { AppointmentResponse, AppointmentStatus } from "@/types/api";
 type Filter = "ALL" | "SCHEDULED" | "COMPLETED" | "CANCELLED";
 
 const FILTERS: { value: Filter; label: string }[] = [
-  { value: "ALL", label: "All" },
-  { value: "SCHEDULED", label: "Upcoming" },
-  { value: "COMPLETED", label: "Completed" },
-  { value: "CANCELLED", label: "Cancelled" },
+  { value: "ALL",       label: "Сите" },
+  { value: "SCHEDULED", label: "Претстојни" },
+  { value: "COMPLETED", label: "Завршени" },
+  { value: "CANCELLED", label: "Откажани" },
 ];
 
 export default function AppointmentsPage() {
@@ -42,14 +42,12 @@ export default function AppointmentsPage() {
     <div className="mx-auto max-w-5xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Appointments</h1>
-          <p className="text-sm text-slate-500">
-            Your scheduled visits, history, and bookings.
-          </p>
+          <h1 className="text-2xl font-bold text-slate-900">Прегледи</h1>
+          <p className="text-sm text-slate-500">Закажани посети, историја и резервации.</p>
         </div>
         <Button onClick={() => setBookOpen(true)} disabled={!profile.data}>
           <Plus className="h-4 w-4" />
-          New appointment
+          Нов преглед
         </Button>
       </div>
 
@@ -87,20 +85,24 @@ export default function AppointmentsPage() {
         </div>
       ) : !profile.data ? (
         <EmptyState
-          title="Profile not set up yet"
-          description="Complete your profile from the dashboard before booking."
+          title="Профилот не е поставен"
+          description="Пополни го профилот од почетната страна пред да закажеш преглед."
         />
       ) : filtered.length === 0 ? (
         <EmptyState
-          title="Nothing here"
+          title="Нема прегледи"
           description={
             filter === "ALL"
-              ? "You haven't booked any appointments yet."
-              : `No ${filter.toLowerCase()} appointments.`
+              ? "Сè уште немаш закажано ниеден преглед."
+              : filter === "SCHEDULED"
+              ? "Нема претстојни прегледи."
+              : filter === "COMPLETED"
+              ? "Нема завршени прегледи."
+              : "Нема откажани прегледи."
           }
           action={
             filter === "ALL" ? (
-              <Button onClick={() => setBookOpen(true)}>Book your first appointment</Button>
+              <Button onClick={() => setBookOpen(true)}>Закажи преглед</Button>
             ) : undefined
           }
         />
@@ -125,7 +127,7 @@ export default function AppointmentsPage() {
 
 function matchesFilter(status: AppointmentStatus, filter: Filter): boolean {
   if (filter === "SCHEDULED") return status === "SCHEDULED" || status === "RESCHEDULED";
-  if (filter === "COMPLETED") return status === "COMPLETED";
-  if (filter === "CANCELLED") return status === "CANCELLED" || status === "NO_SHOW";
+  if (filter === "COMPLETED")  return status === "COMPLETED";
+  if (filter === "CANCELLED")  return status === "CANCELLED" || status === "NO_SHOW";
   return true;
 }

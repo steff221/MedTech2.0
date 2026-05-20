@@ -15,9 +15,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import com.medtech.application.dto.request.UpdateDoctorRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -66,5 +68,14 @@ public class DoctorController {
         Long userId = SecurityUtils.currentUserId()
                 .orElseThrow(() -> new AuthorizationException("Authentication required"));
         return ResponseEntity.ok(mapper.toResponse(doctorService.getByUserId(userId)));
+    }
+
+    @PutMapping("/me")
+    @PreAuthorize("hasRole('DOCTOR')")
+    @Operation(summary = "Update mutable fields of the authenticated doctor's profile")
+    public ResponseEntity<DoctorResponse> updateSelfProfile(@Valid @RequestBody UpdateDoctorRequest request) {
+        Long userId = SecurityUtils.currentUserId()
+                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+        return ResponseEntity.ok(mapper.toResponse(doctorService.updateForUser(userId, request)));
     }
 }
