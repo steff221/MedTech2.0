@@ -39,7 +39,7 @@ const NAV: NavItem[] = [
   { label: "Индивидуални пријави", href: "/doctor/individual-reports",  icon: FileSpreadsheet},
   { label: "МКБ10 Дијагноза",     href: "/doctor/mkb10",               icon: ShieldPlus     },
   { label: "Упатства",             href: "/doctor/guidelines",          icon: FileText       },
-  { label: "Дополнителна дејност", href: "/doctor/settings",            icon: Wrench         },
+  { label: "Поставки",             href: "/doctor/settings",            icon: Wrench         },
   { label: "COVID19 пациенти",     href: "/doctor/patients?tag=covid",  icon: Shield         },
 ];
 

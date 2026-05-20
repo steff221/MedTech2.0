@@ -1,6 +1,15 @@
 import { api } from "./api";
 import type { AppointmentResponse, DoctorResponse, Page } from "@/types/api";
 
+export interface UpdateDoctorRequest {
+  qualification?: string;
+  experienceYears?: number;
+  officeNumber?: string;
+  consultationFee?: number;
+  availabilityHours?: string;
+  bio?: string;
+}
+
 interface DoctorSearchParams {
   specialization?: string;
   hospitalId?: number;
@@ -21,6 +30,9 @@ export const doctorService = {
     api.get<DoctorResponse>(`/doctors/${id}`).then((r) => r.data),
 
   me: () => api.get<DoctorResponse>("/doctors/me").then((r) => r.data),
+
+  updateMe: (body: UpdateDoctorRequest) =>
+    api.put<DoctorResponse>("/doctors/me", body).then((r) => r.data),
 
   appointmentsOn: (doctorId: number, isoDate: string, page = 0, size = 100) =>
     api

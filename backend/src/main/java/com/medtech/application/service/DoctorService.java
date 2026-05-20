@@ -1,6 +1,7 @@
 package com.medtech.application.service;
 
 import com.medtech.application.dto.request.CreateDoctorRequest;
+import com.medtech.application.dto.request.UpdateDoctorRequest;
 import com.medtech.domain.entity.Doctor;
 import com.medtech.domain.entity.Hospital;
 import com.medtech.domain.entity.User;
@@ -78,5 +79,20 @@ public class DoctorService {
 
     public Page<Doctor> search(String specialization, Long hospitalId, String city, Pageable pageable) {
         return doctorRepository.search(specialization, hospitalId, city, UserStatus.ACTIVE, pageable);
+    }
+
+    @Transactional
+    public Doctor updateForUser(Long userId, UpdateDoctorRequest req) {
+        Doctor doctor = doctorRepository.findByUserId(userId)
+                .orElseThrow(() -> ResourceNotFoundException.of("Doctor (by userId)", userId));
+
+        if (req.qualification()     != null) doctor.setQualification(req.qualification());
+        if (req.experienceYears()   != null) doctor.setExperienceYears(req.experienceYears());
+        if (req.officeNumber()      != null) doctor.setOfficeNumber(req.officeNumber());
+        if (req.consultationFee()   != null) doctor.setConsultationFee(req.consultationFee());
+        if (req.availabilityHours() != null) doctor.setAvailabilityHours(req.availabilityHours());
+        if (req.bio()               != null) doctor.setBio(req.bio());
+
+        return doctorRepository.save(doctor);
     }
 }
