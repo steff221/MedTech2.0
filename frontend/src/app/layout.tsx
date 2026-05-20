@@ -10,13 +10,16 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "MedTech — Healthcare Platform",
-  description: "Book appointments, manage prescriptions, and access health records.",
+  title: {
+    default: "MedTech — Здравствена платформа",
+    template: "%s · MedTech",
+  },
+  description: "Закажи прегледи, следи рецепти и пристапи до медицинската историја.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="mk" className={inter.variable}>
       <body className="font-sans">
         <Providers>{children}</Providers>
       </body>

@@ -17,6 +17,9 @@ export const patientService = {
   createSelfProfile: (body: CreatePatientRequest) =>
     api.post<PatientResponse>("/patients/me", body).then((r) => r.data),
 
+  update: (id: number, body: Partial<CreatePatientRequest>) =>
+    api.put<PatientResponse>(`/patients/${id}`, body).then((r) => r.data),
+
   appointments: (patientId: number, page = 0, size = 20) =>
     api
       .get<Page<AppointmentResponse>>(`/patients/${patientId}/appointments`, {

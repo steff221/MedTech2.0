@@ -36,11 +36,11 @@ export default function DashboardPage() {
         transition={{ duration: 0.4 }}
       >
         <p className="text-sm font-medium text-brand-600">
-          {greet()}, {user?.firstName ?? "there"}
+          {greet()}, {user?.firstName ?? ""}
         </p>
-        <h1 className="mt-1 text-3xl font-bold text-slate-900">Your health, one place.</h1>
+        <h1 className="mt-1 text-3xl font-bold text-slate-900">Твоето здравје, на едно место.</h1>
         <p className="mt-1 text-slate-500">
-          Manage appointments, prescriptions, and records — all in one dashboard.
+          Закажи прегледи, следи рецепти и пристапи до медицинската историја.
         </p>
       </motion.div>
 
@@ -55,14 +55,14 @@ export default function DashboardPage() {
           <section>
             <div className="mb-4 flex items-end justify-between">
               <div>
-                <h2 className="text-xl font-bold text-slate-900">Upcoming appointments</h2>
+                <h2 className="text-xl font-bold text-slate-900">Претстојни прегледи</h2>
                 <p className="text-sm text-slate-500">
-                  {upcoming.length} scheduled
+                  {upcoming.length} закажани
                 </p>
               </div>
               <Button onClick={() => setBookOpen(true)}>
                 <Plus className="h-4 w-4" />
-                Book appointment
+                Закажи преглед
               </Button>
             </div>
 
@@ -74,9 +74,9 @@ export default function DashboardPage() {
               </div>
             ) : upcoming.length === 0 ? (
               <EmptyState
-                title="No upcoming appointments"
-                description="Book your first appointment to get started."
-                action={<Button onClick={() => setBookOpen(true)}>Book appointment</Button>}
+                title="Нема закажани прегледи"
+                description="Закажи го твојот прв преглед."
+                action={<Button onClick={() => setBookOpen(true)}>Закажи преглед</Button>}
               />
             ) : (
               <motion.div
@@ -115,7 +115,7 @@ export default function DashboardPage() {
 
 function greet(): string {
   const h = new Date().getHours();
-  if (h < 12) return "Good morning";
-  if (h < 18) return "Good afternoon";
-  return "Good evening";
+  if (h < 12) return "Добро утро";
+  if (h < 18) return "Добар ден";
+  return "Добра вечер";
 }
