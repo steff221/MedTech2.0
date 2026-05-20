@@ -55,10 +55,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Node 20
+      - name: Set up Node 22
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
@@ -121,7 +121,6 @@ jobs:
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=sha,format=short
-            type=schedule,pattern={{date 'YYYYMMDD'}}
           labels: |
             org.opencontainers.image.title=MedTech ${{ matrix.service }}
             org.opencontainers.image.description=MedTech 2.0 healthcare platform — ${{ matrix.service }}
@@ -129,7 +128,7 @@ jobs:
             org.opencontainers.image.licenses=MIT
 
       - name: Build + push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./${{ matrix.service }}
           push: true

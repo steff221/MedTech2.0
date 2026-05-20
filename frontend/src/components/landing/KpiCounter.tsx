@@ -7,7 +7,6 @@ interface KpiCounterProps {
   label: string;
   sub?: string;
   durationMs?: number;
-  accent?: "emerald" | "teal";
 }
 
 // easeOutCubic — fast start, gentle settle
@@ -18,7 +17,6 @@ export function KpiCounter({
   label,
   sub,
   durationMs = 1400,
-  accent = "emerald",
 }: KpiCounterProps) {
   const [display, setDisplay] = useState(0);
   const rafRef = useRef<number | null>(null);
@@ -40,19 +38,10 @@ export function KpiCounter({
     };
   }, [value, durationMs]);
 
-  const accentClass =
-    accent === "teal"
-      ? "from-teal-300 via-emerald-300 to-cyan-300"
-      : "from-emerald-300 via-teal-300 to-cyan-300";
-
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-sm">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/50">
-        {label}
-      </p>
-      <p
-        className={`mt-2 bg-gradient-to-r bg-clip-text text-5xl font-bold tabular-nums text-transparent ${accentClass}`}
-      >
+      <p className="text-xs text-white/50">{label}</p>
+      <p className="mt-2 text-4xl font-bold tabular-nums text-white">
         {display.toLocaleString()}
       </p>
       {sub && <p className="mt-1 text-xs text-white/40">{sub}</p>}

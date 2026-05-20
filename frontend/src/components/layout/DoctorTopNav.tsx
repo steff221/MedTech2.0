@@ -1,11 +1,9 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Activity,
   Calendar,
-  CalendarCheck,
-  ChevronDown,
   ClipboardList,
   FileSpreadsheet,
   FileText,
@@ -20,7 +18,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState, type ComponentType } from "react";
+import { type ComponentType } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useDoctorProfile } from "@/hooks/useDoctor";
 import { cn } from "@/utils/cn";
@@ -28,50 +26,21 @@ import { initials } from "@/utils/format";
 
 type NavItem = {
   label: string;
-  href?: string;
+  href: string;
   icon: ComponentType<{ className?: string }>;
-  children?: { label: string; href: string; description?: string }[];
 };
 
 const NAV: NavItem[] = [
-  {
-    label: "Упати",
-    icon: ClipboardList,
-    children: [
-      { label: "Издадени упати", href: "/doctor/referrals", description: "Историја на издадени" },
-      { label: "Нов упат", href: "/doctor/referrals?new=1", description: "Создади нов упат" },
-    ],
-  },
-  {
-    label: "Календар",
-    icon: Calendar,
-    children: [
-      { label: "Распоред", href: "/doctor/schedule", description: "Неделен преглед" },
-      { label: "Прием на пациенти", href: "/doctor/patients?tab=TODAY", description: "Денешни приеми" },
-    ],
-  },
-  { label: "Пациенти", href: "/doctor/patients", icon: Users },
-  { label: "Операции", href: "/doctor/operations", icon: Scissors },
-  { label: "Медицински дневник", href: "/doctor/medical-journal", icon: Notebook },
-  {
-    label: "Индивидуални пријави",
-    icon: FileSpreadsheet,
-    children: [
-      { label: "Месечни пријави", href: "/doctor/medical-journal?view=monthly" },
-      { label: "Извештаи", href: "/doctor/medical-journal?view=reports" },
-    ],
-  },
-  { label: "МКБ10 Дијагноза", href: "/doctor/mkb10", icon: ShieldPlus },
-  {
-    label: "Упатства",
-    icon: FileText,
-    children: [
-      { label: "Клинички упатства", href: "/doctor/mkb10" },
-      { label: "Документи", href: "/doctor/referrals" },
-    ],
-  },
-  { label: "Дополнителна дејност", href: "/doctor/settings", icon: Wrench },
-  { label: "COVID19 пациенти", href: "/doctor/patients?tag=covid", icon: Shield },
+  { label: "Упати",                href: "/doctor/referrals",          icon: ClipboardList  },
+  { label: "Календар",             href: "/doctor/schedule",            icon: Calendar       },
+  { label: "Пациенти",             href: "/doctor/patients",            icon: Users          },
+  { label: "Операции",             href: "/doctor/operations",          icon: Scissors       },
+  { label: "Медицински дневник",   href: "/doctor/medical-journal",     icon: Notebook       },
+  { label: "Индивидуални пријави", href: "/doctor/individual-reports",  icon: FileSpreadsheet},
+  { label: "МКБ10 Дијагноза",     href: "/doctor/mkb10",               icon: ShieldPlus     },
+  { label: "Упатства",             href: "/doctor/guidelines",          icon: FileText       },
+  { label: "Дополнителна дејност", href: "/doctor/settings",            icon: Wrench         },
+  { label: "COVID19 пациенти",     href: "/doctor/patients?tag=covid",  icon: Shield         },
 ];
 
 export function DoctorTopNav() {
@@ -88,7 +57,7 @@ export function DoctorTopNav() {
             <Activity className="h-3.5 w-3.5" />
           </div>
           <span className="text-sm font-bold text-slate-900">MedTech</span>
-          <span className="text-xs font-medium text-slate-400">· Clinician portal</span>
+          <span className="text-xs font-medium text-slate-400">· Лекарски портал</span>
         </Link>
 
         <div className="flex items-center gap-3">
@@ -99,7 +68,7 @@ export function DoctorTopNav() {
                   {initials(user.firstName, user.lastName)}
                 </div>
                 <div className="text-right">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-rose-600">
+                  <p className="text-[11px] font-semibold text-slate-800">
                     Dr. {user.firstName} {user.lastName}
                   </p>
                   {doctor && (
@@ -142,80 +111,23 @@ export function DoctorTopNav() {
 }
 
 function NavEntry({ item, pathname }: { item: NavItem; pathname: string }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  const isActive = item.href
-    ? pathname.startsWith(item.href.split("?")[0])
-    : item.children?.some((c) => pathname.startsWith(c.href.split("?")[0])) ?? false;
-
-  useEffect(() => {
-    if (!open) return;
-    const onClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", onClick);
-    return () => document.removeEventListener("mousedown", onClick);
-  }, [open]);
-
-  const labelClasses = cn(
-    "relative flex h-12 items-center gap-1.5 whitespace-nowrap px-3 text-sm font-medium transition-colors",
-    isActive ? "text-emerald-700" : "text-slate-600 hover:text-slate-900",
-  );
-
-  const indicator = isActive && (
-    <motion.span
-      layoutId="doctor-nav-active"
-      className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-emerald-500"
-      transition={{ type: "spring", stiffness: 380, damping: 30 }}
-    />
-  );
-
-  if (item.children) {
-    return (
-      <div ref={ref} className="relative">
-        <button
-          type="button"
-          onClick={() => setOpen((o) => !o)}
-          className={labelClasses}
-          aria-expanded={open}
-        >
-          {indicator}
-          {item.label}
-          <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-180")} />
-        </button>
-        <AnimatePresence>
-          {open && (
-            <motion.div
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.15 }}
-              className="absolute left-0 top-full z-40 mt-1 min-w-[240px] overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl"
-            >
-              {item.children.map((c) => (
-                <Link
-                  key={c.label}
-                  href={c.href}
-                  onClick={() => setOpen(false)}
-                  className="block px-3 py-2 text-sm transition-colors hover:bg-emerald-50"
-                >
-                  <p className="font-medium text-slate-900">{c.label}</p>
-                  {c.description && (
-                    <p className="text-xs text-slate-500">{c.description}</p>
-                  )}
-                </Link>
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    );
-  }
+  const isActive = pathname.startsWith(item.href.split("?")[0]);
 
   return (
-    <Link href={item.href!} className={labelClasses}>
-      {indicator}
+    <Link
+      href={item.href}
+      className={cn(
+        "relative flex h-12 items-center whitespace-nowrap px-3 text-sm font-medium transition-colors",
+        isActive ? "text-emerald-700" : "text-slate-600 hover:text-slate-900",
+      )}
+    >
+      {isActive && (
+        <motion.span
+          layoutId="doctor-nav-active"
+          className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-emerald-500"
+          transition={{ type: "spring", stiffness: 380, damping: 30 }}
+        />
+      )}
       {item.label}
     </Link>
   );

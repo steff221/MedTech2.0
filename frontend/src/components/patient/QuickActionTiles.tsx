@@ -10,8 +10,7 @@ interface Tile {
   value: string | number;
   icon: LucideIcon;
   href: string;
-  accent: string;
-  glow: string;
+  iconBg: string;
 }
 
 interface QuickActionTilesProps {
@@ -48,32 +47,28 @@ export function QuickActionTiles({ upcomingCount }: QuickActionTilesProps) {
       value: upcomingCount,
       icon: Calendar,
       href: "/appointments",
-      accent: "from-cyan-500 to-teal-600",
-      glow: "rgba(6,182,212,0.25)",
+      iconBg: "bg-sky-500",
     },
     {
       label: "Health records",
       value: "View",
       icon: FileText,
       href: "/health-records",
-      accent: "from-emerald-500 to-emerald-600",
-      glow: "rgba(16,185,129,0.25)",
+      iconBg: "bg-emerald-500",
     },
     {
       label: "Prescriptions",
       value: "View",
       icon: Pill,
       href: "/prescriptions",
-      accent: "from-violet-500 to-violet-600",
-      glow: "rgba(124,58,237,0.25)",
+      iconBg: "bg-violet-500",
     },
     {
       label: "Find a doctor",
       value: "Search",
       icon: Stethoscope,
       href: "/doctors",
-      accent: "from-amber-500 to-orange-600",
-      glow: "rgba(251,146,60,0.25)",
+      iconBg: "bg-amber-500",
     },
   ];
 
@@ -81,13 +76,13 @@ export function QuickActionTiles({ upcomingCount }: QuickActionTilesProps) {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: { staggerChildren: 0.08, delayChildren: 0.1 },
+      transition: { staggerChildren: 0.07, delayChildren: 0.1 },
     },
   };
 
   const item = {
-    hidden: { opacity: 0, y: 24 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } },
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] } },
   };
 
   return (
@@ -101,34 +96,18 @@ export function QuickActionTiles({ upcomingCount }: QuickActionTilesProps) {
         <motion.div key={tile.label} variants={item}>
           <Link href={tile.href}>
             <motion.div
-              whileHover="hover"
+              whileHover={{ y: -4, scale: 1.01 }}
               whileTap={{ scale: 0.97 }}
-              variants={{
-                hover: { y: -6, scale: 1.02 },
-              }}
-              transition={{ type: "spring", stiffness: 360, damping: 24 }}
-              className="group relative h-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-card transition-shadow hover:shadow-cardHover"
+              transition={{ type: "spring", stiffness: 340, damping: 26 }}
+              className="group h-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-card transition-shadow hover:shadow-cardHover"
             >
-              {/* Soft accent glow on hover */}
-              <motion.div
-                aria-hidden
-                variants={{ hover: { opacity: 1 } }}
-                initial={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="pointer-events-none absolute -inset-px rounded-2xl"
-                style={{
-                  background: `radial-gradient(120% 60% at 50% 0%, ${tile.glow}, transparent 60%)`,
-                }}
-              />
-              <motion.div
-                variants={{ hover: { rotate: [0, -8, 8, 0], scale: 1.08 } }}
-                transition={{ duration: 0.6 }}
-                className={`relative mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${tile.accent} text-white shadow-lg shadow-slate-900/5`}
+              <div
+                className={`mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl ${tile.iconBg} text-white`}
               >
                 <tile.icon className="h-5 w-5" />
-              </motion.div>
-              <p className="relative text-sm font-medium text-slate-500">{tile.label}</p>
-              <p className="relative mt-1 text-2xl font-bold tabular-nums text-slate-900">
+              </div>
+              <p className="text-sm font-medium text-slate-500">{tile.label}</p>
+              <p className="mt-1 text-2xl font-bold tabular-nums text-slate-900">
                 {typeof tile.value === "number" ? <CountUp to={tile.value} /> : tile.value}
               </p>
             </motion.div>

@@ -6,7 +6,6 @@ import {
   CalendarDays,
   LayoutDashboard,
   Settings,
-  Stethoscope,
   Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -32,10 +31,7 @@ export function DoctorSidebar() {
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500 text-white">
           <Activity className="h-4 w-4" />
         </div>
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">Doctor</p>
-          <p className="-mt-0.5 text-base font-semibold text-slate-900">MedTech</p>
-        </div>
+        <p className="text-base font-semibold text-slate-900">MedTech</p>
       </Link>
 
       <nav className="flex-1 space-y-1 p-3">
@@ -64,12 +60,6 @@ export function DoctorSidebar() {
         })}
       </nav>
 
-      <div className="border-t border-slate-200 p-4">
-        <div className="flex items-center gap-2 text-xs text-slate-500">
-          <Stethoscope className="h-3.5 w-3.5" />
-          Clinician portal
-        </div>
-      </div>
     </aside>
   );
 }
