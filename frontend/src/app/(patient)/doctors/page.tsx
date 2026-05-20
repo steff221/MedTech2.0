@@ -57,8 +57,8 @@ export default function DoctorsMapPage() {
     queryFn: () => doctorService.search({ size: 100 }),
   });
 
-  const hospitals: HospitalResponse[] = hospitalsQuery.data ?? [];
-  const allDoctors: DoctorResponse[] = doctorsQuery.data?.content ?? [];
+  const hospitals = useMemo<HospitalResponse[]>(() => hospitalsQuery.data ?? [], [hospitalsQuery.data]);
+  const allDoctors = useMemo<DoctorResponse[]>(() => doctorsQuery.data?.content ?? [], [doctorsQuery.data]);
 
   // Client-side filtering — keeps the map and the list in sync without N round-trips.
   const filteredDoctors = useMemo(() => {
