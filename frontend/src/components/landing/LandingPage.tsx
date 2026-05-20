@@ -59,26 +59,26 @@ export function LandingPage() {
         {/* Top bar */}
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500">
               <Activity className="h-4 w-4 text-white" />
             </div>
             <span className="text-base font-bold tracking-tight">MedTech</span>
-            <span className="ml-2 text-[10px] uppercase tracking-widest text-white/40">
-              Healthcare · MK
+            <span className="ml-2 text-xs text-white/40">
+              Македонија
             </span>
           </div>
           <div className="flex items-center gap-3">
             <Link
               href="/login"
-              className="rounded-full border border-white/15 bg-white/[0.04] px-4 py-1.5 text-xs font-semibold text-white/80 transition-colors hover:border-emerald-400/50 hover:bg-white/[0.08] hover:text-white"
+              className="rounded-full border border-white/15 bg-white/[0.04] px-4 py-1.5 text-xs font-semibold text-white/80 transition-colors hover:border-white/30 hover:bg-white/[0.08] hover:text-white"
             >
-              Sign in
+              Најави се
             </Link>
             <Link
               href="/register"
-              className="rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-1.5 text-xs font-semibold text-white shadow-lg shadow-emerald-500/25 transition-transform hover:scale-[1.03]"
+              className="rounded-full bg-emerald-500 px-4 py-1.5 text-xs font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all hover:bg-emerald-400"
             >
-              Create account
+              Регистрирај се
             </Link>
           </div>
         </header>
@@ -97,8 +97,8 @@ export function LandingPage() {
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
               </span>
-              <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-emerald-300">
-                Live Data
+              <h2 className="text-sm font-semibold text-emerald-300">
+                Live data
               </h2>
             </div>
             <p className="mt-3 font-mono text-xs uppercase tracking-wider text-white/40">
@@ -112,42 +112,38 @@ export function LandingPage() {
               </span>
             </h1>
             <p className="mt-3 max-w-md text-sm leading-relaxed text-white/60">
-              Live operational signal from every connected hospital across North
-              Macedonia. Updated every 30 seconds.
+              Следи ги операциите на секоја поврзана болница во Македонија.
+              Податоците се освежуваат на секои 30 секунди.
             </p>
 
             <div className="mt-8 grid grid-cols-2 gap-3">
               <KpiCounter
-                label="Prescriptions today"
+                label="Рецепти денес"
                 value={stats.data?.prescriptionsToday ?? 0}
-                sub="Issued in last 24h"
-                accent="emerald"
+                sub="Издадени во последните 24ч"
               />
               <KpiCounter
-                label="Referrals today"
+                label="Упати денес"
                 value={stats.data?.referralsToday ?? 0}
-                sub="New appointments"
-                accent="teal"
+                sub="Нови закажувања"
               />
               <KpiCounter
-                label="Active patients"
+                label="Активни пациенти"
                 value={stats.data?.activePatients ?? 0}
-                sub="Across network"
-                accent="emerald"
+                sub="Во мрежата"
               />
               <KpiCounter
-                label="Active doctors"
+                label="Активни лекари"
                 value={stats.data?.activeDoctors ?? 0}
-                sub="On call & on duty"
-                accent="teal"
+                sub="На дежурство"
               />
             </div>
 
             <Link
               href="/login"
-              className="mt-8 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition-transform hover:scale-[1.02]"
+              className="mt-8 inline-flex items-center gap-1.5 rounded-full bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition-all hover:bg-emerald-400 hover:shadow-emerald-400/30"
             >
-              Enter the platform <ArrowRight className="h-4 w-4" />
+              Влези на платформата <ArrowRight className="h-4 w-4" />
             </Link>
           </motion.div>
 
@@ -173,16 +169,13 @@ export function LandingPage() {
               {/* HUD chip */}
               <div className="absolute left-5 top-5 flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-3 py-1.5 backdrop-blur">
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
-                <span className="text-[10px] font-semibold uppercase tracking-widest text-white/80">
-                  {nodes.length} hospitals online
+                <span className="text-xs font-medium text-white/80">
+                  {nodes.length} болници онлајн
                 </span>
               </div>
               <div className="absolute bottom-5 right-5 text-right">
-                <p className="text-[10px] uppercase tracking-widest text-white/30">
-                  Network map
-                </p>
-                <p className="font-mono text-xs text-white/60">
-                  REPUBLIC OF NORTH MACEDONIA
+                <p className="font-mono text-[10px] text-white/30">
+                  Северна Македонија
                 </p>
               </div>
             </div>
@@ -262,9 +255,9 @@ export function LandingPage() {
           />
         </motion.figure>
 
-        <footer className="mb-8 mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-white/5 pt-5 text-[10px] uppercase tracking-widest text-white/30">
+        <footer className="mb-8 mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-white/5 pt-5 text-xs text-white/30">
           <span>© MedTech 2026</span>
-          <span>v2.0 · Build {format(today, "yyyy.MM.dd")}</span>
+          <span>Сите права задржани</span>
         </footer>
       </div>
     </div>
