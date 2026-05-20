@@ -8,14 +8,12 @@ import { Input } from "@/components/common/Input";
 import { useAuth } from "@/hooks/useAuth";
 
 const schema = z.object({
-  email: z.string().email("Enter a valid email"),
-  password: z.string().min(1, "Password is required"),
+  email: z.string().email("Внеси валидна е-пошта"),
+  password: z.string().min(1, "Лозинката е задолжителна"),
 });
 
 type FormData = z.infer<typeof schema>;
 
-// Tailwind override classes for the existing Input — keep the component generic
-// and just paint it for the dark surface here.
 const DARK_INPUT =
   "bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-emerald-400 focus:ring-emerald-400/30";
 
@@ -40,41 +38,36 @@ export default function LoginPage() {
 
   return (
     <div>
-      <div className="flex items-center gap-2">
-        <span className="relative flex h-2 w-2">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-          <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
-        </span>
-        <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-emerald-300">
-          Sign in
-        </p>
-      </div>
-
-      <h1 className="mt-4 text-3xl font-bold tracking-tight text-white">
-        Welcome back
+      <h1 className="text-3xl font-bold tracking-tight text-white">
+        Добредојде назад
       </h1>
       <p className="mt-1.5 text-sm text-white/50">
-        Access your health dashboard.
+        Пристапи до твојот здравствен профил.
       </p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="mt-7 space-y-4">
         <div>
-          <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-white/60">
-            Email
+          <label className="mb-1.5 block text-sm font-medium text-white/60">
+            Е-пошта
           </label>
           <Input
             type="email"
             autoComplete="email"
-            placeholder="you@example.com"
+            placeholder="ime@primer.mk"
             {...register("email")}
             error={errors.email?.message}
             className={DARK_INPUT}
           />
         </div>
         <div>
-          <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-white/60">
-            Password
-          </label>
+          <div className="mb-1.5 flex items-center justify-between">
+            <label className="block text-sm font-medium text-white/60">
+              Лозинка
+            </label>
+            <span className="text-xs text-white/30">
+              Заборавена лозинка? Контактирај администратор
+            </span>
+          </div>
           <Input
             type="password"
             autoComplete="current-password"
@@ -88,26 +81,26 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="group relative mt-2 flex w-full items-center justify-center gap-2 overflow-hidden rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition-transform hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-500 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition-all hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSubmitting ? (
             <>
               <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-              Signing in…
+              Најавување…
             </>
           ) : (
-            <>Sign in →</>
+            "Најави се →"
           )}
         </button>
       </form>
 
       <p className="mt-6 text-center text-sm text-white/50">
-        New to MedTech?{" "}
+        Немаш профил?{" "}
         <Link
           href="/register"
           className="font-semibold text-emerald-300 underline-offset-4 hover:text-emerald-200 hover:underline"
         >
-          Create an account
+          Регистрирај се
         </Link>
       </p>
     </div>

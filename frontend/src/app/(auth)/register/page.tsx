@@ -7,23 +7,19 @@ import { z } from "zod";
 import { Input } from "@/components/common/Input";
 import { useAuth } from "@/hooks/useAuth";
 
-// Mirror of the backend RegisterRequest validation:
-// - email format
-// - 12-128 chars
-// - upper + lower + digit + symbol
 const passwordRule = z
   .string()
-  .min(12, "At least 12 characters")
-  .max(128, "Too long")
-  .regex(/[A-Z]/, "Needs an uppercase letter")
-  .regex(/[a-z]/, "Needs a lowercase letter")
-  .regex(/\d/, "Needs a digit")
-  .regex(/[^A-Za-z0-9]/, "Needs a symbol");
+  .min(12, "Минимум 12 карактери")
+  .max(128, "Премногу долга")
+  .regex(/[A-Z]/, "Потребна голема буква")
+  .regex(/[a-z]/, "Потребна мала буква")
+  .regex(/\d/, "Потребна цифра")
+  .regex(/[^A-Za-z0-9]/, "Потребен симбол");
 
 const schema = z.object({
-  firstName: z.string().min(1, "Required").max(100),
-  lastName: z.string().min(1, "Required").max(100),
-  email: z.string().email("Enter a valid email"),
+  firstName: z.string().min(1, "Задолжително").max(100),
+  lastName: z.string().min(1, "Задолжително").max(100),
+  email: z.string().email("Внеси валидна е-пошта"),
   phoneNumber: z.string().max(20).optional().or(z.literal("")),
   password: passwordRule,
 });
@@ -61,26 +57,16 @@ export default function RegisterPage() {
 
   return (
     <div>
-      <div className="flex items-center gap-2">
-        <span className="relative flex h-2 w-2">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-teal-400 opacity-75" />
-          <span className="relative inline-flex h-2 w-2 rounded-full bg-teal-400" />
-        </span>
-        <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-teal-300">
-          Create account
-        </p>
-      </div>
-
-      <h1 className="mt-4 text-3xl font-bold tracking-tight text-white">
-        Join MedTech
+      <h1 className="text-3xl font-bold tracking-tight text-white">
+        Создај профил
       </h1>
       <p className="mt-1.5 text-sm text-white/50">
-        Book appointments and manage your care.
+        Закажи прегледи и управувај со твојата здравствена историја.
       </p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="mt-7 space-y-4">
         <div className="grid grid-cols-2 gap-3">
-          <Field label="First name" error={errors.firstName?.message}>
+          <Field label="Ime" error={errors.firstName?.message}>
             <Input
               autoComplete="given-name"
               {...register("firstName")}
@@ -88,7 +74,7 @@ export default function RegisterPage() {
               className={DARK_INPUT}
             />
           </Field>
-          <Field label="Last name" error={errors.lastName?.message}>
+          <Field label="Презиме" error={errors.lastName?.message}>
             <Input
               autoComplete="family-name"
               {...register("lastName")}
@@ -97,17 +83,17 @@ export default function RegisterPage() {
             />
           </Field>
         </div>
-        <Field label="Email" error={errors.email?.message}>
+        <Field label="Е-пошта" error={errors.email?.message}>
           <Input
             type="email"
             autoComplete="email"
-            placeholder="you@example.com"
+            placeholder="ime@primer.mk"
             {...register("email")}
             error={errors.email?.message}
             className={DARK_INPUT}
           />
         </Field>
-        <Field label="Phone (optional)" error={errors.phoneNumber?.message}>
+        <Field label="Телефон (незадолжително)" error={errors.phoneNumber?.message}>
           <Input
             type="tel"
             autoComplete="tel"
@@ -117,9 +103,9 @@ export default function RegisterPage() {
           />
         </Field>
         <Field
-          label="Password"
+          label="Лозинка"
           error={errors.password?.message}
-          hint="12+ chars · upper · lower · digit · symbol"
+          hint="12+ карактери · голема · мала · цифра · симбол"
         >
           <Input
             type="password"
@@ -133,26 +119,26 @@ export default function RegisterPage() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="group relative mt-2 flex w-full items-center justify-center gap-2 overflow-hidden rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition-transform hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-500 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition-all hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSubmitting ? (
             <>
               <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-              Creating account…
+              Се креира профил…
             </>
           ) : (
-            <>Create account →</>
+            "Регистрирај се →"
           )}
         </button>
       </form>
 
       <p className="mt-6 text-center text-sm text-white/50">
-        Already have an account?{" "}
+        Веќе имаш профил?{" "}
         <Link
           href="/login"
           className="font-semibold text-emerald-300 underline-offset-4 hover:text-emerald-200 hover:underline"
         >
-          Sign in
+          Најави се
         </Link>
       </p>
     </div>
@@ -171,11 +157,11 @@ function Field({
 }) {
   return (
     <div>
-      <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-white/60">
+      <label className="mb-1.5 block text-sm font-medium text-white/60">
         {label}
       </label>
       {children}
-      {hint && <p className="mt-1 text-[11px] text-white/40">{hint}</p>}
+      {hint && <p className="mt-1 text-xs text-white/30">{hint}</p>}
     </div>
   );
 }

@@ -17,10 +17,10 @@ import type { PrescriptionResponse, PrescriptionStatus } from "@/types/api";
 type Filter = "ALL" | "ACTIVE" | "COMPLETED" | "CANCELLED";
 
 const FILTERS: { key: Filter; label: string }[] = [
-  { key: "ALL", label: "All" },
-  { key: "ACTIVE", label: "Active" },
-  { key: "COMPLETED", label: "Completed" },
-  { key: "CANCELLED", label: "Cancelled" },
+  { key: "ALL",       label: "Сите"      },
+  { key: "ACTIVE",    label: "Активни"   },
+  { key: "COMPLETED", label: "Завршени"  },
+  { key: "CANCELLED", label: "Откажани"  },
 ];
 
 function statusTone(s: PrescriptionStatus) {
@@ -28,6 +28,14 @@ function statusTone(s: PrescriptionStatus) {
   if (s === "COMPLETED") return "neutral" as const;
   if (s === "CANCELLED" || s === "SUSPENDED") return "danger" as const;
   return "neutral" as const;
+}
+
+function statusLabel(s: PrescriptionStatus) {
+  if (s === "ACTIVE") return "Активен";
+  if (s === "COMPLETED") return "Завршен";
+  if (s === "CANCELLED") return "Откажан";
+  if (s === "SUSPENDED") return "Суспендиран";
+  return s;
 }
 
 export default function PrescriptionsPage() {
@@ -64,10 +72,9 @@ export default function PrescriptionsPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
       >
-        <p className="text-sm font-medium text-brand-600">Medications</p>
-        <h1 className="mt-1 text-3xl font-bold text-slate-900">Prescriptions</h1>
+        <h1 className="text-3xl font-bold text-slate-900">Рецепти</h1>
         <p className="mt-1 text-slate-500">
-          Active prescriptions, refills, and full history.
+          Активни лекови, дополнувања и целосна историја на рецепти.
         </p>
       </motion.div>
 
@@ -93,7 +100,8 @@ export default function PrescriptionsPage() {
                   />
                 )}
                 <span className="relative">
-                  {f.label} <span className="ml-1 text-xs opacity-60">{counts[f.key]}</span>
+                  {f.label}{" "}
+                  <span className="ml-1 text-xs opacity-60">{counts[f.key]}</span>
                 </span>
               </button>
             );
@@ -109,14 +117,14 @@ export default function PrescriptionsPage() {
         </div>
       ) : !profile.data ? (
         <EmptyState
-          title="Profile not set up yet"
-          description="Complete your patient profile to view prescriptions."
+          title="Профилот не е поставен"
+          description="Пополни го пациентскиот профил за да ги видиш рецептите."
         />
       ) : filtered.length === 0 ? (
         <EmptyState
           icon={Pill}
-          title={filter === "ACTIVE" ? "No active prescriptions" : "Nothing here"}
-          description="When a doctor issues a prescription it will appear here."
+          title={filter === "ACTIVE" ? "Нема активни рецепти" : "Нема записи"}
+          description="Кога лекар ќе издаде рецепт, ќе се прикаже овде."
         />
       ) : (
         <motion.div
@@ -159,7 +167,7 @@ function PrescriptionRow({ rx }: { rx: PrescriptionResponse }) {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-2">
             <h3 className="text-lg font-bold text-slate-900">{rx.medicationName}</h3>
-            <Badge tone={statusTone(rx.status)}>{rx.status}</Badge>
+            <Badge tone={statusTone(rx.status)}>{statusLabel(rx.status)}</Badge>
           </div>
           <p className="mt-0.5 text-sm text-slate-600">
             <span className="font-semibold">{rx.dosage}</span> · {rx.frequency}
@@ -171,16 +179,16 @@ function PrescriptionRow({ rx }: { rx: PrescriptionResponse }) {
             </p>
           )}
 
-          <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-4">
-            <Stat label="Started" value={format(parseISO(rx.startDate), "MMM d, yyyy")} />
+          <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
+            <Stat label="Почеток" value={format(parseISO(rx.startDate), "d MMM yyyy")} />
             {rx.endDate && (
-              <Stat label="Ends" value={format(parseISO(rx.endDate), "MMM d, yyyy")} />
+              <Stat label="Крај" value={format(parseISO(rx.endDate), "d MMM yyyy")} />
             )}
-            {rx.durationDays && <Stat label="Duration" value={`${rx.durationDays} days`} />}
-            {rx.quantity != null && <Stat label="Quantity" value={`${rx.quantity}`} />}
+            {rx.durationDays && <Stat label="Времетраење" value={`${rx.durationDays} дена`} />}
+            {rx.quantity != null && <Stat label="Количина" value={`${rx.quantity}`} />}
             {rx.refillsAllowed > 0 && (
               <Stat
-                label="Refills"
+                label="Дополнувања"
                 value={
                   <span className="flex items-center gap-1">
                     <Repeat className="h-3 w-3 text-slate-400" />
@@ -193,7 +201,7 @@ function PrescriptionRow({ rx }: { rx: PrescriptionResponse }) {
 
           {rx.instructions && (
             <div className="mt-3 rounded-lg bg-slate-50 p-2.5 text-xs text-slate-700">
-              <span className="font-semibold">Instructions: </span>
+              <span className="font-semibold">Упатства: </span>
               {rx.instructions}
             </div>
           )}
@@ -206,9 +214,7 @@ function PrescriptionRow({ rx }: { rx: PrescriptionResponse }) {
 function Stat({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-        {label}
-      </p>
+      <p className="text-xs text-slate-500">{label}</p>
       <p className="text-sm font-semibold text-slate-900">{value}</p>
     </div>
   );
