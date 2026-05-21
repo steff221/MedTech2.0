@@ -39,11 +39,10 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <div className="relative z-10 mx-auto flex max-w-7xl items-center justify-between px-6 pt-6">
         <Link href="/" className="flex items-center gap-2">
           <Image
-            src="/Logo.png"
+            src="/Logo-removebg-preview.png"
             alt="MedTech"
-            width={36}
-            height={36}
-            className="rounded-lg mix-blend-lighten"
+            width={40}
+            height={40}
           />
           <span className="text-base font-bold tracking-tight">MedTech</span>
           <span className="ml-2 text-xs text-white/40">Македонија</span>

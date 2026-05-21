@@ -60,7 +60,7 @@ export function LandingPage() {
         {/* Top bar */}
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Image src="/Logo.png" alt="MedTech" width={36} height={36} className="rounded-lg mix-blend-lighten" />
+            <Image src="/Logo-removebg-preview.png" alt="MedTech" width={40} height={40} />
             <span className="text-base font-bold tracking-tight">MedTech</span>
             <span className="ml-2 text-xs text-white/40">
               Македонија

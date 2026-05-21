@@ -58,7 +58,7 @@ export function DoctorTopNav() {
         {/* Brand bar */}
         <div className="flex h-12 items-center justify-between border-b border-slate-100 bg-slate-50/50 px-4 sm:px-6">
           <Link href="/doctor" className="flex items-center gap-2">
-            <Image src="/Logo.png" alt="MedTech" width={28} height={28} className="rounded-md" />
+            <Image src="/Logo-removebg-preview.png" alt="MedTech" width={32} height={32} />
             <span className="text-sm font-bold text-slate-900">MedTech</span>
             <span className="text-xs font-medium text-slate-400">· {t.doctorNav.portal}</span>
           </Link>
