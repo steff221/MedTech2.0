@@ -141,7 +141,9 @@ export function PatientsListPanel({ doctorId }: PatientsListPanelProps) {
   }, [summaries, tab, search]);
 
   return (
-    <>
+    // z-50 keeps the list above the drawer overlay (z-40) so clicking another
+    // patient while the drawer is open switches directly without blocking.
+    <div className="relative z-50">
       <Card>
         <Input
           placeholder="Пребарај по име, ЕМБГ, Бр.упат…"
@@ -232,7 +234,7 @@ export function PatientsListPanel({ doctorId }: PatientsListPanelProps) {
         patientName={selected?.name ?? ""}
         onClose={() => setSelected(null)}
       />
-    </>
+    </div>
   );
 }
 
