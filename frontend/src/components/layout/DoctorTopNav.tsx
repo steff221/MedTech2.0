@@ -11,7 +11,6 @@ import {
   Menu,
   Notebook,
   Scissors,
-  Shield,
   ShieldPlus,
   Stethoscope,
   Users,
@@ -44,7 +43,6 @@ const NAV: NavItem[] = [
   { labelKey: "mkb10",          href: "/doctor/mkb10",               icon: ShieldPlus      },
   { labelKey: "guidelines",     href: "/doctor/guidelines",          icon: FileText        },
   { labelKey: "settings",       href: "/doctor/settings",            icon: Wrench          },
-  { labelKey: "covid",          href: "/doctor/patients?tag=covid",  icon: Shield          },
 ];
 
 export function DoctorTopNav() {
