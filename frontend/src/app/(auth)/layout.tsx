@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Activity, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
@@ -37,9 +38,13 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       {/* Top brand bar */}
       <div className="relative z-10 mx-auto flex max-w-7xl items-center justify-between px-6 pt-6">
         <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500">
-            <Activity className="h-4 w-4 text-white" />
-          </div>
+          <Image
+            src="/Logo.png"
+            alt="MedTech"
+            width={36}
+            height={36}
+            className="rounded-lg mix-blend-lighten"
+          />
           <span className="text-base font-bold tracking-tight">MedTech</span>
           <span className="ml-2 text-xs text-white/40">Македонија</span>
         </Link>
