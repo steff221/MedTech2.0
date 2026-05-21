@@ -32,7 +32,7 @@ export function DoctorSidebar() {
         href="/doctor/schedule"
         className="flex h-16 items-center gap-2 border-b border-slate-200 px-6"
       >
-        <Image src="/Logo.png" alt="MedTech" width={32} height={32} className="rounded-lg" />
+        <Image src="/Logo-removebg-preview.png" alt="MedTech" width={36} height={36} />
         <p className="text-base font-semibold text-slate-900">MedTech</p>
       </Link>
 
