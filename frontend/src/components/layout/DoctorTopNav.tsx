@@ -5,7 +5,6 @@ import Image from "next/image";
 import {
   Calendar,
   ClipboardList,
-  FileSpreadsheet,
   FileText,
   LogOut,
   Menu,
@@ -39,7 +38,6 @@ const NAV: NavItem[] = [
   { labelKey: "patients",       href: "/doctor/patients",            icon: Users           },
   { labelKey: "operations",     href: "/doctor/operations",          icon: Scissors        },
   { labelKey: "medicalJournal", href: "/doctor/medical-journal",     icon: Notebook        },
-  { labelKey: "reports",        href: "/doctor/individual-reports",  icon: FileSpreadsheet },
   { labelKey: "mkb10",          href: "/doctor/mkb10",               icon: ShieldPlus      },
   { labelKey: "guidelines",     href: "/doctor/guidelines",          icon: FileText        },
   { labelKey: "settings",       href: "/doctor/settings",            icon: Wrench          },
