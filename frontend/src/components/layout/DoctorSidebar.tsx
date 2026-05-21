@@ -2,13 +2,13 @@
 
 import { motion } from "framer-motion";
 import {
-  Activity,
   CalendarDays,
   LayoutDashboard,
   Pill,
   Settings,
   Users,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useT } from "@/hooks/useT";
@@ -32,9 +32,7 @@ export function DoctorSidebar() {
         href="/doctor/schedule"
         className="flex h-16 items-center gap-2 border-b border-slate-200 px-6"
       >
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500 text-white">
-          <Activity className="h-4 w-4" />
-        </div>
+        <Image src="/Logo.png" alt="MedTech" width={32} height={32} className="rounded-lg" />
         <p className="text-base font-semibold text-slate-900">MedTech</p>
       </Link>
 

@@ -1,8 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import {
-  Activity,
   Calendar,
   ClipboardList,
   FileSpreadsheet,
@@ -56,9 +56,7 @@ export function DoctorTopNav() {
       {/* Brand bar */}
       <div className="flex h-12 items-center justify-between border-b border-slate-100 bg-slate-50/50 px-6">
         <Link href="/doctor" className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-emerald-500 text-white">
-            <Activity className="h-3.5 w-3.5" />
-          </div>
+          <Image src="/Logo.png" alt="MedTech" width={28} height={28} className="rounded-md" />
           <span className="text-sm font-bold text-slate-900">MedTech</span>
           <span className="text-xs font-medium text-slate-400">· {t.doctorNav.portal}</span>
         </Link>

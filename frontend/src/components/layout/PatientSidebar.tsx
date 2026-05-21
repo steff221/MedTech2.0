@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Activity, Bell, Calendar, FileText, LayoutDashboard, Pill, Stethoscope, User } from "lucide-react";
+import { Bell, Calendar, FileText, LayoutDashboard, Pill, Stethoscope, User } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useT } from "@/hooks/useT";
@@ -24,9 +25,7 @@ export function PatientSidebar() {
   return (
     <aside className="hidden w-64 shrink-0 border-r border-slate-200 bg-white lg:flex lg:flex-col">
       <Link href="/dashboard" className="flex h-16 items-center gap-2 border-b border-slate-200 px-6">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-white">
-          <Activity className="h-4 w-4" />
-        </div>
+        <Image src="/Logo.png" alt="MedTech" width={32} height={32} className="rounded-lg" />
         <span className="text-lg font-semibold text-slate-900">MedTech</span>
       </Link>
 

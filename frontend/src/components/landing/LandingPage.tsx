@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Activity, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
@@ -59,9 +60,7 @@ export function LandingPage() {
         {/* Top bar */}
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500">
-              <Activity className="h-4 w-4 text-white" />
-            </div>
+            <Image src="/Logo.png" alt="MedTech" width={32} height={32} className="rounded-lg" />
             <span className="text-base font-bold tracking-tight">MedTech</span>
             <span className="ml-2 text-xs text-white/40">
               Македонија
