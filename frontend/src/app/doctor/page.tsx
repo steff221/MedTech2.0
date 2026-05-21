@@ -93,7 +93,7 @@ export default function DoctorHomePage() {
           variants={{ visible: { transition: { staggerChildren: 0.07 } } }}
           initial="hidden"
           animate="visible"
-          className="grid grid-cols-2 gap-4 md:grid-cols-3"
+          className="grid grid-cols-2 gap-4 md:grid-cols-4"
         >
           {PRIMARY.map((tile) => (
             <TileLink key={tile.label} tile={tile} />
@@ -137,7 +137,7 @@ function TileLink({ tile, small }: { tile: Tile; small?: boolean }) {
   };
 
   return (
-    <motion.div variants={item} className={tile.featured ? "md:col-span-2" : undefined}>
+    <motion.div variants={item}>
       <Link href={tile.href}>
         <motion.div
           whileHover={{ y: -4, scale: 1.01 }}

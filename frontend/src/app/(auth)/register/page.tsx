@@ -1,11 +1,14 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Input } from "@/components/common/Input";
 import { useAuth } from "@/hooks/useAuth";
+import { useT } from "@/hooks/useT";
 
 const passwordRule = z
   .string()
@@ -31,6 +34,8 @@ const DARK_INPUT =
 
 export default function RegisterPage() {
   const { register: registerUser } = useAuth();
+  const t = useT();
+  const [showPwd, setShowPwd] = useState(false);
   const {
     register,
     handleSubmit,
@@ -60,7 +65,7 @@ export default function RegisterPage() {
       <h1 className="text-3xl font-bold tracking-tight text-white">
         Создај профил
       </h1>
-      <p className="mt-1.5 text-sm text-white/50">
+      <p className="mt-1.5 text-sm text-white/60">
         Закажи прегледи и управувај со твојата здравствена историја.
       </p>
 
@@ -107,13 +112,23 @@ export default function RegisterPage() {
           error={errors.password?.message}
           hint="12+ карактери · голема · мала · цифра · симбол"
         >
-          <Input
-            type="password"
-            autoComplete="new-password"
-            {...register("password")}
-            error={errors.password?.message}
-            className={DARK_INPUT}
-          />
+          <div className="relative">
+            <Input
+              type={showPwd ? "text" : "password"}
+              autoComplete="new-password"
+              {...register("password")}
+              error={errors.password?.message}
+              className={`${DARK_INPUT} pr-10`}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPwd((v) => !v)}
+              aria-label={showPwd ? t.auth.hidePassword : t.auth.showPassword}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 transition-colors hover:text-white/80"
+            >
+              {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
         </Field>
 
         <button
@@ -132,7 +147,7 @@ export default function RegisterPage() {
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-white/50">
+      <p className="mt-6 text-center text-sm text-white/60">
         Веќе имаш профил?{" "}
         <Link
           href="/login"
@@ -157,11 +172,11 @@ function Field({
 }) {
   return (
     <div>
-      <label className="mb-1.5 block text-sm font-medium text-white/60">
+      <label className="mb-1.5 block text-sm font-medium text-white/70">
         {label}
       </label>
       {children}
-      {hint && <p className="mt-1 text-xs text-white/30">{hint}</p>}
+      {hint && <p className="mt-1 text-xs text-white/50">{hint}</p>}
     </div>
   );
 }

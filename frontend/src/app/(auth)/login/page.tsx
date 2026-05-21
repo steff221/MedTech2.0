@@ -1,11 +1,15 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
 import { z } from "zod";
 import { Input } from "@/components/common/Input";
 import { useAuth } from "@/hooks/useAuth";
+import { useT } from "@/hooks/useT";
 
 const schema = z.object({
   email: z.string().email("Внеси валидна е-пошта"),
@@ -19,6 +23,8 @@ const DARK_INPUT =
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const t = useT();
+  const [showPwd, setShowPwd] = useState(false);
   const {
     register,
     handleSubmit,
@@ -41,13 +47,13 @@ export default function LoginPage() {
       <h1 className="text-3xl font-bold tracking-tight text-white">
         Добредојде назад
       </h1>
-      <p className="mt-1.5 text-sm text-white/50">
+      <p className="mt-1.5 text-sm text-white/60">
         Пристапи до твојот здравствен профил.
       </p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="mt-7 space-y-4">
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-white/60">
+          <label className="mb-1.5 block text-sm font-medium text-white/70">
             Е-пошта
           </label>
           <Input
@@ -61,21 +67,35 @@ export default function LoginPage() {
         </div>
         <div>
           <div className="mb-1.5 flex items-center justify-between">
-            <label className="block text-sm font-medium text-white/60">
+            <label className="block text-sm font-medium text-white/70">
               Лозинка
             </label>
-            <span className="text-xs text-white/30">
-              Заборавена лозинка? Контактирај администратор
-            </span>
+            <button
+              type="button"
+              onClick={() => toast(t.auth.forgotPasswordToast, { icon: "ℹ️" })}
+              className="text-xs text-white/50 transition-colors hover:text-white/80"
+            >
+              {t.auth.forgotPassword}
+            </button>
           </div>
-          <Input
-            type="password"
-            autoComplete="current-password"
-            placeholder="••••••••"
-            {...register("password")}
-            error={errors.password?.message}
-            className={DARK_INPUT}
-          />
+          <div className="relative">
+            <Input
+              type={showPwd ? "text" : "password"}
+              autoComplete="current-password"
+              placeholder="••••••••"
+              {...register("password")}
+              error={errors.password?.message}
+              className={`${DARK_INPUT} pr-10`}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPwd((v) => !v)}
+              aria-label={showPwd ? t.auth.hidePassword : t.auth.showPassword}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 transition-colors hover:text-white/80"
+            >
+              {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
         </div>
 
         <button
@@ -94,7 +114,7 @@ export default function LoginPage() {
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-white/50">
+      <p className="mt-6 text-center text-sm text-white/60">
         Немаш профил?{" "}
         <Link
           href="/register"
