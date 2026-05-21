@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { MobilePatientNav } from "@/components/layout/MobilePatientNav";
 import { PatientSidebar } from "@/components/layout/PatientSidebar";
 import { Topbar } from "@/components/layout/Topbar";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
@@ -34,10 +35,11 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
       <PatientSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar />
-        <main className="flex-1 overflow-y-auto bg-slate-50 px-6 py-8 md:px-10">
+        <main className="flex-1 overflow-y-auto bg-slate-50 px-6 py-8 pb-20 md:px-10 lg:pb-8">
           <ErrorBoundary>{children}</ErrorBoundary>
         </main>
       </div>
+      <MobilePatientNav />
     </div>
   );
 }

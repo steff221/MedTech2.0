@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Calendar, FileText, Pill, Stethoscope, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { useT } from "@/hooks/useT";
 
 interface Tile {
   label: string;
@@ -41,31 +42,33 @@ function CountUp({ to, durationMs = 1200 }: { to: number; durationMs?: number })
 }
 
 export function QuickActionTiles({ upcomingCount }: QuickActionTilesProps) {
+  const t = useT();
+
   const tiles: Tile[] = [
     {
-      label: "My appointments",
+      label: t.nav.appointments,
       value: upcomingCount,
       icon: Calendar,
       href: "/appointments",
       iconBg: "bg-sky-500",
     },
     {
-      label: "Health records",
-      value: "View",
+      label: t.nav.healthRecords,
+      value: t.common.view,
       icon: FileText,
       href: "/health-records",
       iconBg: "bg-emerald-500",
     },
     {
-      label: "Prescriptions",
-      value: "View",
+      label: t.nav.prescriptions,
+      value: t.common.view,
       icon: Pill,
       href: "/prescriptions",
       iconBg: "bg-violet-500",
     },
     {
-      label: "Find a doctor",
-      value: "Search",
+      label: t.nav.findDoctor,
+      value: t.common.search,
       icon: Stethoscope,
       href: "/doctors",
       iconBg: "bg-amber-500",
@@ -93,7 +96,7 @@ export function QuickActionTiles({ upcomingCount }: QuickActionTilesProps) {
       className="grid grid-cols-2 gap-4 md:grid-cols-4"
     >
       {tiles.map((tile) => (
-        <motion.div key={tile.label} variants={item}>
+        <motion.div key={tile.href} variants={item}>
           <Link href={tile.href}>
             <motion.div
               whileHover={{ y: -4, scale: 1.01 }}

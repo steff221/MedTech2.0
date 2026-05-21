@@ -24,6 +24,7 @@ const mk = {
     suspended: "Суспендиран",
     new: "Нов",
     language: "Јазик",
+    view: "Прикажи",
   },
 
   // ── Patient nav ───────────────────────────────────────────────────────────
@@ -166,6 +167,23 @@ const mk = {
     title:   "Здравствени записи",
     subtitle: "Медицинска историја и наоди.",
   },
+
+  // ── Appointment status labels ─────────────────────────────────────────────
+  apptStatus: {
+    SCHEDULED:   "Закажан",
+    RESCHEDULED: "Преместен",
+    COMPLETED:   "Завршен",
+    CANCELLED:   "Откажан",
+    NO_SHOW:     "Отсутен",
+  },
+
+  // ── Auth ──────────────────────────────────────────────────────────────────
+  auth: {
+    forgotPassword:      "Заборавена лозинка?",
+    forgotPasswordToast: "Контактирајте го вашиот администратор за ресетирање на лозинката.",
+    showPassword:        "Прикажи лозинка",
+    hidePassword:        "Сокриј лозинка",
+  },
 };
 
 const en: typeof mk = {
@@ -191,6 +209,7 @@ const en: typeof mk = {
     suspended: "Suspended",
     new: "New",
     language: "Language",
+    view: "View",
   },
 
   nav: {
@@ -322,6 +341,21 @@ const en: typeof mk = {
   healthRecords: {
     title:    "Health records",
     subtitle: "Medical history and findings.",
+  },
+
+  apptStatus: {
+    SCHEDULED:   "Scheduled",
+    RESCHEDULED: "Rescheduled",
+    COMPLETED:   "Completed",
+    CANCELLED:   "Cancelled",
+    NO_SHOW:     "No show",
+  },
+
+  auth: {
+    forgotPassword:      "Forgot password?",
+    forgotPasswordToast: "Contact your administrator to reset your password.",
+    showPassword:        "Show password",
+    hidePassword:        "Hide password",
   },
 };
 

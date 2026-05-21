@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Calendar, Clock, Hospital, MapPin, X } from "lucide-react";
+import { Calendar, ChevronDown, Clock, Hospital, MapPin, X } from "lucide-react";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
@@ -10,6 +10,7 @@ import { Button } from "@/components/common/Button";
 import { appointmentService } from "@/services/appointment.service";
 import { extractErrorMessage } from "@/services/api";
 import { formatDate, formatTime, initials } from "@/utils/format";
+import { useT } from "@/hooks/useT";
 import type { AppointmentResponse } from "@/types/api";
 
 interface AppointmentCardProps {
@@ -19,6 +20,7 @@ interface AppointmentCardProps {
 export function AppointmentCard({ appointment }: AppointmentCardProps) {
   const [expanded, setExpanded] = useState(false);
   const qc = useQueryClient();
+  const t = useT();
   const isTerminal =
     appointment.status === "CANCELLED" ||
     appointment.status === "COMPLETED" ||
@@ -27,7 +29,7 @@ export function AppointmentCard({ appointment }: AppointmentCardProps) {
   const cancelMutation = useMutation({
     mutationFn: () => appointmentService.cancel(appointment.id, "Cancelled by patient"),
     onSuccess: () => {
-      toast.success("Appointment cancelled");
+      toast.success(t.appointments.cancelBtn);
       qc.invalidateQueries({ queryKey: ["appointments"] });
     },
     onError: (err) => toast.error(extractErrorMessage(err)),
@@ -36,17 +38,23 @@ export function AppointmentCard({ appointment }: AppointmentCardProps) {
   const [firstName, ...rest] = appointment.doctorName.split(" ");
   const lastName = rest.join(" ") || "";
 
+  const statusLabel =
+    t.apptStatus[appointment.status as keyof typeof t.apptStatus] ?? appointment.status;
+
   return (
     <motion.div
       layout
       whileHover={{ y: -2 }}
       transition={{ duration: 0.2 }}
-      className="overflow-hidden rounded-2xl border-l-4 border-l-brand-500 border border-slate-200 bg-white shadow-card"
+      className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card"
     >
+      {/* Left accent bar */}
+      <div className="absolute inset-y-0 left-0 w-1 rounded-l-2xl bg-brand-500" />
+
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="flex w-full items-start justify-between gap-4 p-5 text-left"
+        className="flex w-full items-start justify-between gap-4 pl-5 pr-5 pt-5 pb-5 text-left"
       >
         <div className="flex flex-1 items-start gap-4">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700">
@@ -55,7 +63,7 @@ export function AppointmentCard({ appointment }: AppointmentCardProps) {
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="font-semibold text-slate-900">{appointment.doctorName}</h3>
-              <Badge tone={appointmentStatusTone(appointment.status)}>{appointment.status}</Badge>
+              <Badge tone={appointmentStatusTone(appointment.status)}>{statusLabel}</Badge>
             </div>
             {appointment.doctorSpecialization && (
               <p className="text-sm text-slate-500">{appointment.doctorSpecialization}</p>
@@ -72,6 +80,11 @@ export function AppointmentCard({ appointment }: AppointmentCardProps) {
             </div>
           </div>
         </div>
+        <ChevronDown
+          className={`mt-1 h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 ${
+            expanded ? "rotate-180" : ""
+          }`}
+        />
       </button>
 
       <AnimatePresence initial={false}>
@@ -105,7 +118,7 @@ export function AppointmentCard({ appointment }: AppointmentCardProps) {
                     onClick={() => cancelMutation.mutate()}
                   >
                     <X className="h-3.5 w-3.5" />
-                    Cancel appointment
+                    {t.appointments.cancelBtn}
                   </Button>
                 </div>
               )}
