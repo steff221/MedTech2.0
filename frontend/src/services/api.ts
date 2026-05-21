@@ -5,6 +5,7 @@ import type { ApiError, AuthResponse } from "@/types/api";
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api",
   timeout: 15000,
+  withCredentials: true, // send the httpOnly refresh_token cookie on every request
 });
 
 // ---------------------------------------------------------------------------
@@ -31,18 +32,17 @@ type RetryConfig = InternalAxiosRequestConfig & { _retried?: boolean };
 let inflightRefresh: Promise<string | null> | null = null;
 
 async function refreshAccessToken(): Promise<string | null> {
-  const { refreshToken, setAuth } = useAuthStore.getState();
-  if (!refreshToken) return null;
+  const { setAuth } = useAuthStore.getState();
 
   try {
     // Direct axios call (not `api`) — we don't want to recurse through this
-    // interceptor for the refresh itself.
+    // interceptor for the refresh itself. The httpOnly cookie is sent automatically.
     const res = await axios.post<AuthResponse>(
       `${api.defaults.baseURL}/auth/refresh`,
-      { refreshToken },
-      { timeout: 10000 },
+      null,
+      { timeout: 10000, withCredentials: true },
     );
-    setAuth(res.data.user, res.data.accessToken, res.data.refreshToken);
+    setAuth(res.data.user, res.data.accessToken);
     return res.data.accessToken;
   } catch {
     return null;
