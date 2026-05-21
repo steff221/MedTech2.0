@@ -21,6 +21,7 @@ medtech:
   security:
     jwt:
       secret: ${MEDTECH_SECURITY_JWT_SECRET}
+    cookie-secure: true
     cors:
       allowed-origins:
         - https://medtech.mk
