@@ -71,12 +71,14 @@ medtech:
       access-token-ttl-minutes: 60
       refresh-token-ttl-days: 7
       issuer: medtech-backend
+    # Refresh-token cookie Secure flag: false for dev (HTTP), true in prod profile.
+    cookie-secure: false
     cors:
       allowed-origins:
         - http://localhost:3000
         - http://localhost:5173
       allowed-methods: [GET, POST, PUT, PATCH, DELETE, OPTIONS]
-      allowed-headers: ["*"]
+      allowed-headers: [Authorization, Content-Type, X-Requested-With, Accept, Origin]
       exposed-headers: [Authorization]
       allow-credentials: true
       max-age-seconds: 3600

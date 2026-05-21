@@ -17,13 +17,50 @@ import java.util.List;
 @Repository
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
 
-    Page<Appointment> findByPatientId(Long patientId, Pageable pageable);
+    @Query("""
+           SELECT a FROM Appointment a
+           JOIN FETCH a.patient
+           JOIN FETCH a.doctor
+           WHERE a.patient.id = :patientId
+           """)
+    Page<Appointment> findByPatientId(@Param("patientId") Long patientId, Pageable pageable);
 
-    Page<Appointment> findByDoctorIdAndAppointmentDate(Long doctorId, LocalDate date, Pageable pageable);
+    @Query("""
+           SELECT a FROM Appointment a
+           JOIN FETCH a.patient
+           JOIN FETCH a.doctor
+           WHERE a.doctor.id = :doctorId
+             AND a.appointmentDate = :date
+           """)
+    Page<Appointment> findByDoctorIdAndAppointmentDate(
+            @Param("doctorId") Long doctorId,
+            @Param("date") LocalDate date,
+            Pageable pageable);
 
-    Page<Appointment> findByDoctorIdAndStatus(Long doctorId, AppointmentStatus status, Pageable pageable);
+    @Query("""
+           SELECT a FROM Appointment a
+           JOIN FETCH a.patient
+           JOIN FETCH a.doctor
+           WHERE a.doctor.id = :doctorId
+             AND a.status = :status
+           """)
+    Page<Appointment> findByDoctorIdAndStatus(
+            @Param("doctorId") Long doctorId,
+            @Param("status") AppointmentStatus status,
+            Pageable pageable);
 
-    Page<Appointment> findByDoctorIdAndAppointmentDateBetween(Long doctorId, LocalDate from, LocalDate to, Pageable pageable);
+    @Query("""
+           SELECT a FROM Appointment a
+           JOIN FETCH a.patient
+           JOIN FETCH a.doctor
+           WHERE a.doctor.id = :doctorId
+             AND a.appointmentDate BETWEEN :from AND :to
+           """)
+    Page<Appointment> findByDoctorIdAndAppointmentDateBetween(
+            @Param("doctorId") Long doctorId,
+            @Param("from") LocalDate from,
+            @Param("to") LocalDate to,
+            Pageable pageable);
 
     /**
      * Returns same-day appointments for a doctor that overlap the proposed slot.

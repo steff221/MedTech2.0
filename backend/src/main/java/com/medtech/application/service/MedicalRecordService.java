@@ -28,18 +28,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 
-/**
- * SOAP-shaped medical-record lifecycle.
- *
- * <p>Business rules (system prompt, §"Medical Records"):
- * <ul>
- *   <li>Only the doctor associated with the appointment (or any doctor when no
- *       appointment is supplied) can create the record.</li>
- *   <li>Records become immutable after 7 days (regulatory anti-tampering).</li>
- *   <li>Confidentiality flag is set at creation time; toggle requires special
- *       permission (Phase 5 — currently rejected post-creation).</li>
- * </ul>
- */
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
