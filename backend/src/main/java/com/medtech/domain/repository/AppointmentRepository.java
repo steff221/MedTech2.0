@@ -23,6 +23,8 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
     Page<Appointment> findByDoctorIdAndStatus(Long doctorId, AppointmentStatus status, Pageable pageable);
 
+    Page<Appointment> findByDoctorIdAndAppointmentDateBetween(Long doctorId, LocalDate from, LocalDate to, Pageable pageable);
+
     /**
      * Returns same-day appointments for a doctor that overlap the proposed slot.
      * Pessimistically locked to prevent two patients booking the identical slot

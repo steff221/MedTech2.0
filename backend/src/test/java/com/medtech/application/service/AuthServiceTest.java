@@ -3,12 +3,15 @@ package com.medtech.application.service;
 import com.medtech.application.dto.request.LoginRequest;
 import com.medtech.application.dto.request.RegisterRequest;
 import com.medtech.application.dto.response.AuthResponse;
+import com.medtech.domain.entity.RefreshToken;
 import com.medtech.domain.entity.User;
+import com.medtech.domain.repository.RefreshTokenRepository;
 import com.medtech.domain.repository.UserRepository;
 import com.medtech.domain.vo.UserRole;
 import com.medtech.domain.vo.UserStatus;
 import com.medtech.infrastructure.exception.AppException;
 import com.medtech.infrastructure.exception.ConflictException;
+import com.medtech.infrastructure.security.JwtProperties;
 import com.medtech.infrastructure.security.JwtTokenProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,8 +33,10 @@ import static org.mockito.Mockito.when;
 class AuthServiceTest {
 
     @Mock private UserRepository userRepository;
+    @Mock private RefreshTokenRepository refreshTokenRepository;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private JwtTokenProvider tokenProvider;
+    @Mock private JwtProperties jwtProperties;
 
     @InjectMocks private AuthService authService;
 
@@ -70,6 +75,8 @@ class AuthServiceTest {
         when(tokenProvider.issueAccessToken(any())).thenReturn("access");
         when(tokenProvider.issueRefreshToken(any())).thenReturn("refresh");
         when(tokenProvider.accessTokenTtlSeconds()).thenReturn(3600L);
+        when(jwtProperties.refreshTokenTtlDays()).thenReturn(7L);
+        when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(inv -> inv.getArgument(0));
 
         AuthResponse response = authService.register(validRegister);
 

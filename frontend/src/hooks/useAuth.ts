@@ -15,7 +15,7 @@ function homeFor(role: UserRole): string {
 
 export function useAuth() {
   const router = useRouter();
-  const { user, accessToken, isHydrated, setAuth, logout: clearAuth } = useAuthStore();
+  const { user, accessToken, refreshToken, isHydrated, setAuth, logout: clearAuth } = useAuthStore();
 
   const login = useCallback(
     async (body: LoginRequest) => {
@@ -51,13 +51,13 @@ export function useAuth() {
 
   const logout = useCallback(async () => {
     try {
-      await authService.logout();
+      if (refreshToken) await authService.logout(refreshToken);
     } catch {
-      // stateless JWT — failure to call /logout is fine, we still clear locally
+      // best-effort — always clear locally even if the server call fails
     }
     clearAuth();
     router.push("/login");
-  }, [router, clearAuth]);
+  }, [router, clearAuth, refreshToken]);
 
   return {
     user,
