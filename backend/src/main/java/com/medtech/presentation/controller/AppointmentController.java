@@ -64,6 +64,18 @@ public class AppointmentController {
                 appointmentService.listForDoctorOn(doctorId, date, pageable).map(mapper::toResponse));
     }
 
+    @GetMapping("/doctor/{doctorId}/range")
+    @PreAuthorize("hasAnyRole('DOCTOR', 'NURSE')")
+    @Operation(summary = "List a doctor's appointments within a date range")
+    public ResponseEntity<Page<AppointmentResponse>> byDoctorInRange(
+            @PathVariable Long doctorId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            Pageable pageable) {
+        return ResponseEntity.ok(
+                appointmentService.listForDoctorInRange(doctorId, from, to, pageable).map(mapper::toResponse));
+    }
+
     @PutMapping("/{id}/reschedule")
     @PreAuthorize("hasAnyRole('PATIENT', 'DOCTOR', 'NURSE')")
     @Operation(summary = "Move an appointment to a new date / time")

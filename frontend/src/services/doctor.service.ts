@@ -40,4 +40,11 @@ export const doctorService = {
         params: { date: isoDate, page, size, sort: "appointmentTime,asc" },
       })
       .then((r) => r.data),
+
+  appointmentsInRange: (doctorId: number, from: string, to: string, size = 500) =>
+    api
+      .get<Page<AppointmentResponse>>(`/appointments/doctor/${doctorId}/range`, {
+        params: { from, to, page: 0, size, sort: "appointmentDate,asc" },
+      })
+      .then((r) => r.data),
 };

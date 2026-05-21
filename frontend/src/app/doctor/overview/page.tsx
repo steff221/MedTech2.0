@@ -6,10 +6,12 @@ import { useQuery } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { PageBanner } from "@/components/layout/PageBanner";
 import { Skeleton } from "@/components/common/Skeleton";
+import { useT } from "@/hooks/useT";
 import { statsService } from "@/services/stats.service";
 import { BarChart } from "@/components/landing/BarChart";
 
 export default function DoctorOverviewPage() {
+  const t = useT();
   const { data, isLoading } = useQuery({
     queryKey: ["stats", "overview"],
     queryFn: () => statsService.overview(),
@@ -17,18 +19,17 @@ export default function DoctorOverviewPage() {
   });
 
   const stats = [
-    { label: "Рецепти денес",    value: data?.prescriptionsToday ?? 0, icon: ClipboardList, color: "bg-emerald-50 text-emerald-600" },
-    { label: "Упати денес",      value: data?.referralsToday ?? 0,     icon: Activity,      color: "bg-sky-50 text-sky-600"         },
-    { label: "Активни пациенти", value: data?.activePatients ?? 0,     icon: Users,         color: "bg-violet-50 text-violet-600"   },
-    { label: "Активни лекари",   value: data?.activeDoctors ?? 0,      icon: Calendar,      color: "bg-amber-50 text-amber-600"     },
+    { label: t.doctorOverview.prescriptionsToday, value: data?.prescriptionsToday ?? 0, icon: ClipboardList, color: "bg-emerald-50 text-emerald-600" },
+    { label: t.doctorOverview.referralsToday,     value: data?.referralsToday ?? 0,     icon: Activity,      color: "bg-sky-50 text-sky-600"         },
+    { label: t.doctorOverview.activePatients,     value: data?.activePatients ?? 0,     icon: Users,         color: "bg-violet-50 text-violet-600"   },
+    { label: t.doctorOverview.activeDoctors,      value: data?.activeDoctors ?? 0,      icon: Calendar,      color: "bg-amber-50 text-amber-600"     },
   ];
 
   return (
     <>
-      <PageBanner title="Преглед" breadcrumb={[{ label: "Преглед" }]} />
+      <PageBanner title={t.doctorOverview.title} breadcrumb={[{ label: t.doctorOverview.title }]} />
 
       <div className="mx-auto max-w-7xl space-y-6 px-6 py-6">
-        {/* KPI row */}
         <motion.div
           className="grid grid-cols-2 gap-4 md:grid-cols-4"
           variants={{ visible: { transition: { staggerChildren: 0.07 } } }}
@@ -54,7 +55,6 @@ export default function DoctorOverviewPage() {
           ))}
         </motion.div>
 
-        {/* Charts */}
         {isLoading ? (
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
             <Skeleton className="h-72" />
@@ -68,8 +68,8 @@ export default function DoctorOverviewPage() {
             className="grid grid-cols-1 gap-5 lg:grid-cols-2"
           >
             <BarChart
-              title="Закажувања по болница"
-              subtitle="Последни 30 дена"
+              title={t.doctorOverview.appointmentsByHospital}
+              subtitle={t.doctorOverview.last30days}
               orientation="horizontal"
               gradient={["#10b981", "#2dd4bf"]}
               data={(data?.appointmentsByHospital ?? []).map((h) => ({
@@ -79,8 +79,8 @@ export default function DoctorOverviewPage() {
               }))}
             />
             <BarChart
-              title="Издадени рецепти"
-              subtitle="Последни 7 дена"
+              title={t.doctorOverview.prescriptionsByDay}
+              subtitle={t.doctorOverview.last7days}
               orientation="vertical"
               gradient={["#34d399", "#22d3ee"]}
               data={(data?.prescriptionsByDay ?? []).map((d) => ({

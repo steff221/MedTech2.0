@@ -23,6 +23,12 @@ spring:
       idle-timeout: 600000
       max-lifetime: 1800000
       pool-name: MedTechHikariPool
+  flyway:
+    locations: classpath:database
+    baseline-on-migrate: true
+    baseline-version: 1
+    validate-on-migrate: true
+    out-of-order: false
   jpa:
     open-in-view: false
     hibernate:

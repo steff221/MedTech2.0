@@ -1,0 +1,11 @@
+User-agent: *
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /appointments
+Disallow: /health-records
+Disallow: /prescriptions
+Disallow: /notifications
+Disallow: /profile
+Disallow: /doctor/
+
+Allow: /

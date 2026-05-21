@@ -1,6 +1,7 @@
 package com.medtech.presentation.controller;
 
 import com.medtech.application.dto.request.LoginRequest;
+import com.medtech.application.dto.request.LogoutRequest;
 import com.medtech.application.dto.request.RefreshTokenRequest;
 import com.medtech.application.dto.request.RegisterRequest;
 import com.medtech.application.dto.response.AuthResponse;
@@ -45,10 +46,9 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    @Operation(summary = "Client-side logout (stateless JWT — discard tokens on the client)")
-    public ResponseEntity<Void> logout() {
-        // With stateless JWT there is no server-side session to invalidate.
-        // A future revocation list (Redis) will hook in here.
+    @Operation(summary = "Revoke the supplied refresh token so it cannot be reused")
+    public ResponseEntity<Void> logout(@Valid @RequestBody LogoutRequest request) {
+        authService.logout(request);
         return ResponseEntity.noContent().build();
     }
 }

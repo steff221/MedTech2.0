@@ -11,5 +11,6 @@ export const authService = {
   refresh: (refreshToken: string) =>
     api.post<AuthResponse>("/auth/refresh", { refreshToken }).then((r) => r.data),
 
-  logout: () => api.post<void>("/auth/logout").then((r) => r.data),
+  logout: (refreshToken: string) =>
+    api.post<void>("/auth/logout", { refreshToken }).then((r) => r.data),
 };

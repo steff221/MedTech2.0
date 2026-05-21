@@ -29,6 +29,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Appointment lifecycle: booking, rescheduling, cancellation, completion.
@@ -64,9 +65,9 @@ public class AppointmentService {
                     "Appointment date cannot be in the past");
         }
 
-        Patient patient = patientRepository.findById(req.patientId())
+        Patient patient = patientRepository.findById(Objects.requireNonNull(req.patientId()))
                 .orElseThrow(() -> ResourceNotFoundException.of("Patient", req.patientId()));
-        Doctor doctor = doctorRepository.findById(req.doctorId())
+        Doctor doctor = doctorRepository.findById(Objects.requireNonNull(req.doctorId()))
                 .orElseThrow(() -> ResourceNotFoundException.of("Doctor", req.doctorId()));
 
         // Pessimistic lock on existing same-slot rows to prevent the classic
@@ -164,7 +165,7 @@ public class AppointmentService {
     }
 
     public Appointment getById(Long id) {
-        return appointmentRepository.findById(id)
+        return appointmentRepository.findById(Objects.requireNonNull(id))
                 .orElseThrow(() -> ResourceNotFoundException.of("Appointment", id));
     }
 
@@ -174,6 +175,10 @@ public class AppointmentService {
 
     public Page<Appointment> listForDoctorOn(Long doctorId, LocalDate date, Pageable pageable) {
         return appointmentRepository.findByDoctorIdAndAppointmentDate(doctorId, date, pageable);
+    }
+
+    public Page<Appointment> listForDoctorInRange(Long doctorId, LocalDate from, LocalDate to, Pageable pageable) {
+        return appointmentRepository.findByDoctorIdAndAppointmentDateBetween(doctorId, from, to, pageable);
     }
 
     private static void rejectIfTerminal(Appointment appt) {
