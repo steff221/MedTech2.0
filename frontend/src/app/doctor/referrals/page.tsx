@@ -1,82 +1,243 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Calendar, Filter, Plus, Search } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Calendar, CheckCircle2, Filter, Plus, Search, XCircle } from "lucide-react";
 import { useState } from "react";
+import toast from "react-hot-toast";
 import { Badge } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
 import { Card } from "@/components/common/Card";
-import { EmptyState } from "@/components/common/EmptyState";
 import { Input } from "@/components/common/Input";
+import { Modal } from "@/components/common/Modal";
 import { PageBanner } from "@/components/layout/PageBanner";
+import { NewReferralForm, type ReferralRow } from "@/components/doctor/NewReferralForm";
+import { useT } from "@/hooks/useT";
 import { cn } from "@/utils/cn";
-
-const COLUMNS = [
-  "Креирано на",
-  "Закажана за",
-  "Се упатува кон",
-  "Пациент",
-  "Тип на упат",
-  "МКБ10 Дијагноза",
-  "Опис",
-  "Статус",
-  "Реализиран",
-  "Контрола",
-];
 
 const TYPES = ["Сите", "Општа медицина", "Специјалист", "Лабораторија", "Дијагностика", "Болница"];
 
+type StatusFilter = "Сите" | "active" | "completed" | "cancelled";
+
+const INITIAL_REFERRALS: ReferralRow[] = [
+  { id: "UP-2026-003", createdAt: "17.05.2026", scheduledDate: "20.05.2026", referredTo: "Кардиолог", patientName: "Марија Петровска",       referralType: "Специјалист", mkb10Code: "I10", description: "Контрола на тензија под специјалист",         status: "active" },
+  { id: "UP-2026-002", createdAt: "10.05.2026", scheduledDate: "15.05.2026", referredTo: "Лабораторија ЈЗУ", patientName: "Александар Стојановски", referralType: "Лабораторија", mkb10Code: "E11", description: "Крвна слика, HbA1c, липиден профил",          status: "completed", outcomeNote: "Резултатите примени. HbA1c: 8.1%, LDL 3.8.", outcomeDate: "16.05.2026" },
+  { id: "UP-2026-001", createdAt: "02.05.2026", scheduledDate: "08.05.2026", referredTo: "Ехографист", patientName: "Борче Димовски",         referralType: "Дијагностика", mkb10Code: "K80", description: "Ехографија на абдомен — холелитијаза",       status: "completed", outcomeNote: "Холелитијаза потврдена, упатен на хирургија.", outcomeDate: "09.05.2026" },
+];
+
 export default function ReferralsPage() {
+  const t = useT();
+
+  const STATUS_META: Record<ReferralRow["status"], { label: string; tone: "info" | "success" | "neutral" }> = {
+    active:    { label: t.doctorReferrals.statusActive,    tone: "info"    },
+    completed: { label: t.doctorReferrals.statusCompleted, tone: "success" },
+    cancelled: { label: t.doctorReferrals.statusCancelled, tone: "neutral" },
+  };
+
+  const COLUMNS = [
+    t.doctorReferrals.colCreatedAt,
+    t.doctorReferrals.colScheduledFor,
+    t.doctorReferrals.colReferredTo,
+    t.doctorReferrals.colPatient,
+    t.doctorReferrals.colType,
+    t.doctorReferrals.colMkb10,
+    t.doctorReferrals.colDescription,
+    t.doctorReferrals.colStatus,
+    "",
+  ];
+
+  const [formOpen, setFormOpen] = useState(false);
+  const [referrals, setReferrals] = useState<ReferralRow[]>(INITIAL_REFERRALS);
+
   const [type, setType] = useState("Сите");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("Сите");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [search, setSearch] = useState("");
+  const [pageSize, setPageSize] = useState(10);
+
+  // Outcome modal
+  const [outcomeTarget, setOutcomeTarget] = useState<ReferralRow | null>(null);
+  const [outcomeNote, setOutcomeNote] = useState("");
+  const [outcomeDate, setOutcomeDate] = useState(new Date().toISOString().slice(0, 10));
+
+  const filtered = referrals.filter((r) => {
+    if (type !== "Сите" && r.referralType !== type) return false;
+    if (statusFilter !== "Сите" && r.status !== statusFilter) return false;
+    if (
+      search &&
+      !r.patientName.toLowerCase().includes(search.toLowerCase()) &&
+      !r.referredTo.toLowerCase().includes(search.toLowerCase()) &&
+      !r.id.toLowerCase().includes(search.toLowerCase()) &&
+      !r.mkb10Code.toLowerCase().includes(search.toLowerCase())
+    )
+      return false;
+    return true;
+  });
+
+  const displayed = filtered.slice(0, pageSize);
+
+  const handleCreated = (row: ReferralRow) => {
+    setReferrals((prev) => [row, ...prev]);
+  };
+
+  const openOutcomeModal = (r: ReferralRow) => {
+    setOutcomeTarget(r);
+    setOutcomeNote("");
+    setOutcomeDate(new Date().toISOString().slice(0, 10));
+  };
+
+  const submitOutcome = () => {
+    if (!outcomeTarget) return;
+    const [y, m, d] = outcomeDate.split("-");
+    setReferrals((prev) =>
+      prev.map((r) =>
+        r.id === outcomeTarget.id
+          ? { ...r, status: "completed" as const, outcomeNote, outcomeDate: `${d}.${m}.${y}` }
+          : r,
+      ),
+    );
+    toast.success(t.doctorReferrals.outcomeSuccess);
+    setOutcomeTarget(null);
+  };
+
+  const cancelReferral = (id: string) => {
+    setReferrals((prev) => prev.map((r) => r.id === id ? { ...r, status: "cancelled" as const } : r));
+    toast.success(t.doctorReferrals.cancelSuccess);
+  };
+
+  // Stats
+  const activeCount    = referrals.filter((r) => r.status === "active").length;
+  const completedCount = referrals.filter((r) => r.status === "completed").length;
 
   return (
     <>
       <PageBanner
-        title="Издадени упати"
-        breadcrumb={[{ label: "Упати" }, { label: "Издадени упати" }]}
+        title={t.doctorNav.referrals}
+        breadcrumb={[{ label: t.doctorNav.referrals }]}
         actions={
-          <Button className="bg-white !text-emerald-700 hover:!bg-emerald-50">
-            <Plus className="h-4 w-4" /> Нов упат
+          <Button
+            className="bg-white !text-emerald-700 hover:!bg-emerald-50"
+            onClick={() => setFormOpen(true)}
+          >
+            <Plus className="h-4 w-4" /> {t.doctorReferrals.newBtn}
           </Button>
         }
       />
 
+      <NewReferralForm
+        open={formOpen}
+        onClose={() => setFormOpen(false)}
+        onCreated={handleCreated}
+        existingReferrals={referrals}
+      />
+
+      {/* Outcome modal */}
+      <Modal
+        open={!!outcomeTarget}
+        onClose={() => setOutcomeTarget(null)}
+        title={t.doctorReferrals.outcomeModalTitle}
+        description={outcomeTarget ? `${outcomeTarget.patientName} → ${outcomeTarget.referredTo}` : ""}
+        size="sm"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setOutcomeTarget(null)}>{t.common.cancel}</Button>
+            <Button onClick={submitOutcome}>{t.doctorReferrals.outcomeSubmit}</Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <Input
+            label={t.doctorReferrals.outcomeDate}
+            type="date"
+            value={outcomeDate}
+            onChange={(e) => setOutcomeDate(e.target.value)}
+          />
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
+              {t.doctorReferrals.outcomeNote}
+            </label>
+            <textarea
+              value={outcomeNote}
+              onChange={(e) => setOutcomeNote(e.target.value)}
+              rows={4}
+              placeholder="пр. Кардиолог потврди стабилна ангина, воведен нитрат…"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+            />
+          </div>
+        </div>
+      </Modal>
+
       <div className="mx-auto max-w-7xl px-6 py-6">
+        {/* Stats */}
+        <div className="mb-5 grid grid-cols-3 gap-4">
+          {[
+            { label: t.doctorReferrals.statsTotal,     value: referrals.length },
+            { label: t.doctorReferrals.statsActive,    value: activeCount       },
+            { label: t.doctorReferrals.statsCompleted, value: completedCount    },
+          ].map((s) => (
+            <div key={s.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-card">
+              <p className="text-xs text-slate-500">{s.label}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{s.value}</p>
+            </div>
+          ))}
+        </div>
+
         {/* Filter strip */}
         <Card>
           <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-            <Filter className="h-4 w-4" /> Филтри
+            <Filter className="h-4 w-4" /> {t.doctorReferrals.filterTitle}
           </div>
 
           <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4">
             <div>
-              <p className="mb-1.5 block text-sm font-medium text-slate-700">Тип на упат</p>
+              <p className="mb-1.5 text-sm font-medium text-slate-700">{t.doctorReferrals.filterType}</p>
               <div className="flex flex-wrap gap-1.5">
-                {TYPES.map((t) => (
+                {TYPES.map((typeKey) => (
                   <button
-                    key={t}
+                    key={typeKey}
                     type="button"
-                    onClick={() => setType(t)}
+                    onClick={() => setType(typeKey)}
                     className={cn(
                       "rounded-full border px-2.5 py-1 text-xs font-medium transition-all",
-                      type === t
+                      type === typeKey
                         ? "border-emerald-500 bg-emerald-500 text-white shadow-sm"
                         : "border-slate-200 bg-white text-slate-700 hover:border-emerald-300",
                     )}
                   >
-                    {t}
+                    {typeKey === "Сите" ? t.common.all : typeKey}
                   </button>
                 ))}
               </div>
             </div>
-            <Input label="Од датум" type="date" />
-            <Input label="До датум" type="date" />
             <div>
-              <p className="mb-1.5 block text-sm font-medium text-slate-700">Пребарување</p>
+              <p className="mb-1.5 text-sm font-medium text-slate-700">{t.doctorReferrals.filterStatus}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {(["Сите", "active", "completed", "cancelled"] as StatusFilter[]).map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setStatusFilter(s)}
+                    className={cn(
+                      "rounded-full border px-2.5 py-1 text-xs font-medium transition-all",
+                      statusFilter === s
+                        ? "border-emerald-500 bg-emerald-500 text-white shadow-sm"
+                        : "border-slate-200 bg-white text-slate-700 hover:border-emerald-300",
+                    )}
+                  >
+                    {s === "Сите" ? t.common.all : STATUS_META[s as ReferralRow["status"]].label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <Input label={t.doctorReferrals.filterDateFrom} type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+            <div>
+              <p className="mb-1.5 text-sm font-medium text-slate-700">{t.doctorReferrals.filterSearch}</p>
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
-                  placeholder="Име, Презиме, ЕМБГ, Бр.упат…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Пациент, специјалист, МКБ, бр.упат…"
                   className="w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-9 pr-3 text-sm placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
                 />
               </div>
@@ -84,11 +245,16 @@ export default function ReferralsPage() {
           </div>
 
           <div className="mt-4 flex justify-end">
-            <Button>Барај</Button>
+            <Button
+              variant="secondary"
+              onClick={() => { setType("Сите"); setStatusFilter("Сите"); setDateFrom(""); setDateTo(""); setSearch(""); }}
+            >
+              {t.doctorReferrals.filterReset}
+            </Button>
           </div>
         </Card>
 
-        {/* Results table */}
+        {/* Table */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -97,14 +263,18 @@ export default function ReferralsPage() {
         >
           <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-2.5">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
-              Резултати
+              {t.doctorReferrals.resultsLabel} ({filtered.length})
             </p>
             <div className="flex items-center gap-2 text-xs text-slate-500">
-              <span>Број на редици:</span>
-              <select className="rounded border border-slate-300 bg-white px-2 py-0.5 text-xs">
-                <option>10</option>
-                <option>25</option>
-                <option>50</option>
+              <span>{t.doctorReferrals.rowsLabel}</span>
+              <select
+                value={pageSize}
+                onChange={(e) => setPageSize(Number(e.target.value))}
+                className="rounded border border-slate-300 bg-white px-2 py-0.5 text-xs"
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
               </select>
             </div>
           </div>
@@ -121,37 +291,77 @@ export default function ReferralsPage() {
                 </tr>
               </thead>
               <tbody>
-                {/* Demo placeholder rows */}
-                {[1, 2, 3].map((i) => (
-                  <tr key={i} className="border-b border-slate-100 hover:bg-emerald-50/40">
-                    <td className="px-3 py-2 text-slate-700">
-                      <div className="flex items-center gap-1.5">
-                        <Calendar className="h-3 w-3 text-slate-400" />
-                        17.05.2026
-                      </div>
+                {displayed.map((r, i) => {
+                  const s = STATUS_META[r.status];
+                  return (
+                    <>
+                      <motion.tr
+                        key={r.id}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: i * 0.04 }}
+                        className="border-b border-slate-100 hover:bg-emerald-50/40"
+                      >
+                        <td className="px-3 py-2.5 text-slate-700">
+                          <div className="flex items-center gap-1.5">
+                            <Calendar className="h-3 w-3 text-slate-400" />
+                            {r.createdAt}
+                          </div>
+                        </td>
+                        <td className="px-3 py-2.5 text-slate-700">{r.scheduledDate}</td>
+                        <td className="px-3 py-2.5 font-medium text-slate-900">{r.referredTo}</td>
+                        <td className="px-3 py-2.5 text-slate-700">{r.patientName}</td>
+                        <td className="px-3 py-2.5 text-slate-700">{r.referralType}</td>
+                        <td className="px-3 py-2.5 font-mono text-xs text-slate-700">{r.mkb10Code}</td>
+                        <td className="max-w-[180px] truncate px-3 py-2.5 text-slate-600">{r.description}</td>
+                        <td className="px-3 py-2.5">
+                          <Badge tone={s.tone}>{s.label}</Badge>
+                        </td>
+                        <td className="px-3 py-2.5">
+                          {r.status === "active" && (
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => openOutcomeModal(r)}
+                                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-emerald-600 hover:bg-emerald-50"
+                                title="Реализирај"
+                              >
+                                <CheckCircle2 className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => cancelReferral(r.id)}
+                                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-rose-500 hover:bg-rose-50"
+                                title="Откажи"
+                              >
+                                <XCircle className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </motion.tr>
+                      {/* Outcome row */}
+                      {r.status === "completed" && r.outcomeNote && (
+                        <tr key={`${r.id}-outcome`} className="bg-emerald-50/60">
+                          <td colSpan={9} className="px-3 py-2 text-xs text-emerald-800">
+                            <span className="font-semibold">{t.doctorReferrals.outcomeLabel} ({r.outcomeDate}):</span>{" "}
+                            {r.outcomeNote}
+                          </td>
+                        </tr>
+                      )}
+                    </>
+                  );
+                })}
+
+                {displayed.length === 0 && (
+                  <tr>
+                    <td colSpan={COLUMNS.length} className="px-4 py-10 text-center text-sm text-slate-400">
+                      {t.doctorReferrals.noReferrals}
                     </td>
-                    <td className="px-3 py-2 text-slate-700">20.05.2026</td>
-                    <td className="px-3 py-2 text-slate-700">Кардиолог</td>
-                    <td className="px-3 py-2 font-medium text-slate-900">Демо Пациент {i}</td>
-                    <td className="px-3 py-2 text-slate-700">Специјалист</td>
-                    <td className="px-3 py-2 font-mono text-xs text-slate-700">I10</td>
-                    <td className="px-3 py-2 text-slate-600">Контрола на тензија</td>
-                    <td className="px-3 py-2">
-                      <Badge tone="info">Активен</Badge>
-                    </td>
-                    <td className="px-3 py-2 text-slate-500">—</td>
-                    <td className="px-3 py-2 text-slate-500">—</td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
-          </div>
-
-          <div className="border-t border-slate-200 bg-slate-50 px-4 py-3">
-            <EmptyState
-              title="Демо приказ"
-              description="Целосниот тек на упатите доаѓа во следна верзија — таблицата прикажува три демо записи за да го видите изгледот."
-            />
           </div>
         </motion.div>
       </div>

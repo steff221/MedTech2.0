@@ -45,8 +45,7 @@ services:
       MEDTECH_DB_URL: jdbc:postgresql://postgres:5432/medtech
       MEDTECH_DB_USER: medtech_app
       MEDTECH_DB_PASSWORD: MedTech123!@#
-      # Demo secret — rotate before any real deployment.
-      MEDTECH_SECURITY_JWT_SECRET: docker-compose-medtech-jwt-secret-rotate-before-real-deploy-2026
+      MEDTECH_SECURITY_JWT_SECRET: ${MEDTECH_SECURITY_JWT_SECRET}
       MEDTECH_SECURITY_CORS_ALLOWEDORIGINS_0: http://localhost:3000
       JAVA_OPTS: -XX:+UseG1GC -XX:MaxRAMPercentage=75.0
     ports:

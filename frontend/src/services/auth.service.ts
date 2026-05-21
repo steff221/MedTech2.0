@@ -8,9 +8,10 @@ export const authService = {
   register: (body: RegisterRequest) =>
     api.post<AuthResponse>("/auth/register", body).then((r) => r.data),
 
-  refresh: (refreshToken: string) =>
-    api.post<AuthResponse>("/auth/refresh", { refreshToken }).then((r) => r.data),
+  // Cookie is sent automatically by the browser; no body needed.
+  refresh: () =>
+    api.post<AuthResponse>("/auth/refresh", null).then((r) => r.data),
 
-  logout: (refreshToken: string) =>
-    api.post<void>("/auth/logout", { refreshToken }).then((r) => r.data),
+  logout: () =>
+    api.post<void>("/auth/logout", null).then((r) => r.data),
 };

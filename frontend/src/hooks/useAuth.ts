@@ -15,13 +15,13 @@ function homeFor(role: UserRole): string {
 
 export function useAuth() {
   const router = useRouter();
-  const { user, accessToken, refreshToken, isHydrated, setAuth, logout: clearAuth } = useAuthStore();
+  const { user, accessToken, isHydrated, setAuth, logout: clearAuth } = useAuthStore();
 
   const login = useCallback(
     async (body: LoginRequest) => {
       try {
         const res = await authService.login(body);
-        setAuth(res.user, res.accessToken, res.refreshToken);
+        setAuth(res.user, res.accessToken);
         toast.success(`Welcome back, ${res.user.firstName}`);
         router.push(homeFor(res.user.role));
         return res;
@@ -37,7 +37,7 @@ export function useAuth() {
     async (body: RegisterRequest) => {
       try {
         const res = await authService.register(body);
-        setAuth(res.user, res.accessToken, res.refreshToken);
+        setAuth(res.user, res.accessToken);
         toast.success("Account created. Welcome to MedTech.");
         router.push(homeFor(res.user.role));
         return res;
@@ -51,13 +51,13 @@ export function useAuth() {
 
   const logout = useCallback(async () => {
     try {
-      if (refreshToken) await authService.logout(refreshToken);
+      await authService.logout();
     } catch {
       // best-effort — always clear locally even if the server call fails
     }
     clearAuth();
     router.push("/login");
-  }, [router, clearAuth, refreshToken]);
+  }, [router, clearAuth]);
 
   return {
     user,
