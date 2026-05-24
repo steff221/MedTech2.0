@@ -53,7 +53,12 @@ public class AdminService {
     @Value("${medtech.frontend-url:http://localhost:3000}")
     private String frontendUrl;
 
-    public Page<UserResponse> listUsers(Pageable pageable) {
+    public Page<UserResponse> listUsers(Long hospitalId, Pageable pageable) {
+        if (hospitalId != null) {
+            return userRepository.findAllByRoleInAndHospitalId(
+                    List.of(UserRole.DOCTOR), hospitalId, pageable
+            ).map(UserResponse::from);
+        }
         return userRepository.findAllByRoleIn(
                 List.of(UserRole.DOCTOR, UserRole.NURSE, UserRole.ADMIN),
                 pageable

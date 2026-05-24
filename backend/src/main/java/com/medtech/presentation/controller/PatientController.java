@@ -59,11 +59,12 @@ public class PatientController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('DOCTOR', 'NURSE', 'ADMIN')")
-    @Operation(summary = "Search patients by name or email")
+    @Operation(summary = "Search patients by name or email, optionally scoped to a hospital")
     public ResponseEntity<org.springframework.data.domain.Page<PatientResponse>> search(
             @org.springframework.web.bind.annotation.RequestParam(defaultValue = "") String q,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) Long hospitalId,
             Pageable pageable) {
-        return ResponseEntity.ok(patientService.search(q, pageable).map(patientMapper::toResponse));
+        return ResponseEntity.ok(patientService.search(q, hospitalId, pageable).map(patientMapper::toResponse));
     }
 
     @PostMapping("/me")

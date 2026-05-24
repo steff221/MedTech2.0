@@ -23,4 +23,15 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
               OR LOWER(u.email) LIKE LOWER(CONCAT('%', :q, '%'))
            """)
     Page<Patient> searchByNameOrEmail(@Param("q") String q, Pageable pageable);
+
+    @Query("""
+           SELECT DISTINCT p FROM Patient p JOIN p.user u
+           JOIN Appointment a ON a.patient = p
+           WHERE a.hospital.id = :hospitalId
+             AND (LOWER(CONCAT(u.firstName, ' ', u.lastName)) LIKE LOWER(CONCAT('%', :q, '%'))
+                  OR LOWER(u.email) LIKE LOWER(CONCAT('%', :q, '%')))
+           """)
+    Page<Patient> searchByNameOrEmailAtHospital(@Param("q") String q,
+                                                @Param("hospitalId") Long hospitalId,
+                                                Pageable pageable);
 }

@@ -159,10 +159,16 @@ function InviteModal({ onClose }: { onClose: () => void }) {
 export default function AdminPage() {
   const qc = useQueryClient();
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [filterHospitalId, setFilterHospitalId] = useState<number | undefined>(undefined);
+
+  const hospitals = useQuery({
+    queryKey: ["hospitals-active"],
+    queryFn: () => hospitalService.listActive(),
+  });
 
   const users = useQuery({
-    queryKey: ["admin-users"],
-    queryFn: () => adminService.listUsers(),
+    queryKey: ["admin-users", filterHospitalId],
+    queryFn: () => adminService.listUsers(0, 20, filterHospitalId),
   });
 
   const suspend = useMutation({
@@ -202,6 +208,28 @@ export default function AdminPage() {
             <UserPlus className="h-4 w-4" />
             Покани член
           </button>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <select
+            value={filterHospitalId ?? ""}
+            onChange={(e) =>
+              setFilterHospitalId(e.target.value ? Number(e.target.value) : undefined)
+            }
+            className="rounded-lg border border-slate-200 py-2 px-3 text-sm text-slate-700 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-400/20"
+          >
+            <option value="">Сите болници</option>
+            {hospitals.data?.map((h) => (
+              <option key={h.id} value={h.id}>
+                {h.name} — {h.city}
+              </option>
+            ))}
+          </select>
+          {filterHospitalId && (
+            <span className="rounded-full bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-700">
+              Прикажани само доктори
+            </span>
+          )}
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">

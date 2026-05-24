@@ -69,8 +69,12 @@ public class PatientService {
                 .orElseThrow(() -> ResourceNotFoundException.of("Patient", id));
     }
 
-    public Page<Patient> search(String q, Pageable pageable) {
-        return patientRepository.searchByNameOrEmail(q == null ? "" : q.trim(), pageable);
+    public Page<Patient> search(String q, Long hospitalId, Pageable pageable) {
+        String term = q == null ? "" : q.trim();
+        if (hospitalId != null) {
+            return patientRepository.searchByNameOrEmailAtHospital(term, hospitalId, pageable);
+        }
+        return patientRepository.searchByNameOrEmail(term, pageable);
     }
 
     public Patient getByUserId(Long userId) {

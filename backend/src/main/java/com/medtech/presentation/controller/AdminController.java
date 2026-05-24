@@ -26,10 +26,11 @@ public class AdminController {
     private final AdminService adminService;
 
     @GetMapping("/users")
-    @Operation(summary = "List all staff users (doctors, nurses, admins)")
+    @Operation(summary = "List staff users; optionally filter doctors by hospitalId")
     public ResponseEntity<Page<UserResponse>> listUsers(
+            @RequestParam(required = false) Long hospitalId,
             @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
-        return ResponseEntity.ok(adminService.listUsers(pageable));
+        return ResponseEntity.ok(adminService.listUsers(hospitalId, pageable));
     }
 
     @PostMapping("/invite")

@@ -25,6 +25,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Page<User> findAllByRoleIn(List<UserRole> roles, Pageable pageable);
 
+    @Query("""
+           SELECT u FROM User u
+           JOIN Doctor d ON d.user = u
+           WHERE d.hospital.id = :hospitalId
+             AND u.role IN :roles
+           """)
+    Page<User> findAllByRoleInAndHospitalId(@Param("roles") List<UserRole> roles,
+                                            @Param("hospitalId") Long hospitalId,
+                                            Pageable pageable);
+
     @Modifying
     @Query("UPDATE User u SET u.lastLogin = :ts, u.failedLoginCount = 0 WHERE u.id = :id")
     int recordSuccessfulLogin(@Param("id") Long id, @Param("ts") Instant timestamp);

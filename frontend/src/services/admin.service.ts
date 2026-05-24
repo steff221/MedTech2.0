@@ -13,9 +13,11 @@ export interface InviteStaffRequest {
 }
 
 export const adminService = {
-  listUsers: (page = 0, size = 20) =>
+  listUsers: (page = 0, size = 20, hospitalId?: number) =>
     api
-      .get<Page<UserResponse>>("/admin/users", { params: { page, size, sort: "createdAt,desc" } })
+      .get<Page<UserResponse>>("/admin/users", {
+        params: { page, size, sort: "createdAt,desc", ...(hospitalId ? { hospitalId } : {}) },
+      })
       .then((r) => r.data),
 
   invite: (body: InviteStaffRequest) =>

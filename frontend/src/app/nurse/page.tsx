@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/common/Skeleton";
 import { doctorService } from "@/services/doctor.service";
 import { patientService } from "@/services/patient.service";
 import { appointmentService } from "@/services/appointment.service";
+import { hospitalService } from "@/services/hospital.service";
 import type { PatientResponse, AppointmentResponse } from "@/types/api";
 import { format, parseISO } from "date-fns";
 
@@ -253,6 +254,7 @@ export default function NurseDashboard() {
   const [tab, setTab] = useState<Tab>("patients");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [selectedHospitalId, setSelectedHospitalId] = useState<number | undefined>(undefined);
   const [selectedPatient, setSelectedPatient] =
     useState<PatientResponse | null>(null);
 
@@ -262,9 +264,14 @@ export default function NurseDashboard() {
     (handleSearchChange as any)._t = setTimeout(() => setDebouncedSearch(val), 350);
   };
 
+  const hospitals = useQuery({
+    queryKey: ["hospitals-active"],
+    queryFn: () => hospitalService.listActive(),
+  });
+
   const patients = useQuery({
-    queryKey: ["nurse-patients", debouncedSearch],
-    queryFn: () => patientService.search(debouncedSearch, 0, 20),
+    queryKey: ["nurse-patients", debouncedSearch, selectedHospitalId],
+    queryFn: () => patientService.search(debouncedSearch, 0, 20, selectedHospitalId),
     enabled: debouncedSearch.length >= 2,
   });
 
@@ -321,6 +328,20 @@ export default function NurseDashboard() {
             <h2 className="mb-4 text-base font-semibold text-slate-800">
               Пребарај пациент
             </h2>
+            <select
+              value={selectedHospitalId ?? ""}
+              onChange={(e) =>
+                setSelectedHospitalId(e.target.value ? Number(e.target.value) : undefined)
+              }
+              className="mb-3 w-full rounded-lg border border-slate-200 py-2.5 px-3 text-sm text-slate-700 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/20"
+            >
+              <option value="">Сите болници</option>
+              {hospitals.data?.map((h) => (
+                <option key={h.id} value={h.id}>
+                  {h.name} — {h.city}
+                </option>
+              ))}
+            </select>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
