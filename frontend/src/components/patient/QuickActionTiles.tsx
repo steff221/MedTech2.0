@@ -102,15 +102,15 @@ export function QuickActionTiles({ upcomingCount }: QuickActionTilesProps) {
               whileHover={{ y: -4, scale: 1.01 }}
               whileTap={{ scale: 0.97 }}
               transition={{ type: "spring", stiffness: 340, damping: 26 }}
-              className="group h-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-card transition-shadow hover:shadow-cardHover"
+              className="group h-full overflow-hidden rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition-all hover:shadow-md hover:border-slate-200"
             >
               <div
-                className={`mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl ${tile.iconBg} text-white`}
+                className={`mb-4 inline-flex h-9 w-9 items-center justify-center rounded-xl ${tile.iconBg} text-white`}
               >
-                <tile.icon className="h-5 w-5" />
+                <tile.icon className="h-4 w-4" />
               </div>
-              <p className="text-sm font-medium text-slate-500">{tile.label}</p>
-              <p className="mt-1 text-2xl font-bold tabular-nums text-slate-900">
+              <p className="text-xs font-medium tracking-wide text-slate-400 uppercase">{tile.label}</p>
+              <p className="mt-2 text-xl font-semibold tabular-nums text-slate-800">
                 {typeof tile.value === "number" ? <CountUp to={tile.value} /> : tile.value}
               </p>
             </motion.div>
