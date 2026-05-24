@@ -1,38 +1,37 @@
 package com.medtech.application.service;
 
+import com.medtech.domain.entity.EmailOutbox;
+import com.medtech.domain.repository.EmailOutboxRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.MailException;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 
 /**
- * Fire-and-forget email notifications. Each method is @Async so callers
- * return immediately; email delivery happens on the async executor thread pool.
+ * Writes email intents to the outbox table within the caller's transaction.
+ * Actual SMTP delivery is handled by {@link EmailDispatchJob} which polls
+ * the outbox on a schedule with automatic retry.
+ *
+ * <p>This is the Transactional Outbox pattern: if the caller's transaction
+ * rolls back, the outbox row is rolled back too — no spurious emails sent.
+ * If SMTP is down, the row stays PENDING and will be retried automatically.
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class EmailService {
 
-    private final JavaMailSender mailSender;
+    private final EmailOutboxRepository outboxRepository;
 
-    @Value("${spring.mail.username:noreply@medtech.mk}")
-    private String fromAddress;
-
-    @Async
     public void sendAppointmentConfirmation(String toEmail,
                                             String patientName,
                                             String doctorName,
                                             LocalDate date,
                                             String time) {
-        String subject = "Потврда за термин — " + date + " во " + time;
-        String body = """
+        enqueue(toEmail,
+                "Потврда за термин — " + date + " во " + time,
+                """
                 Почитуван/а %s,
 
                 Вашиот термин е успешно закажан:
@@ -45,17 +44,16 @@ public class EmailService {
 
                 Со почит,
                 MedTech тим
-                """.formatted(patientName, doctorName, date, time);
-        send(toEmail, subject, body);
+                """.formatted(patientName, doctorName, date, time));
     }
 
-    @Async
     public void sendAppointmentCancellation(String toEmail,
                                             String patientName,
                                             LocalDate date,
                                             String time) {
-        String subject = "Откажан термин — " + date + " во " + time;
-        String body = """
+        enqueue(toEmail,
+                "Откажан термин — " + date + " во " + time,
+                """
                 Почитуван/а %s,
 
                 Вашиот термин на %s во %s е откажан.
@@ -64,14 +62,13 @@ public class EmailService {
 
                 Со почит,
                 MedTech тим
-                """.formatted(patientName, date, time);
-        send(toEmail, subject, body);
+                """.formatted(patientName, date, time));
     }
 
-    @Async
     public void sendInviteEmail(String toEmail, String fullName, String role, String setupLink) {
-        String subject = "Покана за MedTech — поставете ја вашата лозинка";
-        String body = """
+        enqueue(toEmail,
+                "Покана за MedTech — поставете ја вашата лозинка",
+                """
                 Почитуван/а %s,
 
                 Вие бевте поканети да се приклучите на MedTech платформата како %s.
@@ -84,14 +81,13 @@ public class EmailService {
 
                 Со почит,
                 MedTech тим
-                """.formatted(fullName, role, setupLink);
-        send(toEmail, subject, body);
+                """.formatted(fullName, role, setupLink));
     }
 
-    @Async
     public void sendEmailVerification(String toEmail, String fullName, String verifyLink) {
-        String subject = "Потврдете ја вашата е-пошта — MedTech";
-        String body = """
+        enqueue(toEmail,
+                "Потврдете ја вашата е-пошта — MedTech",
+                """
                 Почитуван/а %s,
 
                 Добредојдовте во MedTech! Кликнете на линкот подолу за да ја потврдите е-поштата (важи 24 часа):
@@ -102,14 +98,13 @@ public class EmailService {
 
                 Со почит,
                 MedTech тим
-                """.formatted(fullName, verifyLink);
-        send(toEmail, subject, body);
+                """.formatted(fullName, verifyLink));
     }
 
-    @Async
     public void sendPasswordResetEmail(String toEmail, String fullName, String resetLink) {
-        String subject = "Ресетирање на лозинка — MedTech";
-        String body = """
+        enqueue(toEmail,
+                "Ресетирање на лозинка — MedTech",
+                """
                 Почитуван/а %s,
 
                 Примивме барање за ресетирање на лозинката за вашата сметка.
@@ -121,14 +116,13 @@ public class EmailService {
 
                 Со почит,
                 MedTech тим
-                """.formatted(fullName, resetLink);
-        send(toEmail, subject, body);
+                """.formatted(fullName, resetLink));
     }
 
-    @Async
     public void sendPasswordChangedNotice(String toEmail, String fullName) {
-        String subject = "Вашата лозинка е сменета";
-        String body = """
+        enqueue(toEmail,
+                "Вашата лозинка е сменета",
+                """
                 Почитуван/а %s,
 
                 Вашата лозинка за MedTech беше успешно сменета.
@@ -136,21 +130,11 @@ public class EmailService {
 
                 Со почит,
                 MedTech тим
-                """.formatted(fullName);
-        send(toEmail, subject, body);
+                """.formatted(fullName));
     }
 
-    private void send(String to, String subject, String body) {
-        try {
-            SimpleMailMessage msg = new SimpleMailMessage();
-            msg.setFrom(fromAddress);
-            msg.setTo(to);
-            msg.setSubject(subject);
-            msg.setText(body);
-            mailSender.send(msg);
-            log.info("Email sent to={} subject='{}'", to, subject);
-        } catch (MailException ex) {
-            log.error("Failed to send email to={} subject='{}': {}", to, subject, ex.getMessage());
-        }
+    private void enqueue(String to, String subject, String body) {
+        outboxRepository.save(EmailOutbox.of(to, subject, body));
+        log.debug("Email queued for delivery: to={} subject='{}'", to, subject);
     }
 }
