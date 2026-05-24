@@ -1,15 +1,16 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect } from "react";
+import axios from "axios";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/store/auth.store";
 import { authService } from "@/services/auth.service";
 import { extractErrorMessage } from "@/services/api";
 import type { LoginRequest, RegisterRequest, UserRole } from "@/types/api";
 
-// Module-level promise ensures only one silent refresh runs at a time across
-// all mounted components (patient layout + doctor layout both call useAuth).
+// Module-level flag: only one silent refresh can run at a time across all
+// mounted layouts. Reset to null when the refresh settles.
 let silentRefreshPromise: Promise<void> | null = null;
 
 function homeFor(role: UserRole): string {
@@ -24,23 +25,22 @@ export function useAuth() {
   const router = useRouter();
   const { user, accessToken, isHydrated, setAuth, logout: clearAuth } = useAuthStore();
 
-  // Silent refresh on hard reload: user profile is in localStorage but accessToken was
-  // cleared from memory. Re-acquire it using the httpOnly refresh_token cookie.
-  const refreshingRef = useRef(false);
+  // Silent refresh on hard reload: user is in localStorage but accessToken is
+  // only in memory, so it's gone after a page reload. Re-acquire via cookie.
   useEffect(() => {
-    if (!isHydrated) return;
-    if (user && !accessToken && !refreshingRef.current) {
-      if (silentRefreshPromise) return; // another instance already in flight
-      refreshingRef.current = true;
-      silentRefreshPromise = authService.refresh().then((res) => {
-        setAuth(res.user, res.accessToken);
-      }).catch(() => {
-        clearAuth();
-      }).finally(() => {
-        refreshingRef.current = false;
-        silentRefreshPromise = null;
-      });
-    }
+    if (!isHydrated || !user || accessToken) return;
+    if (silentRefreshPromise) return; // already in flight from another layout
+
+    silentRefreshPromise = authService.refresh()
+      .then((res) => { setAuth(res.user, res.accessToken); })
+      .catch((err) => {
+        // Only clear the session on a definitive auth rejection (401/403).
+        // Network errors or 5xx should NOT log the user out.
+        if (axios.isAxiosError(err) && (err.response?.status === 401 || err.response?.status === 403)) {
+          clearAuth();
+        }
+      })
+      .finally(() => { silentRefreshPromise = null; });
   }, [isHydrated, user, accessToken, setAuth, clearAuth]);
 
   const login = useCallback(
