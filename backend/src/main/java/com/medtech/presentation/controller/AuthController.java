@@ -120,20 +120,20 @@ public class AuthController {
         // Deliberately NOT calling response.addCookie() — that would emit a second, SameSite-less header.
         response.addHeader("Set-Cookie",
                 REFRESH_COOKIE + "=" + token
-                + "; Path=/api/auth"
+                + "; Path=/"
                 + "; Max-Age=" + maxAge
                 + "; HttpOnly"
                 + (secureCookie ? "; Secure" : "")
-                + "; SameSite=Strict");
+                + "; SameSite=Lax");
     }
 
     private void clearRefreshCookie(HttpServletResponse response) {
         response.addHeader("Set-Cookie",
                 REFRESH_COOKIE + "="
-                + "; Path=/api/auth"
+                + "; Path=/"
                 + "; Max-Age=0"
                 + "; HttpOnly"
                 + (secureCookie ? "; Secure" : "")
-                + "; SameSite=Strict");
+                + "; SameSite=Lax");
     }
 }
