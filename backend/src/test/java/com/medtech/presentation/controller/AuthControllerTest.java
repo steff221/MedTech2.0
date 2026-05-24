@@ -12,6 +12,7 @@ import com.medtech.infrastructure.config.JpaConfig;
 import com.medtech.infrastructure.config.SecurityConfig;
 import com.medtech.infrastructure.exception.AuthorizationException;
 import com.medtech.infrastructure.exception.ConflictException;
+import com.medtech.infrastructure.security.JwtProperties;
 import com.medtech.infrastructure.security.JwtTokenProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +44,7 @@ class AuthControllerTest {
     @Autowired ObjectMapper objectMapper;
 
     @MockBean AuthService authService;
+    @MockBean JwtProperties jwtProperties;
 
     @Test
     void register_returns201() throws Exception {

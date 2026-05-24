@@ -3,8 +3,11 @@ package com.medtech.application.service;
 import com.medtech.application.dto.request.LoginRequest;
 import com.medtech.application.dto.request.RegisterRequest;
 import com.medtech.application.dto.response.AuthResponse;
+import com.medtech.domain.entity.EmailVerificationToken;
 import com.medtech.domain.entity.RefreshToken;
 import com.medtech.domain.entity.User;
+import com.medtech.domain.repository.EmailVerificationTokenRepository;
+import com.medtech.domain.repository.PasswordResetTokenRepository;
 import com.medtech.domain.repository.RefreshTokenRepository;
 import com.medtech.domain.repository.UserRepository;
 import com.medtech.domain.vo.UserRole;
@@ -34,9 +37,13 @@ class AuthServiceTest {
 
     @Mock private UserRepository userRepository;
     @Mock private RefreshTokenRepository refreshTokenRepository;
+    @Mock private EmailVerificationTokenRepository emailVerificationTokenRepository;
+    @Mock private PasswordResetTokenRepository passwordResetTokenRepository;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private JwtTokenProvider tokenProvider;
     @Mock private JwtProperties jwtProperties;
+    @Mock private EmailService emailService;
+    @Mock private AuditLogService auditLogService;
 
     @InjectMocks private AuthService authService;
 
@@ -77,6 +84,7 @@ class AuthServiceTest {
         when(tokenProvider.accessTokenTtlSeconds()).thenReturn(3600L);
         when(jwtProperties.refreshTokenTtlDays()).thenReturn(7L);
         when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(emailVerificationTokenRepository.save(any(EmailVerificationToken.class))).thenAnswer(inv -> inv.getArgument(0));
 
         AuthResponse response = authService.register(validRegister);
 
