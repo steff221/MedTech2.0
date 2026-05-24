@@ -4,7 +4,9 @@ import com.medtech.application.dto.mapper.MedicalRecordMapper;
 import com.medtech.application.dto.request.CreateMedicalRecordRequest;
 import com.medtech.application.dto.response.MedicalRecordResponse;
 import com.medtech.application.service.MedicalRecordService;
+import com.medtech.domain.entity.MedicalRecord;
 import com.medtech.infrastructure.exception.AuthorizationException;
+import com.medtech.infrastructure.security.PatientAccessGuard;
 import com.medtech.infrastructure.security.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,6 +30,7 @@ public class MedicalRecordController {
 
     private final MedicalRecordService medicalRecordService;
     private final MedicalRecordMapper mapper;
+    private final PatientAccessGuard accessGuard;
 
     @PostMapping
     @PreAuthorize("hasRole('DOCTOR')")
@@ -41,8 +44,10 @@ public class MedicalRecordController {
 
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    @Operation(summary = "Get a medical record")
+    @Operation(summary = "Get a medical record (patient who owns it, or clinician with care relationship)")
     public ResponseEntity<MedicalRecordResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(mapper.toResponse(medicalRecordService.getById(id)));
+        MedicalRecord record = medicalRecordService.getById(id);
+        accessGuard.assertCanAccessPatient(record.getPatient().getId());
+        return ResponseEntity.ok(mapper.toResponse(record));
     }
 }

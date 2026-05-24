@@ -63,6 +63,14 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
             Pageable pageable);
 
     /**
+     * Returns true when the doctor (identified by their user id) has at least one
+     * appointment—past or future—with the given patient. Used by the access guard
+     * to verify a care relationship before exposing patient data.
+     */
+    @Query("SELECT COUNT(a) > 0 FROM Appointment a WHERE a.doctor.user.id = :doctorUserId AND a.patient.id = :patientId")
+    boolean hasCareRelationship(@Param("doctorUserId") Long doctorUserId, @Param("patientId") Long patientId);
+
+    /**
      * Returns same-day appointments for a doctor that overlap the proposed slot.
      * Pessimistically locked to prevent two patients booking the identical slot
      * during concurrent transactions.

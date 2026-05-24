@@ -4,7 +4,9 @@ import com.medtech.application.dto.mapper.PrescriptionMapper;
 import com.medtech.application.dto.request.IssuePrescriptionRequest;
 import com.medtech.application.dto.response.PrescriptionResponse;
 import com.medtech.application.service.PrescriptionService;
+import com.medtech.domain.entity.Prescription;
 import com.medtech.infrastructure.exception.AuthorizationException;
+import com.medtech.infrastructure.security.PatientAccessGuard;
 import com.medtech.infrastructure.security.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,6 +34,7 @@ public class PrescriptionController {
 
     private final PrescriptionService prescriptionService;
     private final PrescriptionMapper mapper;
+    private final PatientAccessGuard accessGuard;
 
     @PostMapping
     @PreAuthorize("hasRole('DOCTOR')")
@@ -46,7 +49,9 @@ public class PrescriptionController {
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PrescriptionResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(mapper.toResponse(prescriptionService.getById(id)));
+        Prescription rx = prescriptionService.getById(id);
+        accessGuard.assertCanAccessPatient(rx.getPatient().getId());
+        return ResponseEntity.ok(mapper.toResponse(rx));
     }
 
     @PutMapping("/{id}/refill")
@@ -70,6 +75,7 @@ public class PrescriptionController {
     @GetMapping("/patient/{patientId}/active")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<PrescriptionResponse>> active(@PathVariable Long patientId, Pageable pageable) {
+        accessGuard.assertCanAccessPatient(patientId);
         return ResponseEntity.ok(prescriptionService.activeFor(patientId, pageable).map(mapper::toResponse));
     }
 }

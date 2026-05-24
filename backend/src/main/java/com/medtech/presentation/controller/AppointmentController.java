@@ -6,6 +6,8 @@ import com.medtech.application.dto.request.CancelAppointmentRequest;
 import com.medtech.application.dto.request.RescheduleAppointmentRequest;
 import com.medtech.application.dto.response.AppointmentResponse;
 import com.medtech.application.service.AppointmentService;
+import com.medtech.domain.entity.Appointment;
+import com.medtech.infrastructure.security.PatientAccessGuard;
 import com.medtech.infrastructure.security.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -37,6 +39,7 @@ public class AppointmentController {
 
     private final AppointmentService appointmentService;
     private final AppointmentMapper mapper;
+    private final PatientAccessGuard accessGuard;
 
     @PostMapping
     @PreAuthorize("hasAnyRole('PATIENT', 'NURSE')")
@@ -48,9 +51,11 @@ public class AppointmentController {
 
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    @Operation(summary = "Get an appointment")
+    @Operation(summary = "Get an appointment (caller must be patient, assigned doctor, nurse, or admin)")
     public ResponseEntity<AppointmentResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(mapper.toResponse(appointmentService.getById(id)));
+        Appointment appt = appointmentService.getById(id);
+        accessGuard.assertCanAccessPatient(appt.getPatient().getId());
+        return ResponseEntity.ok(mapper.toResponse(appt));
     }
 
     @GetMapping("/doctor/{doctorId}")

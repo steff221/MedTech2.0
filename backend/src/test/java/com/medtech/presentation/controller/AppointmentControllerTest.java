@@ -6,6 +6,7 @@ import com.medtech.application.dto.request.BookAppointmentRequest;
 import com.medtech.application.dto.response.AppointmentResponse;
 import com.medtech.application.service.AppointmentService;
 import com.medtech.constant.ErrorCode;
+import com.medtech.infrastructure.security.PatientAccessGuard;
 import com.medtech.domain.vo.AppointmentStatus;
 import com.medtech.infrastructure.config.JpaConfig;
 import com.medtech.infrastructure.config.SecurityConfig;
@@ -44,6 +45,7 @@ class AppointmentControllerTest {
 
     @MockBean AppointmentService appointmentService;
     @MockBean AppointmentMapper appointmentMapper;
+    @MockBean PatientAccessGuard patientAccessGuard;
 
     @Test
     @WithMockUser(roles = "PATIENT")

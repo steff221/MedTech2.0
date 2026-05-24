@@ -77,9 +77,10 @@ public class PatientController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('DOCTOR', 'NURSE')")
-    @Operation(summary = "Get any patient (clinicians and admins only)")
+    @PreAuthorize("hasAnyRole('DOCTOR', 'NURSE', 'ADMIN')")
+    @Operation(summary = "Get a patient profile (doctors must have a care relationship)")
     public ResponseEntity<PatientResponse> getById(@PathVariable Long id, HttpServletRequest request) {
+        accessGuard.assertCanAccessPatient(id);
         SecurityUtils.currentUserId().ifPresent(uid ->
             auditLogService.recordByUserId(uid, AuditAction.VIEW, "Patient", id,
                 "Patient profile viewed", clientIp(request), request.getHeader("User-Agent"), AuditStatus.SUCCESS)
