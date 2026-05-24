@@ -22,42 +22,42 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
     Page<AuditLog> findByActionType(AuditAction actionType, Pageable pageable);
 
     /** Distinct patient IDs viewed by a user in the given time window. */
-    @Query("""
-           SELECT COUNT(DISTINCT a.entityId)
-           FROM AuditLog a
-           WHERE a.user.id = :userId
-             AND a.entityType = 'Patient'
-             AND a.actionType = com.medtech.domain.vo.AuditAction.VIEW
-             AND a.createdAt >= :since
-           """)
+    @Query(value = """
+           SELECT COUNT(DISTINCT entity_id)
+           FROM audit_logs
+           WHERE user_id = :userId
+             AND entity_type = 'Patient'
+             AND action_type = 'VIEW'::audit_action_enum
+             AND created_at >= :since
+           """, nativeQuery = true)
     long countDistinctPatientsViewedByUserSince(@Param("userId") Long userId,
                                                 @Param("since") Instant since);
 
     /** Failed LOGIN attempts from a given IP since the given instant. */
-    @Query("""
-           SELECT COUNT(a)
-           FROM AuditLog a
-           WHERE a.actionType = com.medtech.domain.vo.AuditAction.LOGIN
-             AND a.status = com.medtech.domain.vo.AuditStatus.FAILURE
-             AND a.ipAddress = :ip
-             AND a.createdAt >= :since
-           """)
+    @Query(value = """
+           SELECT COUNT(*)
+           FROM audit_logs
+           WHERE action_type = 'LOGIN'::audit_action_enum
+             AND status = 'FAILURE'::audit_status_enum
+             AND ip_address = :ip
+             AND created_at >= :since
+           """, nativeQuery = true)
     long countFailedLoginsByIpSince(@Param("ip") String ip, @Param("since") Instant since);
 
     /** All users who performed VIEW actions since a given instant (for bulk-access scan). */
-    @Query("""
-           SELECT DISTINCT a.user.id FROM AuditLog a
-           WHERE a.actionType = com.medtech.domain.vo.AuditAction.VIEW
-             AND a.entityType = 'Patient'
-             AND a.createdAt >= :since
-             AND a.user IS NOT NULL
-           """)
+    @Query(value = """
+           SELECT DISTINCT user_id FROM audit_logs
+           WHERE action_type = 'VIEW'::audit_action_enum
+             AND entity_type = 'Patient'
+             AND created_at >= :since
+             AND user_id IS NOT NULL
+           """, nativeQuery = true)
     List<Long> findUserIdsWithPatientViewsSince(@Param("since") Instant since);
 
     /** Off-hours VIEW entries (hour < 6 or hour >= 22) since the given instant. */
     @Query(value = """
            SELECT * FROM audit_logs
-           WHERE action_type = 'VIEW'
+           WHERE action_type = 'VIEW'::audit_action_enum
              AND entity_type IN ('Patient', 'MedicalRecord')
              AND created_at >= :since
              AND (EXTRACT(HOUR FROM created_at AT TIME ZONE 'Europe/Skopje') < 6
@@ -66,12 +66,12 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
     List<AuditLog> findOffHoursAccessesSince(@Param("since") Instant since);
 
     /** Distinct IPs with failed logins since the given instant. */
-    @Query("""
-           SELECT DISTINCT a.ipAddress FROM AuditLog a
-           WHERE a.actionType = com.medtech.domain.vo.AuditAction.LOGIN
-             AND a.status = com.medtech.domain.vo.AuditStatus.FAILURE
-             AND a.createdAt >= :since
-             AND a.ipAddress IS NOT NULL
-           """)
+    @Query(value = """
+           SELECT DISTINCT ip_address FROM audit_logs
+           WHERE action_type = 'LOGIN'::audit_action_enum
+             AND status = 'FAILURE'::audit_status_enum
+             AND created_at >= :since
+             AND ip_address IS NOT NULL
+           """, nativeQuery = true)
     List<String> findIpsWithFailedLoginsSince(@Param("since") Instant since);
 }
