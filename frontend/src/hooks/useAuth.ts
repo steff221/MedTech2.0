@@ -1,12 +1,16 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/store/auth.store";
 import { authService } from "@/services/auth.service";
 import { extractErrorMessage } from "@/services/api";
 import type { LoginRequest, RegisterRequest, UserRole } from "@/types/api";
+
+// Module-level promise ensures only one silent refresh runs at a time across
+// all mounted components (patient layout + doctor layout both call useAuth).
+let silentRefreshPromise: Promise<void> | null = null;
 
 function homeFor(role: UserRole): string {
   if (role === "DOCTOR") return "/doctor";
@@ -22,14 +26,19 @@ export function useAuth() {
 
   // Silent refresh on hard reload: user profile is in localStorage but accessToken was
   // cleared from memory. Re-acquire it using the httpOnly refresh_token cookie.
+  const refreshingRef = useRef(false);
   useEffect(() => {
     if (!isHydrated) return;
-    if (user && !accessToken) {
-      authService.refresh().then((res) => {
+    if (user && !accessToken && !refreshingRef.current) {
+      if (silentRefreshPromise) return; // another instance already in flight
+      refreshingRef.current = true;
+      silentRefreshPromise = authService.refresh().then((res) => {
         setAuth(res.user, res.accessToken);
       }).catch(() => {
-        // Refresh token expired or missing — clear stale user profile
         clearAuth();
+      }).finally(() => {
+        refreshingRef.current = false;
+        silentRefreshPromise = null;
       });
     }
   }, [isHydrated, user, accessToken, setAuth, clearAuth]);

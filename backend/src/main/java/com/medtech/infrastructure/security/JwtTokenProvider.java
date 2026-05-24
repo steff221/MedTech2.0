@@ -16,6 +16,7 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Stateless JWT issuance and verification. Uses HS256 with a symmetric key
@@ -61,6 +62,7 @@ public class JwtTokenProvider {
         return Jwts.builder()
                 .issuer(props.issuer())
                 .subject(user.getId().toString())
+                .id(UUID.randomUUID().toString())
                 .claims(Map.of(
                         "email", user.getEmail(),
                         CLAIM_ROLE, user.getRole().name(),
