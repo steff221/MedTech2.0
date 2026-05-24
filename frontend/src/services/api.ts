@@ -40,7 +40,7 @@ async function refreshAccessToken(): Promise<string | null> {
     const res = await axios.post<AuthResponse>(
       `${api.defaults.baseURL}/auth/refresh`,
       null,
-      { timeout: 10000, withCredentials: true },
+      { timeout: 10000, withCredentials: true, headers: { "Content-Type": "application/json" } },
     );
     setAuth(res.data.user, res.data.accessToken);
     return res.data.accessToken;

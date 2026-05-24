@@ -10,7 +10,7 @@ export const authService = {
 
   // Cookie is sent automatically by the browser; no body needed.
   refresh: () =>
-    api.post<AuthResponse>("/auth/refresh", null).then((r) => r.data),
+    api.post<AuthResponse>("/auth/refresh", null, { headers: { "Content-Type": "application/json" } }).then((r) => r.data),
 
   logout: () =>
     api.post<void>("/auth/logout", null).then((r) => r.data),
