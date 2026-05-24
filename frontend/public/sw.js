@@ -1,4 +1,4 @@
-const CACHE_NAME = "medtech-v1";
+const CACHE_NAME = "medtech-v2";
 
 // Static assets to pre-cache on install
 const PRECACHE_URLS = ["/", "/login", "/register", "/offline"];
