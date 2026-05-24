@@ -5,11 +5,13 @@ import { useEffect } from "react";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { Spinner } from "@/components/common/Spinner";
 import { useAuth } from "@/hooks/useAuth";
+import { useEventStream } from "@/hooks/useEventStream";
 import { Activity, LogOut, Users } from "lucide-react";
 
 export default function NurseLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { isAuthenticated, isHydrated, user, logout } = useAuth();
+  useEventStream();
 
   useEffect(() => {
     if (!isHydrated) return;

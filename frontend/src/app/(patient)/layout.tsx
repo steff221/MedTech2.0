@@ -8,10 +8,12 @@ import { Topbar } from "@/components/layout/Topbar";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { Spinner } from "@/components/common/Spinner";
 import { useAuth } from "@/hooks/useAuth";
+import { useEventStream } from "@/hooks/useEventStream";
 
 export default function PatientLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { isAuthenticated, isHydrated, user } = useAuth();
+  useEventStream();
 
   useEffect(() => {
     if (!isHydrated) return;

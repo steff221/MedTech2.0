@@ -5,11 +5,16 @@ import com.medtech.domain.entity.User;
 import com.medtech.domain.repository.NotificationRepository;
 import com.medtech.domain.repository.UserRepository;
 import com.medtech.infrastructure.exception.ResourceNotFoundException;
+import com.medtech.infrastructure.sse.SseEmitterRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -17,6 +22,7 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
+    private final SseEmitterRegistry sseRegistry;
 
     @Transactional(readOnly = true)
     public Page<Notification> listForUser(Long userId, Pageable pageable) {
@@ -47,5 +53,16 @@ public class NotificationService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> ResourceNotFoundException.of("User", userId));
         notificationRepository.save(Notification.create(user, type, title, body, referenceId));
+
+        // Push SSE event AFTER the transaction commits so the client's follow-up
+        // API call sees the committed notification row.
+        long unread = notificationRepository.countByUserIdAndReadFalse(userId);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                sseRegistry.push(userId, "notification",
+                        Map.of("type", type, "title", title, "unreadCount", unread + 1));
+            }
+        });
     }
 }
