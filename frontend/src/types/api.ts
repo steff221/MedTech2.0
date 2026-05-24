@@ -257,6 +257,16 @@ export interface StatsOverviewResponse {
   prescriptionsByDay: Array<{ day: string; count: number }>;
 }
 
+export interface NotificationResponse {
+  id: number;
+  type: string;
+  title: string;
+  body: string | null;
+  read: boolean;
+  referenceId: number | null;
+  createdAt: string;
+}
+
 export interface ApiError {
   timestamp: string;
   status: number;

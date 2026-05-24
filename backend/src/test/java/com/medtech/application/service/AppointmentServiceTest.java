@@ -49,6 +49,7 @@ class AppointmentServiceTest {
     @Mock PatientRepository patientRepository;
     @Mock DoctorRepository doctorRepository;
     @Mock EmailService emailService;
+    @Mock NotificationService notificationService;
 
     AppointmentService service;
 
@@ -68,7 +69,7 @@ class AppointmentServiceTest {
 
         AppointmentProperties props = new AppointmentProperties(30, 24);
         service = new AppointmentService(appointmentRepository, patientRepository,
-                doctorRepository, props, fixedClock, emailService);
+                doctorRepository, props, fixedClock, emailService, notificationService);
 
         lenient().when(patientRepository.findById(patient.getId())).thenReturn(Optional.of(patient));
         lenient().when(doctorRepository.findById(doctor.getId())).thenReturn(Optional.of(doctor));

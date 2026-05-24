@@ -2,110 +2,52 @@
 
 import { motion } from "framer-motion";
 import { Bell, CheckCircle, Clock, Info, XCircle } from "lucide-react";
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { format, differenceInDays, parseISO, isToday, isTomorrow } from "date-fns";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { format, parseISO } from "date-fns";
 import { EmptyState } from "@/components/common/EmptyState";
 import { Skeleton } from "@/components/common/Skeleton";
-import { usePatientProfile } from "@/hooks/usePatient";
 import { useT } from "@/hooks/useT";
-import { patientService } from "@/services/patient.service";
+import { notificationService } from "@/services/notification.service";
 import { cn } from "@/utils/cn";
-import type { AppointmentResponse } from "@/types/api";
+import type { NotificationResponse } from "@/types/api";
 
-type NotifKind = "reminder" | "cancelled" | "completed" | "system";
+type NotifKind = "REMINDER" | "CANCELLED" | "COMPLETED" | "SYSTEM" | string;
 
-interface Notification {
-  id: string;
-  kind: NotifKind;
-  title: string;
-  body: string;
-  timestamp: Date;
-  read: boolean;
-}
-
-const kindMeta: Record<NotifKind, { icon: React.ComponentType<{ className?: string }>; color: string; bg: string }> = {
-  reminder:  { icon: Clock,       color: "text-brand-600",   bg: "bg-brand-50"    },
-  cancelled: { icon: XCircle,     color: "text-rose-500",    bg: "bg-rose-50"     },
-  completed: { icon: CheckCircle, color: "text-emerald-600", bg: "bg-emerald-50"  },
-  system:    { icon: Info,        color: "text-slate-500",   bg: "bg-slate-100"   },
+const kindMeta: Record<string, { icon: React.ComponentType<{ className?: string }>; color: string; bg: string }> = {
+  REMINDER:  { icon: Clock,       color: "text-brand-600",   bg: "bg-brand-50"   },
+  CANCELLED: { icon: XCircle,     color: "text-rose-500",    bg: "bg-rose-50"    },
+  COMPLETED: { icon: CheckCircle, color: "text-emerald-600", bg: "bg-emerald-50" },
+  SYSTEM:    { icon: Info,        color: "text-slate-500",   bg: "bg-slate-100"  },
 };
 
-export default function NotificationsPage() {
-  const profile = usePatientProfile();
-  const t = useT();
-  const [readIds, setReadIds] = useState<Set<string>>(new Set());
+function metaFor(type: string) {
+  return kindMeta[type] ?? kindMeta.SYSTEM;
+}
 
-  const appointmentsQuery = useQuery({
-    queryKey: ["appointments", profile.data?.id],
-    queryFn: () => patientService.appointments(profile.data!.id),
-    enabled: !!profile.data?.id,
+export default function NotificationsPage() {
+  const t = useT();
+  const qc = useQueryClient();
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["notifications"],
+    queryFn: () => notificationService.list(),
   });
 
-  const notifications = useMemo(() => {
-    function toNotif(apt: AppointmentResponse): Notification | null {
-      const date = parseISO(apt.appointmentDate as unknown as string);
-      const daysAway = differenceInDays(date, new Date());
+  const markRead = useMutation({
+    mutationFn: (id: number) => notificationService.markRead(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }),
+  });
 
-      if (apt.status === "SCHEDULED" || apt.status === "RESCHEDULED") {
-        if (daysAway < 0 || daysAway > 7) return null;
-        let when = `на ${format(date, "d MMM")} во ${apt.appointmentTime}`;
-        if (isToday(date))    when = `денес во ${apt.appointmentTime}`;
-        if (isTomorrow(date)) when = `утре во ${apt.appointmentTime}`;
-        return {
-          id: `reminder-${apt.id}`,
-          kind: "reminder",
-          title: t.notifications.reminder,
-          body: `${t.notifications.reminder}: ${when} — д-р ${apt.doctorName ?? "—"}.`,
-          timestamp: date,
-          read: false,
-        };
-      }
-      if (apt.status === "CANCELLED") {
-        return {
-          id: `cancelled-${apt.id}`,
-          kind: "cancelled",
-          title: t.notifications.cancelledKind,
-          body: `${format(date, "d MMM yyyy")} — д-р ${apt.doctorName ?? "—"}`,
-          timestamp: date,
-          read: true,
-        };
-      }
-      if (apt.status === "COMPLETED") {
-        return {
-          id: `completed-${apt.id}`,
-          kind: "completed",
-          title: t.notifications.completedKind,
-          body: `${format(date, "d MMM yyyy")} — д-р ${apt.doctorName ?? "—"}`,
-          timestamp: date,
-          read: true,
-        };
-      }
-      return null;
-    }
+  const markAll = useMutation({
+    mutationFn: () => notificationService.markAllRead(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["notifications"] });
+      qc.invalidateQueries({ queryKey: ["notifications-unread"] });
+    },
+  });
 
-    const systemNotifs: Notification[] = [
-      {
-        id: "sys-welcome",
-        kind: "system",
-        title: t.notifications.systemWelcomeTitle,
-        body: t.notifications.systemWelcomeBody,
-        timestamp: new Date(2026, 0, 1),
-        read: true,
-      },
-    ];
-
-    const apptNotifs = (appointmentsQuery.data?.content ?? [])
-      .map(toNotif)
-      .filter((n): n is Notification => n !== null);
-
-    return [...apptNotifs, ...systemNotifs].sort(
-      (a, b) => b.timestamp.getTime() - a.timestamp.getTime(),
-    );
-  }, [appointmentsQuery.data, t]);
-
-  const isLoading = profile.isLoading || appointmentsQuery.isLoading;
-  const unreadCount = notifications.filter((n) => !n.read && !readIds.has(n.id)).length;
+  const notifications = data?.content ?? [];
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -124,7 +66,7 @@ export default function NotificationsPage() {
         {unreadCount > 0 && (
           <button
             type="button"
-            onClick={() => setReadIds(new Set(notifications.map((n) => n.id)))}
+            onClick={() => markAll.mutate()}
             className="text-sm font-medium text-brand-600 hover:text-brand-700"
           >
             {t.notifications.markAllRead}
@@ -153,19 +95,19 @@ export default function NotificationsPage() {
           animate="visible"
           variants={{ visible: { transition: { staggerChildren: 0.05 } } }}
         >
-          {notifications.map((notif) => {
-            const isRead = notif.read || readIds.has(notif.id);
-            const meta = kindMeta[notif.kind];
+          {notifications.map((notif: NotificationResponse) => {
+            const meta = metaFor(notif.type);
             const Icon = meta.icon;
+            const date = parseISO(notif.createdAt);
 
             return (
               <motion.li
                 key={notif.id}
                 variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.25 } } }}
-                onClick={() => setReadIds((prev) => new Set([...prev, notif.id]))}
+                onClick={() => { if (!notif.read) markRead.mutate(notif.id); }}
                 className={cn(
                   "flex cursor-pointer gap-4 rounded-xl border bg-white p-4 shadow-sm transition-colors hover:bg-slate-50",
-                  isRead ? "border-slate-200" : "border-brand-200",
+                  notif.read ? "border-slate-200" : "border-brand-200",
                 )}
               >
                 <div className={cn("mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full", meta.bg)}>
@@ -173,15 +115,15 @@ export default function NotificationsPage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-2">
-                    <p className={cn("text-sm font-semibold", isRead ? "text-slate-700" : "text-slate-900")}>
+                    <p className={cn("text-sm font-semibold", notif.read ? "text-slate-700" : "text-slate-900")}>
                       {notif.title}
                     </p>
                     <div className="flex shrink-0 items-center gap-2">
-                      <span className="text-xs text-slate-400">{format(notif.timestamp, "d MMM")}</span>
-                      {!isRead && <span className="h-2 w-2 rounded-full bg-brand-500" />}
+                      <span className="text-xs text-slate-400">{format(date, "d MMM")}</span>
+                      {!notif.read && <span className="h-2 w-2 rounded-full bg-brand-500" />}
                     </div>
                   </div>
-                  <p className="mt-0.5 text-sm text-slate-500">{notif.body}</p>
+                  {notif.body && <p className="mt-0.5 text-sm text-slate-500">{notif.body}</p>}
                 </div>
               </motion.li>
             );

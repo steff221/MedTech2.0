@@ -57,6 +57,7 @@ public class AppointmentService {
     private final AppointmentProperties props;
     private final Clock clock;
     private final EmailService emailService;
+    private final NotificationService notificationService;
 
     @Transactional
     public Appointment book(BookAppointmentRequest req) {
@@ -153,6 +154,14 @@ public class AppointmentService {
         emailService.sendAppointmentCancellation(patientEmail, patientName,
                 appt.getAppointmentDate(), appt.getAppointmentTime());
 
+        Long patientUserId = appt.getPatient().getUser().getId();
+        String doctorName = "д-р " + appt.getDoctor().getUser().getFirstName()
+                + " " + appt.getDoctor().getUser().getLastName();
+        notificationService.create(patientUserId, "CANCELLED",
+                "Термин откажан",
+                doctorName + " — " + appt.getAppointmentDate() + " во " + appt.getAppointmentTime(),
+                appt.getId());
+
         return appt;
     }
 
@@ -161,6 +170,15 @@ public class AppointmentService {
         Appointment appt = getById(appointmentId);
         rejectIfTerminal(appt);
         appt.setStatus(AppointmentStatus.COMPLETED);
+
+        Long patientUserId = appt.getPatient().getUser().getId();
+        String doctorName = "д-р " + appt.getDoctor().getUser().getFirstName()
+                + " " + appt.getDoctor().getUser().getLastName();
+        notificationService.create(patientUserId, "COMPLETED",
+                "Термин завршен",
+                doctorName + " — " + appt.getAppointmentDate() + " во " + appt.getAppointmentTime(),
+                appt.getId());
+
         return appt;
     }
 
