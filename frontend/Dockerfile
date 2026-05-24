@@ -23,8 +23,11 @@ RUN mkdir -p ./public
 
 # NEXT_PUBLIC_* vars are baked into the bundle at build time — the value
 # matters here, not at runtime.
-ARG NEXT_PUBLIC_API_URL=http://localhost:8080/api
+# BACKEND_URL is the server-side proxy target used by next.config rewrites.
+ARG NEXT_PUBLIC_API_URL=/api
+ARG BACKEND_URL=http://localhost:8080
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV BACKEND_URL=$BACKEND_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN npm run build

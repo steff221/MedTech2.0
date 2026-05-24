@@ -3,7 +3,7 @@ import { useAuthStore } from "@/store/auth.store";
 import type { ApiError, AuthResponse } from "@/types/api";
 
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api",
   timeout: 15000,
   withCredentials: true, // send the httpOnly refresh_token cookie on every request
 });

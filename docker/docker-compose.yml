@@ -41,6 +41,10 @@ services:
       postgres:
         condition: service_healthy
     environment:
+      MEDTECH_MAIL_USERNAME: stefan.perovski20@gmail.com
+      MEDTECH_MAIL_PASSWORD: bxzy xydd drhk cvvj  
+      MEDTECH_MAIL_HOST: smtp.gmail.com
+      MEDTECH_MAIL_PORT: 587
       SPRING_PROFILES_ACTIVE: prod
       MEDTECH_DB_URL: jdbc:postgresql://postgres:5432/medtech
       MEDTECH_DB_USER: medtech_app
@@ -74,7 +78,8 @@ services:
       context: ../frontend
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: http://localhost:8080/api
+        NEXT_PUBLIC_API_URL: /api
+        BACKEND_URL: http://backend:8080
     container_name: medtech-frontend
     restart: unless-stopped
     depends_on:
