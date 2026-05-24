@@ -70,6 +70,15 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     @Query("SELECT COUNT(a) > 0 FROM Appointment a WHERE a.doctor.user.id = :doctorUserId AND a.patient.id = :patientId")
     boolean hasCareRelationship(@Param("doctorUserId") Long doctorUserId, @Param("patientId") Long patientId);
 
+    @Query("""
+           SELECT a FROM Appointment a
+           JOIN FETCH a.patient
+           JOIN FETCH a.doctor
+           WHERE a.appointmentDate = :date
+           ORDER BY a.appointmentTime ASC
+           """)
+    List<Appointment> findAllByAppointmentDate(@Param("date") LocalDate date);
+
     /**
      * Returns same-day appointments for a doctor that overlap the proposed slot.
      * Pessimistically locked to prevent two patients booking the identical slot

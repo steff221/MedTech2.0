@@ -12,6 +12,8 @@ import com.medtech.infrastructure.exception.ResourceNotFoundException;
 import com.medtech.infrastructure.exception.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -65,6 +67,10 @@ public class PatientService {
     public Patient getById(Long id) {
         return patientRepository.findById(id)
                 .orElseThrow(() -> ResourceNotFoundException.of("Patient", id));
+    }
+
+    public Page<Patient> search(String q, Pageable pageable) {
+        return patientRepository.searchByNameOrEmail(q == null ? "" : q.trim(), pageable);
     }
 
     public Patient getByUserId(Long userId) {

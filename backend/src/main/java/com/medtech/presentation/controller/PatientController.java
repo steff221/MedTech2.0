@@ -57,6 +57,15 @@ public class PatientController {
     private final PatientAccessGuard accessGuard;
     private final AuditLogService auditLogService;
 
+    @GetMapping
+    @PreAuthorize("hasAnyRole('DOCTOR', 'NURSE', 'ADMIN')")
+    @Operation(summary = "Search patients by name or email")
+    public ResponseEntity<org.springframework.data.domain.Page<PatientResponse>> search(
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "") String q,
+            Pageable pageable) {
+        return ResponseEntity.ok(patientService.search(q, pageable).map(patientMapper::toResponse));
+    }
+
     @PostMapping("/me")
     @PreAuthorize("hasRole('PATIENT')")
     @Operation(summary = "Create the patient profile for the currently authenticated PATIENT user")

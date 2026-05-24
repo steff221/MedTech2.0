@@ -9,6 +9,11 @@ import type {
 } from "@/types/api";
 
 export const patientService = {
+  search: (q: string, page = 0, size = 20) =>
+    api
+      .get<Page<PatientResponse>>("/patients", { params: { q, page, size } })
+      .then((r) => r.data),
+
   me: () => api.get<PatientResponse>("/patients/me").then((r) => r.data),
 
   byId: (id: number) =>

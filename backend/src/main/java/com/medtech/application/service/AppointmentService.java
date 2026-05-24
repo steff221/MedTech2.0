@@ -199,6 +199,10 @@ public class AppointmentService {
         return appointmentRepository.findByDoctorIdAndAppointmentDateBetween(doctorId, from, to, pageable);
     }
 
+    public List<Appointment> listForDate(LocalDate date) {
+        return appointmentRepository.findAllByAppointmentDate(date);
+    }
+
     private static void rejectIfTerminal(Appointment appt) {
         if (appt.getStatus().isTerminal()) {
             throw new ConflictException("Appointment is already " + appt.getStatus());

@@ -2,6 +2,9 @@ import { api } from "./api";
 import type { AppointmentResponse, BookAppointmentRequest } from "@/types/api";
 
 export const appointmentService = {
+  today: () =>
+    api.get<AppointmentResponse[]>("/appointments/today").then((r) => r.data),
+
   book: (body: BookAppointmentRequest) =>
     api.post<AppointmentResponse>("/appointments", body).then((r) => r.data),
 

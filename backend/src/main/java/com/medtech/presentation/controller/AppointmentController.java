@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/appointments")
@@ -56,6 +57,15 @@ public class AppointmentController {
         Appointment appt = appointmentService.getById(id);
         accessGuard.assertCanAccessPatient(appt.getPatient().getId());
         return ResponseEntity.ok(mapper.toResponse(appt));
+    }
+
+    @GetMapping("/today")
+    @PreAuthorize("hasAnyRole('NURSE', 'ADMIN')")
+    @Operation(summary = "List all appointments for today (across all doctors)")
+    public ResponseEntity<List<AppointmentResponse>> today() {
+        return ResponseEntity.ok(
+                appointmentService.listForDate(LocalDate.now())
+                        .stream().map(mapper::toResponse).toList());
     }
 
     @GetMapping("/doctor/{doctorId}")
