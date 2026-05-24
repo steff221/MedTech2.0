@@ -1,0 +1,43 @@
+{
+  "name": "MedTech — Здравствена платформа",
+  "short_name": "MedTech",
+  "description": "Закажи прегледи, следи рецепти и пристапи до медицинската историја.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0f1e",
+  "theme_color": "#10b981",
+  "lang": "mk",
+  "categories": ["health", "medical"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Мои прегледи",
+      "short_name": "Прегледи",
+      "description": "Погледни ги твоите закажани прегледи",
+      "url": "/dashboard/appointments",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Најди лекар",
+      "short_name": "Лекари",
+      "description": "Пребарај и закажи кај лекар",
+      "url": "/dashboard/find-doctor",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
