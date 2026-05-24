@@ -10,6 +10,7 @@ import com.medtech.domain.entity.MedicalRecord;
 import com.medtech.domain.entity.Patient;
 import com.medtech.domain.repository.AppointmentRepository;
 import com.medtech.domain.repository.DoctorRepository;
+import com.medtech.domain.repository.MedicalRecordEventRepository;
 import com.medtech.domain.repository.MedicalRecordRepository;
 import com.medtech.domain.repository.PatientRepository;
 import com.medtech.domain.vo.AppointmentStatus;
@@ -41,6 +42,7 @@ import static org.mockito.Mockito.when;
 class MedicalRecordServiceTest {
 
     @Mock MedicalRecordRepository medicalRecordRepository;
+    @Mock MedicalRecordEventRepository medicalRecordEventRepository;
     @Mock PatientRepository patientRepository;
     @Mock DoctorRepository doctorRepository;
     @Mock AppointmentRepository appointmentRepository;
@@ -63,8 +65,8 @@ class MedicalRecordServiceTest {
         otherDoctor = Entities.doctor(21L, Entities.user(3L, UserRole.DOCTOR), hospital);
 
         service = new MedicalRecordService(
-                medicalRecordRepository, patientRepository, doctorRepository,
-                appointmentRepository, new ObjectMapper(), fixedClock);
+                medicalRecordRepository, medicalRecordEventRepository, patientRepository,
+                doctorRepository, appointmentRepository, new ObjectMapper(), fixedClock);
 
         lenient().when(doctorRepository.findByUserId(doctor.getUser().getId()))
                 .thenReturn(Optional.of(doctor));

@@ -2,14 +2,18 @@ package com.medtech.application.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.medtech.application.dto.request.AddAddendumRequest;
 import com.medtech.application.dto.request.CreateMedicalRecordRequest;
 import com.medtech.constant.ErrorCode;
 import com.medtech.domain.entity.Appointment;
 import com.medtech.domain.entity.Doctor;
 import com.medtech.domain.entity.MedicalRecord;
+import com.medtech.domain.entity.MedicalRecordEvent;
 import com.medtech.domain.entity.Patient;
+import com.medtech.domain.entity.User;
 import com.medtech.domain.repository.AppointmentRepository;
 import com.medtech.domain.repository.DoctorRepository;
+import com.medtech.domain.repository.MedicalRecordEventRepository;
 import com.medtech.domain.repository.MedicalRecordRepository;
 import com.medtech.domain.repository.PatientRepository;
 import com.medtech.domain.vo.AppointmentStatus;
@@ -27,6 +31,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 
 @Slf4j
@@ -38,6 +45,7 @@ public class MedicalRecordService {
     public static final Duration MUTABILITY_WINDOW = Duration.ofDays(7);
 
     private final MedicalRecordRepository medicalRecordRepository;
+    private final MedicalRecordEventRepository eventRepository;
     private final PatientRepository patientRepository;
     private final DoctorRepository doctorRepository;
     private final AppointmentRepository appointmentRepository;
@@ -84,14 +92,45 @@ public class MedicalRecordService {
 
         MedicalRecord saved = medicalRecordRepository.save(record);
 
-        // Auto-progress the parent appointment to COMPLETED if it was still SCHEDULED/RESCHEDULED.
         if (appointment != null && !appointment.getStatus().isTerminal()) {
             appointment.setStatus(AppointmentStatus.COMPLETED);
         }
 
+        User author = doctor.getUser();
+        eventRepository.save(MedicalRecordEvent.created(saved, author, snapshot(saved)));
+
         log.info("Created medical record id={} patient={} doctor={} confidential={}",
                 saved.getId(), patient.getId(), doctor.getId(), saved.isConfidential());
         return saved;
+    }
+
+    @Transactional
+    public MedicalRecord addAddendum(Long recordId, Long authorUserId, AddAddendumRequest req) {
+        MedicalRecord record = getById(recordId);
+        assertMutable(record);
+
+        Doctor doctor = doctorRepository.findByUserId(authorUserId)
+                .orElseThrow(() -> new AuthorizationException("Only DOCTOR users can add addendums"));
+        if (!record.getDoctor().getId().equals(doctor.getId())) {
+            throw new AuthorizationException("Only the authoring doctor may add an addendum to this record");
+        }
+
+        if (req.clinicalNotes() != null) record.setClinicalNotes(req.clinicalNotes());
+        if (req.assessment()    != null) record.setAssessment(req.assessment());
+        if (req.plan()          != null) record.setPlan(req.plan());
+
+        MedicalRecord saved = medicalRecordRepository.save(record);
+        eventRepository.save(MedicalRecordEvent.addendum(saved, doctor.getUser(), snapshot(saved), req.note()));
+
+        log.info("Addendum added to medical record id={} by doctor userId={}", recordId, authorUserId);
+        return saved;
+    }
+
+    public List<MedicalRecordEvent> getHistory(Long recordId) {
+        if (!medicalRecordRepository.existsById(recordId)) {
+            throw ResourceNotFoundException.of("MedicalRecord", recordId);
+        }
+        return eventRepository.findByRecordIdOrderByCreatedAtAsc(recordId);
     }
 
     public MedicalRecord getById(Long id) {
@@ -103,10 +142,6 @@ public class MedicalRecordService {
         return medicalRecordRepository.findByPatientIdOrderByCreatedAtDesc(patientId, pageable);
     }
 
-    /**
-     * Permission check for any future "edit medical record" endpoint.
-     * Throws when the record is older than {@link #MUTABILITY_WINDOW}.
-     */
     public void assertMutable(MedicalRecord record) {
         if (Instant.now(clock).isAfter(record.getCreatedAt().plus(MUTABILITY_WINDOW))) {
             throw new ConflictException(ErrorCode.MEDICAL_RECORD_IMMUTABLE,
@@ -114,10 +149,29 @@ public class MedicalRecordService {
         }
     }
 
-    private String serializeVitalSigns(CreateMedicalRecordRequest req) {
-        if (req.vitalSigns() == null) {
-            return null;
+    private String snapshot(MedicalRecord r) {
+        Map<String, Object> snap = new LinkedHashMap<>();
+        snap.put("diagnosis",     r.getDiagnosis());
+        snap.put("mkb10Code",     r.getMkb10Code());
+        snap.put("clinicalNotes", r.getClinicalNotes());
+        snap.put("assessment",    r.getAssessment());
+        snap.put("plan",          r.getPlan());
+        snap.put("bloodPressure", r.getBloodPressure());
+        snap.put("heartRate",     r.getHeartRate());
+        snap.put("temperature",   r.getTemperature());
+        snap.put("weight",        r.getWeight());
+        snap.put("height",        r.getHeight());
+        snap.put("bmi",           r.getBmi());
+        snap.put("confidential",  r.isConfidential());
+        try {
+            return objectMapper.writeValueAsString(snap);
+        } catch (JsonProcessingException e) {
+            throw new ValidationException("Failed to serialize medical record snapshot: " + e.getMessage());
         }
+    }
+
+    private String serializeVitalSigns(CreateMedicalRecordRequest req) {
+        if (req.vitalSigns() == null) return null;
         try {
             return objectMapper.writeValueAsString(req.vitalSigns());
         } catch (JsonProcessingException e) {
