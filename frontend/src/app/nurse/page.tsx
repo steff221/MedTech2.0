@@ -387,7 +387,7 @@ export default function NurseDashboard() {
               {patients.data?.content.length === 0 &&
                 debouncedSearch.length >= 2 && (
                   <p className="py-6 text-center text-sm text-slate-400">
-                    Нема резултати за „{debouncedSearch}".
+                    Нема резултати за &bdquo;{debouncedSearch}&ldquo;.
                   </p>
                 )}
             </div>
