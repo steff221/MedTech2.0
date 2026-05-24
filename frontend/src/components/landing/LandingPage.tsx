@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
@@ -69,13 +68,13 @@ export function LandingPage() {
           <div className="flex items-center gap-3">
             <Link
               href="/login"
-              className="rounded-full border border-white/15 bg-white/[0.04] px-4 py-1.5 text-xs font-semibold text-white/80 transition-colors hover:border-white/30 hover:bg-white/[0.08] hover:text-white"
+              className="rounded-full border border-white/15 bg-white/[0.04] px-5 py-2 text-sm font-semibold text-white/80 transition-colors hover:border-white/30 hover:bg-white/[0.08] hover:text-white"
             >
               Најави се
             </Link>
             <Link
               href="/register"
-              className="rounded-full bg-emerald-500 px-4 py-1.5 text-xs font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all hover:bg-emerald-400"
+              className="rounded-full bg-emerald-500 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all hover:bg-emerald-400"
             >
               Регистрирај се
             </Link>
@@ -97,7 +96,7 @@ export function LandingPage() {
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
               </span>
               <h2 className="text-sm font-semibold text-emerald-300">
-                Live data
+                Во живо
               </h2>
             </div>
             <p className="mt-3 font-mono text-xs uppercase tracking-wider text-white/40">
@@ -105,9 +104,9 @@ export function LandingPage() {
             </p>
 
             <h1 className="mt-6 text-4xl font-bold leading-tight tracking-tight">
-              National healthcare,{" "}
+              Национално здравство,{" "}
               <span className="bg-gradient-to-r from-emerald-300 via-teal-300 to-cyan-300 bg-clip-text text-transparent">
-                in real time.
+                во реално време.
               </span>
             </h1>
             <p className="mt-3 max-w-md text-sm leading-relaxed text-white/60">
@@ -138,12 +137,6 @@ export function LandingPage() {
               />
             </div>
 
-            <Link
-              href="/login"
-              className="mt-8 inline-flex items-center gap-1.5 rounded-full bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition-all hover:bg-emerald-400 hover:shadow-emerald-400/30"
-            >
-              Влези на платформата <ArrowRight className="h-4 w-4" />
-            </Link>
           </motion.div>
 
           {/* RIGHT: Map */}
@@ -189,8 +182,8 @@ export function LandingPage() {
           className="my-10 grid grid-cols-1 gap-5 lg:grid-cols-2"
         >
           <BarChart
-            title="Appointments by hospital"
-            subtitle="Last 30 days"
+            title="Прегледи по болница"
+            subtitle="Последните 30 дена"
             orientation="horizontal"
             gradient={["#10b981", "#2dd4bf"]}
             data={(stats.data?.appointmentsByHospital ?? []).map((h) => ({
@@ -200,8 +193,8 @@ export function LandingPage() {
             }))}
           />
           <BarChart
-            title="Prescriptions issued"
-            subtitle="Last 7 days"
+            title="Издадени рецепти"
+            subtitle="Последните 7 дена"
             orientation="vertical"
             gradient={["#34d399", "#22d3ee"]}
             data={(stats.data?.prescriptionsByDay ?? []).map((d) => ({
@@ -211,48 +204,6 @@ export function LandingPage() {
             }))}
           />
         </motion.div>
-
-        {/* Personal quote — the reason this exists. */}
-        <motion.figure
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.4 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="relative mx-auto my-20 max-w-3xl px-6 text-center"
-        >
-          {/* Soft halo behind the quote */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 -z-10 opacity-40 blur-3xl"
-            style={{
-              background:
-                "radial-gradient(ellipse 50% 60% at 50% 50%, rgba(16,185,129,0.22), transparent 70%)",
-            }}
-          />
-          {/* Opening quote mark */}
-          <div
-            aria-hidden
-            className="mx-auto mb-4 font-serif text-6xl leading-none text-white/15"
-          >
-            “
-          </div>
-          <blockquote className="text-lg font-medium italic leading-relaxed text-white/75 sm:text-xl">
-            With the world so set on tearing itself apart, it don&apos;t seem
-            like such a bad thing to me to want to put a little bit of it{" "}
-            <span className="bg-gradient-to-r from-emerald-300 via-teal-300 to-cyan-300 bg-clip-text text-transparent">
-              back together.
-            </span>
-          </blockquote>
-          {/* Hairline divider */}
-          <div
-            aria-hidden
-            className="mx-auto mt-6 h-px w-16"
-            style={{
-              background:
-                "linear-gradient(90deg, transparent, rgba(16,185,129,0.6), transparent)",
-            }}
-          />
-        </motion.figure>
 
         <footer className="mb-8 mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-white/5 pt-5 text-xs text-white/30">
           <span>© MedTech 2026</span>

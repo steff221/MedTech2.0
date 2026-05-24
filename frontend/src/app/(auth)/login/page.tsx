@@ -3,9 +3,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
+import { useSearchParams } from "next/navigation";
 import { z } from "zod";
 import { Input } from "@/components/common/Input";
 import { useAuth } from "@/hooks/useAuth";
@@ -21,9 +21,11 @@ type FormData = z.infer<typeof schema>;
 const DARK_INPUT =
   "bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-emerald-400 focus:ring-emerald-400/30";
 
-export default function LoginPage() {
+function LoginForm() {
   const { login } = useAuth();
   const t = useT();
+  const searchParams = useSearchParams();
+  const nextUrl = searchParams.get("next") ?? undefined;
   const [showPwd, setShowPwd] = useState(false);
   const {
     register,
@@ -36,7 +38,7 @@ export default function LoginPage() {
 
   const onSubmit = async (data: FormData) => {
     try {
-      await login(data);
+      await login(data, nextUrl);
     } catch {
       /* toast already shown in useAuth */
     }
@@ -70,13 +72,12 @@ export default function LoginPage() {
             <label className="block text-sm font-medium text-white/70">
               Лозинка
             </label>
-            <button
-              type="button"
-              onClick={() => toast(t.auth.forgotPasswordToast, { icon: "ℹ️" })}
+            <Link
+              href="/forgot-password"
               className="text-xs text-white/50 transition-colors hover:text-white/80"
             >
               {t.auth.forgotPassword}
-            </button>
+            </Link>
           </div>
           <div className="relative">
             <Input
@@ -124,5 +125,13 @@ export default function LoginPage() {
         </Link>
       </p>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }

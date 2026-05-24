@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Activity, Calendar, ClipboardList, Users } from "lucide-react";
+import { Activity, ClipboardList, Stethoscope, Users } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { PageBanner } from "@/components/layout/PageBanner";
@@ -22,7 +22,7 @@ export default function DoctorOverviewPage() {
     { label: t.doctorOverview.prescriptionsToday, value: data?.prescriptionsToday ?? 0, icon: ClipboardList, color: "bg-emerald-50 text-emerald-600" },
     { label: t.doctorOverview.referralsToday,     value: data?.referralsToday ?? 0,     icon: Activity,      color: "bg-sky-50 text-sky-600"         },
     { label: t.doctorOverview.activePatients,     value: data?.activePatients ?? 0,     icon: Users,         color: "bg-violet-50 text-violet-600"   },
-    { label: t.doctorOverview.activeDoctors,      value: data?.activeDoctors ?? 0,      icon: Calendar,      color: "bg-amber-50 text-amber-600"     },
+    { label: t.doctorOverview.activeDoctors,      value: data?.activeDoctors ?? 0,      icon: Stethoscope,   color: "bg-amber-50 text-amber-600"     },
   ];
 
   return (

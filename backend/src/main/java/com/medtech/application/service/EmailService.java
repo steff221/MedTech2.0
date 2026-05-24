@@ -69,6 +69,63 @@ public class EmailService {
     }
 
     @Async
+    public void sendInviteEmail(String toEmail, String fullName, String role, String setupLink) {
+        String subject = "Покана за MedTech — поставете ја вашата лозинка";
+        String body = """
+                Почитуван/а %s,
+
+                Вие бевте поканети да се приклучите на MedTech платформата како %s.
+
+                Кликнете на линкот подолу за да ја поставите вашата лозинка и да ја активирате сметката (важи 48 часа):
+
+                  %s
+
+                Ако мислите дека ова е грешка, игнорирајте ја оваа порака.
+
+                Со почит,
+                MedTech тим
+                """.formatted(fullName, role, setupLink);
+        send(toEmail, subject, body);
+    }
+
+    @Async
+    public void sendEmailVerification(String toEmail, String fullName, String verifyLink) {
+        String subject = "Потврдете ја вашата е-пошта — MedTech";
+        String body = """
+                Почитуван/а %s,
+
+                Добредојдовте во MedTech! Кликнете на линкот подолу за да ја потврдите е-поштата (важи 24 часа):
+
+                  %s
+
+                Ако не сте се регистрирале, игнорирајте ја оваа порака.
+
+                Со почит,
+                MedTech тим
+                """.formatted(fullName, verifyLink);
+        send(toEmail, subject, body);
+    }
+
+    @Async
+    public void sendPasswordResetEmail(String toEmail, String fullName, String resetLink) {
+        String subject = "Ресетирање на лозинка — MedTech";
+        String body = """
+                Почитуван/а %s,
+
+                Примивме барање за ресетирање на лозинката за вашата сметка.
+                Кликнете на линкот подолу (важи 30 минути):
+
+                  %s
+
+                Ако не сте го побарале ова, игнорирајте ја оваа порака — вашата лозинка останува непроменета.
+
+                Со почит,
+                MedTech тим
+                """.formatted(fullName, resetLink);
+        send(toEmail, subject, body);
+    }
+
+    @Async
     public void sendPasswordChangedNotice(String toEmail, String fullName) {
         String subject = "Вашата лозинка е сменета";
         String body = """

@@ -78,6 +78,14 @@ public class SecurityConfig {
                 .xssProtection(Customizer.withDefaults())
                 .referrerPolicy(rp -> rp
                     .policy(org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+                .contentSecurityPolicy(csp -> csp
+                    .policyDirectives("default-src 'none'; " +
+                        "script-src 'none'; " +
+                        "style-src 'none'; " +
+                        "img-src 'none'; " +
+                        "connect-src 'self'; " +
+                        "frame-ancestors 'none'; " +
+                        "form-action 'none'"))
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
@@ -85,6 +93,9 @@ public class SecurityConfig {
                         "/api/auth/login",
                         "/api/auth/register",
                         "/api/auth/refresh",
+                        "/api/auth/forgot-password",
+                        "/api/auth/reset-password",
+                        "/api/auth/verify-email",
                         "/v3/api-docs/**",
                         "/swagger-ui.html",
                         "/swagger-ui/**",

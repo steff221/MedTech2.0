@@ -1,15 +1,17 @@
 package com.medtech.presentation.controller;
 
+import com.medtech.application.dto.request.ForgotPasswordRequest;
 import com.medtech.application.dto.request.LoginRequest;
 import com.medtech.application.dto.request.LogoutRequest;
 import com.medtech.application.dto.request.RefreshTokenRequest;
 import com.medtech.application.dto.request.RegisterRequest;
+import com.medtech.application.dto.request.ResetPasswordRequest;
 import com.medtech.application.dto.response.AuthResponse;
 import com.medtech.application.service.AuthService;
+import com.medtech.infrastructure.security.JwtProperties;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,9 +19,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -30,16 +34,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private static final String REFRESH_COOKIE = "refresh_token";
-    /** 7 days in seconds — matches JwtProperties.refreshTokenTtlDays default */
-    private static final int COOKIE_MAX_AGE_SECONDS = 7 * 24 * 60 * 60;
 
     private final AuthService authService;
+    private final JwtProperties jwtProperties;
 
     @Value("${medtech.security.cookie-secure:true}")
     private boolean secureCookie;
 
     @PostMapping("/register")
-    @Operation(summary = "Self-register a PATIENT, DOCTOR, or NURSE account")
+    @Operation(summary = "Self-register a PATIENT account")
     public ResponseEntity<AuthResponse> register(
             @Valid @RequestBody RegisterRequest request,
             HttpServletResponse response) {
@@ -75,6 +78,27 @@ public class AuthController {
         return ResponseEntity.ok(auth);
     }
 
+    @GetMapping("/verify-email")
+    @Operation(summary = "Verify email address using the token from the confirmation email")
+    public ResponseEntity<Void> verifyEmail(@RequestParam String token) {
+        authService.verifyEmail(token);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/forgot-password")
+    @Operation(summary = "Request a password-reset email (always 200 to prevent user enumeration)")
+    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.forgotPassword(request);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/reset-password")
+    @Operation(summary = "Set a new password using a valid reset token")
+    public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request);
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("/logout")
     @Operation(summary = "Revoke the supplied refresh token so it cannot be reused")
     public ResponseEntity<Void> logout(
@@ -91,17 +115,13 @@ public class AuthController {
     }
 
     private void setRefreshCookie(HttpServletResponse response, String token) {
-        Cookie cookie = new Cookie(REFRESH_COOKIE, token);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(secureCookie);
-        cookie.setPath("/api/auth");
-        cookie.setMaxAge(COOKIE_MAX_AGE_SECONDS);
-        // SameSite=Strict prevents CSRF — set via header because Servlet Cookie API lacks it pre-Servlet 6.
-        response.addCookie(cookie);
+        long maxAge = jwtProperties.refreshTokenTtlDays() * 24 * 60 * 60;
+        // Use raw Set-Cookie header so we can include SameSite (Servlet API < 6 has no setter for it).
+        // Deliberately NOT calling response.addCookie() — that would emit a second, SameSite-less header.
         response.addHeader("Set-Cookie",
                 REFRESH_COOKIE + "=" + token
                 + "; Path=/api/auth"
-                + "; Max-Age=" + COOKIE_MAX_AGE_SECONDS
+                + "; Max-Age=" + maxAge
                 + "; HttpOnly"
                 + (secureCookie ? "; Secure" : "")
                 + "; SameSite=Strict");

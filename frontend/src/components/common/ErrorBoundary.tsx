@@ -51,7 +51,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             Something went wrong on this page
           </h2>
           <p className="mt-1 text-sm text-slate-500">
-            {this.state.error?.message ?? "Unexpected error."}
+            {process.env.NODE_ENV !== "production"
+              ? (this.state.error?.message ?? "Unexpected error.")
+              : "An unexpected error occurred. Please try again or go home."}
           </p>
           <div className="mt-5 flex justify-center gap-2">
             <button

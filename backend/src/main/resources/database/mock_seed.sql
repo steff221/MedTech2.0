@@ -20,7 +20,14 @@ SELECT * FROM (VALUES
   ('Општа болница Струмица',   'Струмица', 'ул. Млечен Пат бб',      '2400', '+389 34 200 000', 41.43780::numeric, 22.64110::numeric, 'SECONDARY'::hospital_type_enum, 'Никола Атанасов',  180, 'ACTIVE'::hospital_status_enum),
   ('Општа болница Гостивар',   'Гостивар', 'ул. Браќа Гиноски бб',   '1230', '+389 42 200 000', 41.79720::numeric, 20.90280::numeric, 'SECONDARY'::hospital_type_enum, 'Ариф Незири',      160, 'ACTIVE'::hospital_status_enum),
   ('Општа болница Велес',      'Велес',    'ул. Шефки Сали бб',      '1400', '+389 43 200 000', 41.71560::numeric, 21.77580::numeric, 'SECONDARY'::hospital_type_enum, 'Љубомир Андонов',  170, 'ACTIVE'::hospital_status_enum),
-  ('Општа болница Кичево',     'Кичево',   'ул. Маршал Тито бб',     '6250', '+389 45 220 000', 41.51300::numeric, 20.95800::numeric, 'SECONDARY'::hospital_type_enum, 'Билјана Трајкоска', 120, 'ACTIVE'::hospital_status_enum)
+  ('Општа болница Кичево',     'Кичево',    'ул. Маршал Тито бб',        '6250', '+389 45 220 000', 41.51300::numeric, 20.95800::numeric, 'SECONDARY'::hospital_type_enum, 'Билјана Трајкоска',  120, 'ACTIVE'::hospital_status_enum),
+  ('Општа болница Кавадарци',  'Кавадарци', 'ул. Маршал Тито бб',        '1430', '+389 43 410 000', 41.43340::numeric, 22.01220::numeric, 'SECONDARY'::hospital_type_enum, 'Томе Јовановски',   140, 'ACTIVE'::hospital_status_enum),
+  ('Општа болница Гевгелија',  'Гевгелија', 'ул. Маршал Тито бб',        '1480', '+389 34 210 000', 41.14380::numeric, 22.50540::numeric, 'SECONDARY'::hospital_type_enum, 'Горан Стоилов',     110, 'ACTIVE'::hospital_status_enum),
+  ('Општа болница Кочани',     'Кочани',    'ул. Партизански одред бб',  '2300', '+389 33 270 000', 41.91430::numeric, 22.41260::numeric, 'SECONDARY'::hospital_type_enum, 'Снежана Георгиева',  130, 'ACTIVE'::hospital_status_enum),
+  ('Општа болница Дебар',      'Дебар',     'ул. Сливово бб',            '1250', '+389 46 830 000', 41.52390::numeric, 20.52440::numeric, 'SECONDARY'::hospital_type_enum, 'Хасан Реџепи',      100, 'ACTIVE'::hospital_status_enum),
+  ('Општа болница Неготино',   'Неготино',  'ул. Моша Пијаде бб',        '1440', '+389 43 360 000', 41.48370::numeric, 22.08940::numeric, 'SECONDARY'::hospital_type_enum, 'Ленче Јовановска',   90, 'ACTIVE'::hospital_status_enum),
+  ('Општа болница Свети Николе','Свети Николе','ул. Трајко Христов бб',  '2220', '+389 32 440 000', 41.86690::numeric, 21.94370::numeric, 'SECONDARY'::hospital_type_enum, 'Димитар Стојков',    80, 'ACTIVE'::hospital_status_enum),
+  ('Општа болница Берово',     'Берово',    'ул. Маршал Тито бб',        '2330', '+389 33 470 000', 41.70970::numeric, 22.85410::numeric, 'SECONDARY'::hospital_type_enum, 'Роза Митева',        75, 'ACTIVE'::hospital_status_enum)
 ) AS v(name, city, address, postal_code, phone_number, latitude, longitude, type, director_name, bed_count, status)
 WHERE NOT EXISTS (SELECT 1 FROM hospitals WHERE hospitals.name = v.name);
 

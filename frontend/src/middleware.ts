@@ -1,26 +1,9 @@
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 
-const PROTECTED_PREFIXES = ["/doctor", "/dashboard", "/profile"];
-
-/**
- * Edge middleware: if the request targets a protected route and the browser
- * hasn't sent the httpOnly refresh_token cookie, redirect to /login before
- * Next.js even renders a page.  This is a first-line gate — the layouts still
- * re-validate role and hydration state on the client.
- */
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const hasSession = request.cookies.has("refresh_token");
-
-  const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
-
-  if (isProtected && !hasSession) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("next", pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
+// The refresh_token cookie is set by the backend (port 8080) and is therefore
+// invisible to this middleware running on the frontend origin (port 3000).
+// Route protection is handled client-side in each layout via useAuth + zustand.
+export function middleware() {
   return NextResponse.next();
 }
 

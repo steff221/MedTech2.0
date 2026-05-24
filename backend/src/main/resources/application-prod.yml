@@ -27,6 +27,12 @@ medtech:
         - https://medtech.mk
         - https://www.medtech.mk
 
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: false
+
 logging:
   level:
     root: WARN

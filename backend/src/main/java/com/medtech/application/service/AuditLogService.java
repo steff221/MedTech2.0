@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.medtech.domain.entity.AuditLog;
 import com.medtech.domain.entity.User;
 import com.medtech.domain.repository.AuditLogRepository;
+import com.medtech.domain.repository.UserRepository;
 import com.medtech.domain.vo.AuditAction;
 import com.medtech.domain.vo.AuditStatus;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +36,24 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuditLogService {
 
     private final AuditLogRepository auditLogRepository;
+    private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
+
+    /** Convenience overload for callers that only have a userId (e.g. controllers). */
+    @Async
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void recordByUserId(Long userId,
+                               AuditAction action,
+                               String entityType,
+                               Long entityId,
+                               String description,
+                               String ipAddress,
+                               String userAgent,
+                               AuditStatus status) {
+        userRepository.findById(userId).ifPresent(user ->
+            record(user, action, entityType, entityId, null, description, ipAddress, userAgent, status)
+        );
+    }
 
     @Async
     @Transactional(propagation = Propagation.REQUIRES_NEW)

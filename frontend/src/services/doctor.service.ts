@@ -41,7 +41,7 @@ export const doctorService = {
       })
       .then((r) => r.data),
 
-  appointmentsInRange: (doctorId: number, from: string, to: string, size = 500) =>
+  appointmentsInRange: (doctorId: number, from: string, to: string, size = 100) =>
     api
       .get<Page<AppointmentResponse>>(`/appointments/doctor/${doctorId}/range`, {
         params: { from, to, page: 0, size, sort: "appointmentDate,asc" },

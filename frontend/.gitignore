@@ -6,3 +6,7 @@ out
 *.log
 .DS_Store
 next-env.d.ts
+
+# PWA generated files (workbox auto-generated — our sw.js is hand-written and IS committed)
+public/workbox-*.js
+public/workbox-*.js.map

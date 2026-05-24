@@ -1,16 +1,24 @@
 package com.medtech.application.service;
 
+import com.medtech.application.dto.request.ForgotPasswordRequest;
 import com.medtech.application.dto.request.LoginRequest;
 import com.medtech.application.dto.request.LogoutRequest;
 import com.medtech.application.dto.request.RefreshTokenRequest;
 import com.medtech.application.dto.request.RegisterRequest;
+import com.medtech.application.dto.request.ResetPasswordRequest;
 import com.medtech.application.dto.response.AuthResponse;
 import com.medtech.application.dto.response.UserResponse;
 import com.medtech.constant.ErrorCode;
+import com.medtech.domain.entity.EmailVerificationToken;
+import com.medtech.domain.entity.PasswordResetToken;
 import com.medtech.domain.entity.RefreshToken;
 import com.medtech.domain.entity.User;
+import com.medtech.domain.repository.EmailVerificationTokenRepository;
+import com.medtech.domain.repository.PasswordResetTokenRepository;
 import com.medtech.domain.repository.RefreshTokenRepository;
 import com.medtech.domain.repository.UserRepository;
+import com.medtech.domain.vo.AuditAction;
+import com.medtech.domain.vo.AuditStatus;
 import com.medtech.domain.vo.UserStatus;
 import com.medtech.infrastructure.exception.AppException;
 import com.medtech.infrastructure.exception.AuthorizationException;
@@ -19,18 +27,24 @@ import com.medtech.infrastructure.exception.ResourceNotFoundException;
 import com.medtech.infrastructure.security.JwtProperties;
 import com.medtech.infrastructure.security.JwtTokenProvider;
 import io.jsonwebtoken.Claims;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.HexFormat;
 import java.util.Objects;
 
@@ -41,15 +55,31 @@ public class AuthService {
 
     private static final int MAX_FAILED_ATTEMPTS = 5;
     private static final Duration LOCKOUT_WINDOW = Duration.ofMinutes(15);
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final EmailVerificationTokenRepository emailVerificationTokenRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
     private final JwtProperties jwtProperties;
+    private final EmailService emailService;
+    private final AuditLogService auditLogService;
+
+    @Value("${medtech.frontend-url:http://localhost:3000}")
+    private String frontendUrl;
+
+    @Value("${medtech.password-reset-ttl-minutes:30}")
+    private int passwordResetTtlMinutes;
 
     @Transactional
     public AuthResponse register(RegisterRequest req) {
+        if (req.role() != com.medtech.domain.vo.UserRole.PATIENT) {
+            throw new AppException(ErrorCode.AUTH_FORBIDDEN, HttpStatus.FORBIDDEN,
+                    "Self-registration is only allowed for PATIENT accounts") {};
+        }
+
         if (userRepository.existsByEmailIgnoreCase(req.email())) {
             throw new ConflictException(ErrorCode.AUTH_EMAIL_TAKEN, "Email already registered");
         }
@@ -66,6 +96,7 @@ public class AuthService {
         user = userRepository.save(user);
 
         log.info("Registered user id={} email={} role={}", user.getId(), user.getEmail(), user.getRole());
+        issueVerificationToken(user);
         return buildAuthResponse(user);
     }
 
@@ -98,7 +129,10 @@ public class AuthService {
         }
 
         userRepository.recordSuccessfulLogin(user.getId(), Instant.now());
-        return buildAuthResponse(user);
+        AuthResponse res = buildAuthResponse(user);
+        auditLogService.record(user, AuditAction.LOGIN, "User", user.getId(), null,
+                "Successful login", currentIp(), currentUserAgent(), AuditStatus.SUCCESS);
+        return res;
     }
 
     @Transactional
@@ -148,7 +182,65 @@ public class AuthService {
             t.setRevoked(true);
             t.setRevokedAt(Instant.now());
             refreshTokenRepository.save(t);
+            auditLogService.record(t.getUser(), AuditAction.LOGOUT, "User", t.getUser().getId(),
+                    null, "Logout", currentIp(), currentUserAgent(), AuditStatus.SUCCESS);
         });
+    }
+
+    /**
+     * Initiates the password reset flow. Always returns 200 regardless of whether
+     * the email exists — prevents user enumeration.
+     */
+    @Transactional
+    public void forgotPassword(ForgotPasswordRequest req) {
+        userRepository.findByEmailIgnoreCase(req.email()).ifPresent(user -> {
+            // Invalidate any existing reset tokens for this user
+            passwordResetTokenRepository.invalidateAllForUser(user.getId(), Instant.now());
+
+            byte[] raw = new byte[32];
+            SECURE_RANDOM.nextBytes(raw);
+            String plainToken = Base64.getUrlEncoder().withoutPadding().encodeToString(raw);
+            String hash = hashToken(plainToken);
+
+            PasswordResetToken prt = new PasswordResetToken();
+            prt.setUser(user);
+            prt.setTokenHash(hash);
+            prt.setExpiresAt(Instant.now().plus(Duration.ofMinutes(passwordResetTtlMinutes)));
+            passwordResetTokenRepository.save(prt);
+
+            String resetLink = frontendUrl + "/reset-password?token=" + plainToken;
+            emailService.sendPasswordResetEmail(user.getEmail(),
+                    user.getFirstName() + " " + user.getLastName(), resetLink);
+            log.info("Password reset token issued for user id={}", user.getId());
+        });
+    }
+
+    @Transactional
+    public void resetPassword(ResetPasswordRequest req) {
+        String hash = hashToken(req.token());
+        PasswordResetToken prt = passwordResetTokenRepository.findByTokenHash(hash)
+                .orElseThrow(() -> new AppException(ErrorCode.AUTH_RESET_TOKEN_INVALID,
+                        HttpStatus.BAD_REQUEST, "Invalid or expired reset token") {});
+
+        if (prt.isUsed() || prt.getExpiresAt().isBefore(Instant.now())) {
+            throw new AppException(ErrorCode.AUTH_RESET_TOKEN_INVALID,
+                    HttpStatus.BAD_REQUEST, "Reset token has expired or already been used") {};
+        }
+
+        User user = prt.getUser();
+        user.setPasswordHash(passwordEncoder.encode(req.newPassword()));
+        userRepository.save(user);
+
+        prt.setUsed(true);
+        prt.setUsedAt(Instant.now());
+        passwordResetTokenRepository.save(prt);
+
+        // Revoke all active refresh tokens so existing sessions are invalidated
+        refreshTokenRepository.revokeAllForUser(user.getId(), Instant.now());
+
+        emailService.sendPasswordChangedNotice(user.getEmail(),
+                user.getFirstName() + " " + user.getLastName());
+        log.info("Password reset completed for user id={}", user.getId());
     }
 
     private AuthResponse buildAuthResponse(User user) {
@@ -172,6 +264,44 @@ public class AuthService {
         refreshTokenRepository.save(rt);
     }
 
+    private void issueVerificationToken(User user) {
+        byte[] raw = new byte[32];
+        SECURE_RANDOM.nextBytes(raw);
+        String plainToken = Base64.getUrlEncoder().withoutPadding().encodeToString(raw);
+
+        EmailVerificationToken evt = new EmailVerificationToken();
+        evt.setUser(user);
+        evt.setTokenHash(hashToken(plainToken));
+        evt.setExpiresAt(Instant.now().plus(Duration.ofHours(24)));
+        emailVerificationTokenRepository.save(evt);
+
+        String link = frontendUrl + "/verify-email?token=" + plainToken;
+        emailService.sendEmailVerification(user.getEmail(), user.fullName(), link);
+    }
+
+    @Transactional
+    public void verifyEmail(String plainToken) {
+        String hash = hashToken(plainToken);
+        EmailVerificationToken evt = emailVerificationTokenRepository.findByTokenHash(hash)
+                .orElseThrow(() -> new AppException(ErrorCode.AUTH_RESET_TOKEN_INVALID,
+                        HttpStatus.BAD_REQUEST, "Verification link is invalid or expired") {});
+
+        if (evt.isUsed() || evt.getExpiresAt().isBefore(Instant.now())) {
+            throw new AppException(ErrorCode.AUTH_RESET_TOKEN_INVALID,
+                    HttpStatus.BAD_REQUEST, "Verification link has expired") {};
+        }
+
+        User user = evt.getUser();
+        user.setEmailVerified(true);
+        userRepository.save(user);
+
+        evt.setUsed(true);
+        evt.setUsedAt(Instant.now());
+        emailVerificationTokenRepository.save(evt);
+
+        log.info("Email verified for user id={}", user.getId());
+    }
+
     private static String hashToken(String token) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -179,6 +309,30 @@ public class AuthService {
             return HexFormat.of().formatHex(bytes);
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 not available", e);
+        }
+    }
+
+    private static String currentIp() {
+        try {
+            ServletRequestAttributes attrs =
+                    (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
+            HttpServletRequest req = attrs.getRequest();
+            String forwarded = req.getHeader("X-Forwarded-For");
+            return (forwarded != null && !forwarded.isBlank())
+                    ? forwarded.split(",")[0].trim()
+                    : req.getRemoteAddr();
+        } catch (IllegalStateException e) {
+            return null;
+        }
+    }
+
+    private static String currentUserAgent() {
+        try {
+            ServletRequestAttributes attrs =
+                    (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
+            return attrs.getRequest().getHeader("User-Agent");
+        } catch (IllegalStateException e) {
+            return null;
         }
     }
 }

@@ -11,14 +11,18 @@ import com.medtech.application.dto.response.MedicalRecordResponse;
 import com.medtech.application.dto.response.PatientResponse;
 import com.medtech.application.dto.response.PrescriptionResponse;
 import com.medtech.application.service.AppointmentService;
+import com.medtech.application.service.AuditLogService;
 import com.medtech.application.service.MedicalRecordService;
 import com.medtech.application.service.PatientService;
 import com.medtech.application.service.PrescriptionService;
+import com.medtech.domain.vo.AuditAction;
+import com.medtech.domain.vo.AuditStatus;
 import com.medtech.infrastructure.exception.AuthorizationException;
 import com.medtech.infrastructure.security.PatientAccessGuard;
 import com.medtech.infrastructure.security.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -51,6 +55,7 @@ public class PatientController {
     private final PrescriptionMapper prescriptionMapper;
 
     private final PatientAccessGuard accessGuard;
+    private final AuditLogService auditLogService;
 
     @PostMapping("/me")
     @PreAuthorize("hasRole('PATIENT')")
@@ -74,7 +79,11 @@ public class PatientController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('DOCTOR', 'NURSE')")
     @Operation(summary = "Get any patient (clinicians and admins only)")
-    public ResponseEntity<PatientResponse> getById(@PathVariable Long id) {
+    public ResponseEntity<PatientResponse> getById(@PathVariable Long id, HttpServletRequest request) {
+        SecurityUtils.currentUserId().ifPresent(uid ->
+            auditLogService.recordByUserId(uid, AuditAction.VIEW, "Patient", id,
+                "Patient profile viewed", clientIp(request), request.getHeader("User-Agent"), AuditStatus.SUCCESS)
+        );
         return ResponseEntity.ok(patientMapper.toResponse(patientService.getById(id)));
     }
 
@@ -95,15 +104,32 @@ public class PatientController {
 
     @GetMapping("/{id}/medical-records")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Page<MedicalRecordResponse>> medicalRecords(@PathVariable Long id, Pageable pageable) {
+    public ResponseEntity<Page<MedicalRecordResponse>> medicalRecords(@PathVariable Long id, Pageable pageable,
+                                                                      HttpServletRequest request) {
         accessGuard.assertCanAccessPatient(id);
+        SecurityUtils.currentUserId().ifPresent(uid ->
+            auditLogService.recordByUserId(uid, AuditAction.VIEW, "Patient", id,
+                "Medical records viewed", clientIp(request), request.getHeader("User-Agent"), AuditStatus.SUCCESS)
+        );
         return ResponseEntity.ok(medicalRecordService.historyOf(id, pageable).map(medicalRecordMapper::toResponse));
     }
 
     @GetMapping("/{id}/prescriptions")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Page<PrescriptionResponse>> prescriptions(@PathVariable Long id, Pageable pageable) {
+    public ResponseEntity<Page<PrescriptionResponse>> prescriptions(@PathVariable Long id, Pageable pageable,
+                                                                    HttpServletRequest request) {
         accessGuard.assertCanAccessPatient(id);
+        SecurityUtils.currentUserId().ifPresent(uid ->
+            auditLogService.recordByUserId(uid, AuditAction.VIEW, "Patient", id,
+                "Prescriptions viewed", clientIp(request), request.getHeader("User-Agent"), AuditStatus.SUCCESS)
+        );
         return ResponseEntity.ok(prescriptionService.listFor(id, pageable).map(prescriptionMapper::toResponse));
+    }
+
+    private static String clientIp(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        return (forwarded != null && !forwarded.isBlank())
+                ? forwarded.split(",")[0].trim()
+                : request.getRemoteAddr();
     }
 }

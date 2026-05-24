@@ -24,8 +24,9 @@ export const useAuthStore = create<AuthState>()(
     {
       name: "medtech-auth",
       storage: createJSONStorage(() => localStorage),
-      // Refresh token is stored only in an httpOnly cookie — never in localStorage.
-      partialize: (state) => ({ user: state.user, accessToken: state.accessToken }),
+      // accessToken is NOT persisted — it lives in memory only (XSS risk if in localStorage).
+      // On hard reload, useAuth triggers a silent refresh via the httpOnly refresh_token cookie.
+      partialize: (state) => ({ user: state.user }),
       onRehydrateStorage: () => (state) => {
         if (state) state.isHydrated = true;
       },

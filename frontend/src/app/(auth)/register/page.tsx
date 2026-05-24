@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff } from "lucide-react";
+import { CheckCircle2, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -36,6 +36,7 @@ export default function RegisterPage() {
   const { register: registerUser } = useAuth();
   const t = useT();
   const [showPwd, setShowPwd] = useState(false);
+  const [registered, setRegistered] = useState(false);
   const {
     register,
     handleSubmit,
@@ -55,10 +56,33 @@ export default function RegisterPage() {
         phoneNumber: data.phoneNumber || undefined,
         role: "PATIENT",
       });
+      setRegistered(true);
     } catch {
       /* toast already shown */
     }
   };
+
+  if (registered) {
+    return (
+      <div className="text-center">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/10">
+          <CheckCircle2 className="h-7 w-7 text-emerald-400" />
+        </div>
+        <h1 className="text-2xl font-bold tracking-tight text-white">
+          Проверете ја вашата е-пошта
+        </h1>
+        <p className="mt-2 text-sm leading-relaxed text-white/60">
+          Испративме верификациски линк на вашата адреса. Кликнете на него за да ја активирате сметката.
+        </p>
+        <Link
+          href="/login"
+          className="mt-6 inline-block text-sm font-semibold text-emerald-300 underline-offset-4 hover:text-emerald-200 hover:underline"
+        >
+          Оди на најава →
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -163,6 +187,7 @@ export default function RegisterPage() {
 function Field({
   label,
   hint,
+  error,
   children,
 }: {
   label: string;
@@ -176,7 +201,11 @@ function Field({
         {label}
       </label>
       {children}
-      {hint && <p className="mt-1 text-xs text-white/50">{hint}</p>}
+      {error ? (
+        <p className="mt-1 text-xs text-rose-400">{error}</p>
+      ) : hint ? (
+        <p className="mt-1 text-xs text-white/50">{hint}</p>
+      ) : null}
     </div>
   );
 }

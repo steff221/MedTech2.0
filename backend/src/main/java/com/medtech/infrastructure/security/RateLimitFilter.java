@@ -1,5 +1,7 @@
 package com.medtech.infrastructure.security;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import jakarta.servlet.FilterChain;
@@ -13,20 +15,21 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * In-memory per-IP rate limiter for auth endpoints.
  * Limits: 10 requests / minute per IP on /api/auth/**.
- * Uses Bucket4j with local (non-distributed) buckets.
+ * Caffeine cache evicts idle entries after 2 minutes so the map never grows without bound.
  */
 public class RateLimitFilter extends OncePerRequestFilter {
 
     private static final int CAPACITY = 10;
     private static final Duration REFILL_PERIOD = Duration.ofMinutes(1);
 
-    private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
+    private final Cache<String, Bucket> buckets = Caffeine.newBuilder()
+            .expireAfterAccess(Duration.ofMinutes(2))
+            .maximumSize(50_000)
+            .build();
 
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
@@ -38,16 +41,15 @@ public class RateLimitFilter extends OncePerRequestFilter {
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain chain) throws ServletException, IOException {
         String ip = resolveClientIp(request);
-        Bucket bucket = buckets.computeIfAbsent(ip, k -> newBucket());
+        Bucket bucket = buckets.get(ip, k -> newBucket());
 
         if (bucket.tryConsume(1)) {
             chain.doFilter(request, response);
         } else {
             response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-            response.getWriter().write("""
-                    {"status":429,"code":"RATE_LIMITED","message":"Too many requests. Please try again later."}
-                    """.strip());
+            response.getWriter().write(
+                    "{\"status\":429,\"code\":\"RATE_LIMITED\",\"message\":\"Too many requests. Please try again later.\"}");
         }
     }
 

@@ -14,4 +14,13 @@ export const authService = {
 
   logout: () =>
     api.post<void>("/auth/logout", null).then((r) => r.data),
+
+  forgotPassword: (email: string) =>
+    api.post<void>("/auth/forgot-password", { email }).then((r) => r.data),
+
+  resetPassword: (token: string, newPassword: string) =>
+    api.post<void>("/auth/reset-password", { token, newPassword }).then((r) => r.data),
+
+  verifyEmail: (token: string) =>
+    api.get<void>(`/auth/verify-email?token=${encodeURIComponent(token)}`).then((r) => r.data),
 };

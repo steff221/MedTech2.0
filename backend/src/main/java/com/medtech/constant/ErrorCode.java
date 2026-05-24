@@ -23,7 +23,8 @@ public final class ErrorCode {
     public static final String AUTH_TOKEN_INVALID       = "AUTH_TOKEN_INVALID";
     public static final String AUTH_TOKEN_EXPIRED       = "AUTH_TOKEN_EXPIRED";
     public static final String AUTH_FORBIDDEN           = "AUTH_FORBIDDEN";
-    public static final String AUTH_EMAIL_TAKEN         = "AUTH_EMAIL_TAKEN";
+    public static final String AUTH_EMAIL_TAKEN              = "AUTH_EMAIL_TAKEN";
+    public static final String AUTH_RESET_TOKEN_INVALID      = "AUTH_RESET_TOKEN_INVALID";
 
     // Domain
     public static final String APPOINTMENT_CONFLICT         = "APPOINTMENT_CONFLICT";

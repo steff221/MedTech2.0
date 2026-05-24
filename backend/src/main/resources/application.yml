@@ -66,8 +66,8 @@ server:
 medtech:
   security:
     jwt:
-      # 32+ byte secret; OVERRIDE in production via env var MEDTECH_SECURITY_JWT_SECRET
-      secret: ${MEDTECH_SECURITY_JWT_SECRET:dev-only-medtech-jwt-secret-please-override-in-production-2026}
+      # 32+ byte secret — must be set via MEDTECH_SECURITY_JWT_SECRET env var; no default so startup fails fast if missing
+      secret: ${MEDTECH_SECURITY_JWT_SECRET}
       access-token-ttl-minutes: 60
       refresh-token-ttl-days: 7
       issuer: medtech-backend
@@ -82,6 +82,8 @@ medtech:
       exposed-headers: [Authorization]
       allow-credentials: true
       max-age-seconds: 3600
+  frontend-url: ${MEDTECH_FRONTEND_URL:http://localhost:3000}
+  password-reset-ttl-minutes: 30
   appointment:
     default-duration-minutes: 30
     cancellation-window-hours: 24
@@ -107,6 +109,9 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+  health:
+    mail:
+      enabled: false
 
 logging:
   level:
