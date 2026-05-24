@@ -11,6 +11,11 @@ export const appointmentService = {
   getById: (id: number) =>
     api.get<AppointmentResponse>(`/appointments/${id}`).then((r) => r.data),
 
+  setVideoUrl: (id: number, videoCallUrl: string) =>
+    api
+      .put<AppointmentResponse>(`/appointments/${id}/video-url`, { videoCallUrl })
+      .then((r) => r.data),
+
   cancel: (id: number, reason?: string) =>
     api
       .delete<AppointmentResponse>(`/appointments/${id}`, {

@@ -4,6 +4,7 @@ import com.medtech.application.dto.mapper.AppointmentMapper;
 import com.medtech.application.dto.request.BookAppointmentRequest;
 import com.medtech.application.dto.request.CancelAppointmentRequest;
 import com.medtech.application.dto.request.RescheduleAppointmentRequest;
+import com.medtech.application.dto.request.SetVideoUrlRequest;
 import com.medtech.application.dto.response.AppointmentResponse;
 import com.medtech.application.service.AppointmentService;
 import com.medtech.domain.entity.Appointment;
@@ -104,6 +105,14 @@ public class AppointmentController {
     @Operation(summary = "Doctor marks an appointment COMPLETED")
     public ResponseEntity<AppointmentResponse> complete(@PathVariable Long id) {
         return ResponseEntity.ok(mapper.toResponse(appointmentService.complete(id)));
+    }
+
+    @PutMapping("/{id}/video-url")
+    @PreAuthorize("hasRole('DOCTOR')")
+    @Operation(summary = "Doctor sets or updates the video call URL for a virtual appointment")
+    public ResponseEntity<AppointmentResponse> setVideoUrl(@PathVariable Long id,
+                                                           @Valid @RequestBody SetVideoUrlRequest request) {
+        return ResponseEntity.ok(mapper.toResponse(appointmentService.setVideoCallUrl(id, request.videoCallUrl())));
     }
 
     @DeleteMapping("/{id}")

@@ -182,6 +182,13 @@ public class AppointmentService {
         return appt;
     }
 
+    @Transactional
+    public Appointment setVideoCallUrl(Long appointmentId, String url) {
+        Appointment appt = getById(appointmentId);
+        appt.setVideoCallUrl(url);
+        return appt;
+    }
+
     public Appointment getById(Long id) {
         return appointmentRepository.findById(Objects.requireNonNull(id))
                 .orElseThrow(() -> ResourceNotFoundException.of("Appointment", id));

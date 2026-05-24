@@ -9,7 +9,7 @@ export type AppointmentStatus =
   | "CANCELLED"
   | "NO_SHOW"
   | "RESCHEDULED";
-export type AppointmentType = "CONSULTATION" | "FOLLOW_UP" | "PROCEDURE" | "CHECKUP";
+export type AppointmentType = "CONSULTATION" | "FOLLOW_UP" | "PROCEDURE" | "CHECKUP" | "VIRTUAL";
 export type Gender = "M" | "F" | "O";
 export type BloodType = "A_POS" | "A_NEG" | "B_POS" | "B_NEG" | "AB_POS" | "AB_NEG" | "O_POS" | "O_NEG";
 export type HospitalType = "PUBLIC" | "PRIVATE" | "CLINIC" | "SPECIALIZED";
@@ -103,6 +103,7 @@ export interface AppointmentResponse {
   appointmentType: AppointmentType | null;
   reason: string | null;
   cancellationReason: string | null;
+  videoCallUrl: string | null;
   createdAt: string;
 }
 

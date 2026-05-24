@@ -5,5 +5,6 @@ public enum AppointmentType {
     CONSULTATION,
     FOLLOW_UP,
     PROCEDURE,
-    CHECKUP
+    CHECKUP,
+    VIRTUAL
 }

@@ -39,6 +39,7 @@ const APPOINTMENT_TYPES: { value: AppointmentType; label: string }[] = [
   { value: "FOLLOW_UP", label: "Follow-up" },
   { value: "PROCEDURE", label: "Procedure" },
   { value: "CHECKUP", label: "Checkup" },
+  { value: "VIRTUAL", label: "Virtual (Video)" },
 ];
 
 const TIME_SLOTS = [

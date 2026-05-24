@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Calendar, ChevronDown, Clock, Hospital, MapPin, X } from "lucide-react";
+import { Calendar, ChevronDown, Clock, Hospital, MapPin, Video, X } from "lucide-react";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
@@ -108,6 +108,17 @@ export function AppointmentCard({ appointment }: AppointmentCardProps) {
                   <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
                   <span>{appointment.reason}</span>
                 </div>
+              )}
+              {appointment.videoCallUrl && !isTerminal && (
+                <a
+                  href={appointment.videoCallUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mb-3 flex items-center gap-2 rounded-lg bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors w-fit"
+                >
+                  <Video className="h-4 w-4" />
+                  Приклучи се на видео-повик
+                </a>
               )}
               {!isTerminal && (
                 <div className="flex gap-2 pt-2">

@@ -73,6 +73,9 @@ public class Appointment {
     @Column(name = "cancellation_reason", length = 500)
     private String cancellationReason;
 
+    @Column(name = "video_call_url", length = 2048)
+    private String videoCallUrl;
+
     @Column(name = "created_by", length = 100)
     private String createdBy;
 

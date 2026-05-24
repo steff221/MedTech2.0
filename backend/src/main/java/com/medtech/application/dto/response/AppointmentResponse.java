@@ -24,5 +24,6 @@ public record AppointmentResponse(
         AppointmentType appointmentType,
         String reason,
         String cancellationReason,
+        String videoCallUrl,
         Instant createdAt
 ) {}

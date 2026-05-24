@@ -9,10 +9,12 @@ import {
   FileText,
   Pill,
   Plus,
+  Video,
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 import { format, parseISO } from "date-fns";
 import { Badge, appointmentStatusTone } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
@@ -22,6 +24,8 @@ import { PrescriptionForm } from "./PrescriptionForm";
 import { SickLeaveModal } from "./SickLeaveModal";
 import { useT } from "@/hooks/useT";
 import { patientService } from "@/services/patient.service";
+import { appointmentService } from "@/services/appointment.service";
+import { extractErrorMessage } from "@/services/api";
 import type {
   AppointmentResponse,
   MedicalRecordResponse,
@@ -394,6 +398,85 @@ function OverviewPanel({
   );
 }
 
+function AppointmentItem({ a }: { a: AppointmentResponse }) {
+  const qc = useQueryClient();
+  const [editing, setEditing] = useState(false);
+  const [url, setUrl] = useState(a.videoCallUrl ?? "");
+
+  const saveMutation = useMutation({
+    mutationFn: () => appointmentService.setVideoUrl(a.id, url),
+    onSuccess: () => {
+      toast.success("Линкот е зачуван.");
+      setEditing(false);
+      qc.invalidateQueries({ queryKey: ["patient", a.patientId, "appointments"] });
+    },
+    onError: (err) => toast.error(extractErrorMessage(err)),
+  });
+
+  const isVirtualScheduled =
+    a.appointmentType === "VIRTUAL" && a.status === "SCHEDULED";
+
+  return (
+    <li className="rounded-lg border border-slate-200 px-3 py-2">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-semibold text-slate-900">
+            {formatDate(a.appointmentDate)} · {formatTime(a.appointmentTime?.substring(0, 5))}
+          </p>
+          <p className="text-xs text-slate-500">{a.reason ?? "—"}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {isVirtualScheduled && (
+            <button
+              onClick={() => setEditing((v) => !v)}
+              className="flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100"
+            >
+              <Video className="h-3 w-3" />
+              {a.videoCallUrl ? "Промени" : "Постави линк"}
+            </button>
+          )}
+          <Badge tone={appointmentStatusTone(a.status)}>{a.status}</Badge>
+        </div>
+      </div>
+      {a.videoCallUrl && !editing && (
+        <a
+          href={a.videoCallUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-1.5 flex items-center gap-1 text-xs text-emerald-600 hover:underline"
+        >
+          <Video className="h-3 w-3" />
+          {a.videoCallUrl}
+        </a>
+      )}
+      {editing && (
+        <div className="mt-2 flex gap-2">
+          <input
+            type="url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="https://meet.google.com/..."
+            className="flex-1 rounded-md border border-slate-200 px-2 py-1.5 text-xs focus:border-emerald-400 focus:outline-none"
+          />
+          <button
+            onClick={() => saveMutation.mutate()}
+            disabled={saveMutation.isPending || !url}
+            className="rounded-md bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-600 disabled:opacity-50"
+          >
+            {saveMutation.isPending ? "…" : "Зачувај"}
+          </button>
+          <button
+            onClick={() => setEditing(false)}
+            className="rounded-md px-2 py-1.5 text-xs text-slate-500 hover:bg-slate-100"
+          >
+            Откажи
+          </button>
+        </div>
+      )}
+    </li>
+  );
+}
+
 function AppointmentsPanel({ items, loading }: { items: AppointmentResponse[]; loading: boolean }) {
   const t = useT();
   if (loading) return <Skeleton className="h-32" />;
@@ -402,17 +485,7 @@ function AppointmentsPanel({ items, loading }: { items: AppointmentResponse[]; l
   return (
     <ul className="space-y-2">
       {items.map((a) => (
-        <li key={a.id} className="rounded-lg border border-slate-200 px-3 py-2">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-semibold text-slate-900">
-                {formatDate(a.appointmentDate)} · {formatTime(a.appointmentTime?.substring(0, 5))}
-              </p>
-              <p className="text-xs text-slate-500">{a.reason ?? "—"}</p>
-            </div>
-            <Badge tone={appointmentStatusTone(a.status)}>{a.status}</Badge>
-          </div>
-        </li>
+        <AppointmentItem key={a.id} a={a} />
       ))}
     </ul>
   );
