@@ -21,11 +21,12 @@ medtech:
   security:
     jwt:
       secret: ${MEDTECH_SECURITY_JWT_SECRET}
-    cookie-secure: true
+    cookie-secure: false
     cors:
       allowed-origins:
         - https://medtech.mk
         - https://www.medtech.mk
+        - http://localhost:3000
 
 springdoc:
   swagger-ui:
