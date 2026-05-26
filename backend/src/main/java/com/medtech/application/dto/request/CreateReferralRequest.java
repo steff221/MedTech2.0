@@ -1,7 +1,7 @@
 package com.medtech.application.dto.request;
 
 import com.medtech.domain.vo.ReferralType;
-import jakarta.validation.constraints.Future;
+import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -19,5 +19,5 @@ public record CreateReferralRequest(
 
         @Size(max = 1000) String description,
 
-        @NotNull @Future LocalDate scheduledDate
+        @NotNull @FutureOrPresent LocalDate scheduledDate
 ) {}

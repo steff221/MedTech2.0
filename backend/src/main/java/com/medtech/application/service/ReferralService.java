@@ -52,11 +52,9 @@ public class ReferralService {
         referral.setScheduledDate(req.scheduledDate());
         referral.setStatus(ReferralStatus.ACTIVE);
         referral.setCreatedBy(doctor.getUser().getEmail());
+        referral.setReferralNumber(buildNumber(referralRepository.count() + 1));
 
-        // Persist first to get the generated ID, then assign the human-readable number.
         Referral saved = referralRepository.save(referral);
-        saved.setReferralNumber(buildNumber(saved.getId()));
-
         log.info("Issued referral {} for patient={} by doctor={}", saved.getReferralNumber(),
                 patient.getId(), doctor.getId());
         return saved;
@@ -117,7 +115,7 @@ public class ReferralService {
         }
     }
 
-    private String buildNumber(Long id) {
-        return "UP-" + Year.now().getValue() + "-" + String.format("%03d", id);
+    private String buildNumber(long seq) {
+        return "UP-" + Year.now().getValue() + "-" + String.format("%03d", seq);
     }
 }
