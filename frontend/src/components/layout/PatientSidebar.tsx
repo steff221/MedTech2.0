@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Bell, Calendar, FileText, LayoutDashboard, Pill, Stethoscope, User } from "lucide-react";
+import { Bell, Calendar, ClipboardList, FileText, LayoutDashboard, Pill, Stethoscope, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -17,6 +17,7 @@ export function PatientSidebar() {
     { href: "/appointments",   label: t.nav.appointments,  icon: Calendar },
     { href: "/health-records", label: t.nav.healthRecords, icon: FileText },
     { href: "/prescriptions",  label: t.nav.prescriptions, icon: Pill },
+    { href: "/referrals",      label: t.nav.referrals,     icon: ClipboardList },
     { href: "/doctors",        label: t.nav.findDoctor,    icon: Stethoscope },
     { href: "/notifications",  label: t.nav.notifications, icon: Bell },
     { href: "/profile",        label: t.nav.profile,       icon: User },

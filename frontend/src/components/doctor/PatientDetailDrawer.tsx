@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { format, parseISO } from "date-fns";
@@ -44,6 +45,29 @@ import {
 } from "@/__fixtures__/patientDrawer.fixtures";
 
 const USE_MOCKS = process.env.NEXT_PUBLIC_USE_MOCKS === "true";
+
+// ── BloodTypeBadge ────────────────────────────────────────────────────────────
+function formatBloodType(bt: string): string {
+  return bt.replace("_POS", "+").replace("_NEG", "−");
+}
+
+function BloodTypeBadge({ value }: { value: string | null | undefined }) {
+  if (!value) return <span className="text-slate-400">—</span>;
+  const isNeg = value.endsWith("_NEG");
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold",
+        isNeg
+          ? "bg-blue-50 text-blue-700 ring-1 ring-blue-200"
+          : "bg-red-50 text-red-700 ring-1 ring-red-200"
+      )}
+    >
+      <Droplet className={cn("h-3 w-3", isNeg ? "text-blue-500" : "text-red-500")} />
+      {formatBloodType(value)}
+    </span>
+  );
+}
 
 // ── Component ─────────────────────────────────────────────────────────────────
 interface PatientDetailDrawerProps {
@@ -124,12 +148,11 @@ export function PatientDetailDrawer({
     return Math.floor((Date.now() - dob.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
   }, [patient]);
 
-  return (
-    <>
-      <AnimatePresence>
-        {open && (
-          <>
-            <motion.div
+  const drawerContent = (
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
               className="fixed inset-x-0 bottom-0 top-24 z-40 bg-slate-900/30 backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -159,7 +182,7 @@ export function PatientDetailDrawer({
                       <h2 className="text-lg font-semibold text-slate-900">{patientName}</h2>
                       {patient && (
                         <p className="text-sm text-slate-500">
-                          {ageYears ?? "?"} год · {patient.gender ?? "?"} · {patient.bloodType?.replace("_", "") ?? "?"}
+                          {ageYears ?? "?"} год · {patient.gender ?? "?"} · <BloodTypeBadge value={patient.bloodType} />
                         </p>
                       )}
                     </div>
@@ -255,16 +278,22 @@ export function PatientDetailDrawer({
           </>
         )}
       </AnimatePresence>
+  );
 
-      {patientId && (
+  return typeof window === "undefined"
+    ? null
+    : createPortal(
         <>
-          <MedicalRecordForm
-            open={soapOpen}
-            onClose={() => setSoapOpen(false)}
-            patientId={patientId}
-            patientName={patientName}
-          />
-          <PrescriptionForm
+          {drawerContent}
+          {patientId && (
+            <>
+              <MedicalRecordForm
+                open={soapOpen}
+                onClose={() => setSoapOpen(false)}
+                patientId={patientId}
+                patientName={patientName}
+              />
+              <PrescriptionForm
             open={rxOpen}
             onClose={() => setRxOpen(false)}
             patientId={patientId}
@@ -280,8 +309,9 @@ export function PatientDetailDrawer({
           />
         </>
       )}
-    </>
-  );
+        </>,
+        document.body,
+      );
 }
 
 // ── Sub-panels ────────────────────────────────────────────────────────────────
@@ -382,7 +412,6 @@ function OverviewPanel({
           [t.doctorDrawer.emailLabel,     patient.email],
           [t.doctorDrawer.phoneLabel,     patient.phoneNumber],
           [t.doctorDrawer.dobLabel,       patient.dateOfBirth],
-          [t.doctorDrawer.bloodTypeLabel, patient.bloodType],
           [t.doctorDrawer.cityLabel,      patient.city],
           [t.doctorDrawer.addressLabel,   patient.address],
           [t.doctorDrawer.insuranceLabel, patient.insuranceProvider],
@@ -393,6 +422,10 @@ function OverviewPanel({
             <dd className="mt-0.5 text-sm text-slate-900">{value || "—"}</dd>
           </div>
         ))}
+        <div>
+          <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t.doctorDrawer.bloodTypeLabel}</dt>
+          <dd className="mt-0.5"><BloodTypeBadge value={patient.bloodType} /></dd>
+        </div>
       </dl>
     </div>
   );

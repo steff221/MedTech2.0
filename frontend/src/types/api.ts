@@ -258,6 +258,24 @@ export interface StatsOverviewResponse {
   prescriptionsByDay: Array<{ day: string; count: number }>;
 }
 
+export type AuditAction = "INSERT" | "UPDATE" | "DELETE" | "VIEW" | "LOGIN" | "LOGOUT";
+export type AuditStatus = "SUCCESS" | "FAILURE";
+
+export interface AuditLogResponse {
+  id: number;
+  userId: number | null;
+  actionType: AuditAction;
+  entityType: string | null;
+  entityId: number | null;
+  oldValues: string | null;
+  newValues: string | null;
+  description: string | null;
+  ipAddress: string | null;
+  userAgent: string | null;
+  status: AuditStatus;
+  createdAt: string;
+}
+
 export interface NotificationResponse {
   id: number;
   type: string;
@@ -268,6 +286,48 @@ export interface NotificationResponse {
   createdAt: string;
 }
 
+export type OperationStatus = "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+
+export interface OperationResponse {
+  id: number;
+  patientId: number;
+  doctorId: number;
+  doctorName: string;
+  hospitalId: number;
+  hospitalName: string;
+  operationName: string;
+  operationDate: string;
+  operationTime: string | null;
+  durationMinutes: number | null;
+  operationRoom: string | null;
+  surgicalTeam: string | null;
+  anesthesiaType: string | null;
+  anesthesiologist: string | null;
+  preOperativeNotes: string | null;
+  intraOperativeNotes: string | null;
+  postOperativeNotes: string | null;
+  complications: string | null;
+  outcome: string | null;
+  status: OperationStatus;
+  implantsUsed: string | null;
+  createdAt: string;
+}
+
+export interface ScheduleOperationRequest {
+  patientId: number;
+  hospitalId: number;
+  operationName: string;
+  operationDate: string;
+  operationTime?: string;
+  durationMinutes?: number;
+  operationRoom?: string;
+  surgicalTeam?: string;
+  anesthesiaType?: string;
+  anesthesiologist?: string;
+  preOperativeNotes?: string;
+  implantsUsed?: string;
+}
+
 export interface ApiError {
   timestamp: string;
   status: number;
@@ -275,4 +335,64 @@ export interface ApiError {
   message: string;
   path: string;
   errors?: Array<{ field: string; message: string; rejectedValue: unknown }>;
+}
+
+export type ReferralType =
+  | "GENERAL_MEDICINE"
+  | "SPECIALIST"
+  | "LABORATORY"
+  | "DIAGNOSTICS"
+  | "HOSPITAL";
+
+export type ReferralStatus = "ACTIVE" | "COMPLETED" | "CANCELLED";
+
+export interface ReferralResponse {
+  id: number;
+  referralNumber: string;
+  doctorId: number;
+  doctorName: string;
+  patientId: number;
+  patientName: string;
+  referralType: ReferralType;
+  referredTo: string;
+  mkb10Code: string | null;
+  description: string | null;
+  scheduledDate: string;
+  status: ReferralStatus;
+  outcomeNote: string | null;
+  outcomeDate: string | null;
+  createdAt: string;
+}
+
+export interface CreateReferralRequest {
+  patientId: number;
+  referralType: ReferralType;
+  referredTo: string;
+  mkb10Code?: string;
+  description?: string;
+  scheduledDate: string;
+}
+
+export interface CompleteReferralRequest {
+  outcomeDate: string;
+  outcomeNote?: string;
+}
+
+export type ReportPeriodType = "MONTHLY" | "QUARTERLY" | "ANNUAL";
+export type ReportStatus = "DRAFT" | "SUBMITTED";
+
+export interface DoctorReportResponse {
+  id: number;
+  reportNumber: string;
+  periodType: ReportPeriodType;
+  periodLabel: string;
+  periodStart: string;
+  periodEnd: string;
+  patientCount: number;
+  diagnosisCount: number;
+  appointmentCount: number;
+  prescriptionCount: number;
+  status: ReportStatus;
+  submittedAt: string | null;
+  createdAt: string;
 }

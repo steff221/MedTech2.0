@@ -1,8 +1,9 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Calendar, CheckCircle2, Filter, Plus, Search, XCircle } from "lucide-react";
-import { useState } from "react";
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { Badge } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
@@ -10,22 +11,20 @@ import { Card } from "@/components/common/Card";
 import { Input } from "@/components/common/Input";
 import { Modal } from "@/components/common/Modal";
 import { PageBanner } from "@/components/layout/PageBanner";
-import { NewReferralForm, type ReferralRow } from "@/components/doctor/NewReferralForm";
+import { Skeleton } from "@/components/common/Skeleton";
+import { NewReferralForm, referralResponseToRow, type ReferralRow } from "@/components/doctor/NewReferralForm";
+import { referralService } from "@/services/referral.service";
 import { useT } from "@/hooks/useT";
 import { cn } from "@/utils/cn";
 
 const TYPES = ["Сите", "Општа медицина", "Специјалист", "Лабораторија", "Дијагностика", "Болница"];
 
-type StatusFilter = "Сите" | "active" | "completed" | "cancelled";
 
-const INITIAL_REFERRALS: ReferralRow[] = [
-  { id: "UP-2026-003", createdAt: "17.05.2026", scheduledDate: "20.05.2026", referredTo: "Кардиолог", patientName: "Марија Петровска",       referralType: "Специјалист", mkb10Code: "I10", description: "Контрола на тензија под специјалист",         status: "active" },
-  { id: "UP-2026-002", createdAt: "10.05.2026", scheduledDate: "15.05.2026", referredTo: "Лабораторија ЈЗУ", patientName: "Александар Стојановски", referralType: "Лабораторија", mkb10Code: "E11", description: "Крвна слика, HbA1c, липиден профил",          status: "completed", outcomeNote: "Резултатите примени. HbA1c: 8.1%, LDL 3.8.", outcomeDate: "16.05.2026" },
-  { id: "UP-2026-001", createdAt: "02.05.2026", scheduledDate: "08.05.2026", referredTo: "Ехографист", patientName: "Борче Димовски",         referralType: "Дијагностика", mkb10Code: "K80", description: "Ехографија на абдомен — холелитијаза",       status: "completed", outcomeNote: "Холелитијаза потврдена, упатен на хирургија.", outcomeDate: "09.05.2026" },
-];
+type StatusFilter = "Сите" | "active" | "completed" | "cancelled";
 
 export default function ReferralsPage() {
   const t = useT();
+  const queryClient = useQueryClient();
 
   const STATUS_META: Record<ReferralRow["status"], { label: string; tone: "info" | "success" | "neutral" }> = {
     active:    { label: t.doctorReferrals.statusActive,    tone: "info"    },
@@ -45,24 +44,74 @@ export default function ReferralsPage() {
     "",
   ];
 
-  const [formOpen, setFormOpen] = useState(false);
-  const [referrals, setReferrals] = useState<ReferralRow[]>(INITIAL_REFERRALS);
-
-  const [type, setType] = useState("Сите");
+  const [formOpen, setFormOpen]         = useState(false);
+  const [type, setType]                 = useState("Сите");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("Сите");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
-  const [search, setSearch] = useState("");
-  const [pageSize, setPageSize] = useState(10);
+  const [dateFrom, setDateFrom]         = useState("");
+  const [search, setSearch]             = useState("");
+  const [pageSize, setPageSize]         = useState(10);
 
-  // Outcome modal
+  // Outcome modal state
   const [outcomeTarget, setOutcomeTarget] = useState<ReferralRow | null>(null);
-  const [outcomeNote, setOutcomeNote] = useState("");
-  const [outcomeDate, setOutcomeDate] = useState(new Date().toISOString().slice(0, 10));
+  const [outcomeNote, setOutcomeNote]     = useState("");
+  const [outcomeDate, setOutcomeDate]     = useState(new Date().toISOString().slice(0, 10));
+
+  // Fetch referrals from backend
+  const { data, isLoading } = useQuery({
+    queryKey: ["doctor-referrals"],
+    queryFn:  () => referralService.myReferrals(undefined, 0, 200),
+  });
+
+  const referrals: ReferralRow[] = data?.content.map(referralResponseToRow) ?? [];
+
+  const completeMutation = useMutation({
+    mutationFn: ({ id, outcomeDate, outcomeNote }: { id: number; outcomeDate: string; outcomeNote: string }) =>
+      referralService.complete(id, { outcomeDate, outcomeNote }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["doctor-referrals"] });
+      toast.success(t.doctorReferrals.outcomeSuccess);
+      setOutcomeTarget(null);
+    },
+    onError: () => toast.error("Грешка при реализирање на упат."),
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: referralService.cancel,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["doctor-referrals"] });
+      toast.success(t.doctorReferrals.cancelSuccess);
+    },
+    onError: () => toast.error("Грешка при откажување на упат."),
+  });
+
+  const handleCreated = () => {
+    queryClient.invalidateQueries({ queryKey: ["doctor-referrals"] });
+  };
+
+  const openOutcomeModal = (r: ReferralRow) => {
+    setOutcomeTarget(r);
+    setOutcomeNote("");
+    setOutcomeDate(new Date().toISOString().slice(0, 10));
+  };
+
+  const submitOutcome = () => {
+    if (!outcomeTarget?.backendId) return;
+    completeMutation.mutate({
+      id:          outcomeTarget.backendId,
+      outcomeDate: outcomeDate,
+      outcomeNote: outcomeNote,
+    });
+  };
+
+  const cancelReferral = (r: ReferralRow) => {
+    if (!r.backendId) return;
+    cancelMutation.mutate(r.backendId);
+  };
 
   const filtered = referrals.filter((r) => {
     if (type !== "Сите" && r.referralType !== type) return false;
     if (statusFilter !== "Сите" && r.status !== statusFilter) return false;
+    if (dateFrom && r.scheduledDate < dateFrom.split("-").reverse().join(".")) return false;
     if (
       search &&
       !r.patientName.toLowerCase().includes(search.toLowerCase()) &&
@@ -76,36 +125,6 @@ export default function ReferralsPage() {
 
   const displayed = filtered.slice(0, pageSize);
 
-  const handleCreated = (row: ReferralRow) => {
-    setReferrals((prev) => [row, ...prev]);
-  };
-
-  const openOutcomeModal = (r: ReferralRow) => {
-    setOutcomeTarget(r);
-    setOutcomeNote("");
-    setOutcomeDate(new Date().toISOString().slice(0, 10));
-  };
-
-  const submitOutcome = () => {
-    if (!outcomeTarget) return;
-    const [y, m, d] = outcomeDate.split("-");
-    setReferrals((prev) =>
-      prev.map((r) =>
-        r.id === outcomeTarget.id
-          ? { ...r, status: "completed" as const, outcomeNote, outcomeDate: `${d}.${m}.${y}` }
-          : r,
-      ),
-    );
-    toast.success(t.doctorReferrals.outcomeSuccess);
-    setOutcomeTarget(null);
-  };
-
-  const cancelReferral = (id: string) => {
-    setReferrals((prev) => prev.map((r) => r.id === id ? { ...r, status: "cancelled" as const } : r));
-    toast.success(t.doctorReferrals.cancelSuccess);
-  };
-
-  // Stats
   const activeCount    = referrals.filter((r) => r.status === "active").length;
   const completedCount = referrals.filter((r) => r.status === "completed").length;
 
@@ -141,7 +160,9 @@ export default function ReferralsPage() {
         footer={
           <>
             <Button variant="secondary" onClick={() => setOutcomeTarget(null)}>{t.common.cancel}</Button>
-            <Button onClick={submitOutcome}>{t.doctorReferrals.outcomeSubmit}</Button>
+            <Button onClick={submitOutcome} disabled={completeMutation.isPending}>
+              {completeMutation.isPending ? "Се зачувува…" : t.doctorReferrals.outcomeSubmit}
+            </Button>
           </>
         }
       >
@@ -177,7 +198,9 @@ export default function ReferralsPage() {
           ].map((s) => (
             <div key={s.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-card">
               <p className="text-xs text-slate-500">{s.label}</p>
-              <p className="mt-1 text-2xl font-bold text-slate-900">{s.value}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">
+                {isLoading ? <Skeleton className="h-7 w-12" /> : s.value}
+              </p>
             </div>
           ))}
         </div>
@@ -247,7 +270,7 @@ export default function ReferralsPage() {
           <div className="mt-4 flex justify-end">
             <Button
               variant="secondary"
-              onClick={() => { setType("Сите"); setStatusFilter("Сите"); setDateFrom(""); setDateTo(""); setSearch(""); }}
+              onClick={() => { setType("Сите"); setStatusFilter("Сите"); setDateFrom(""); setSearch(""); }}
             >
               {t.doctorReferrals.filterReset}
             </Button>
@@ -291,12 +314,23 @@ export default function ReferralsPage() {
                 </tr>
               </thead>
               <tbody>
-                {displayed.map((r, i) => {
+                {isLoading && (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <tr key={i} className="border-b border-slate-100">
+                      {COLUMNS.map((c) => (
+                        <td key={c} className="px-3 py-3">
+                          <Skeleton className="h-4 w-full" />
+                        </td>
+                      ))}
+                    </tr>
+                  ))
+                )}
+
+                {!isLoading && displayed.map((r, i) => {
                   const s = STATUS_META[r.status];
                   return (
-                    <>
+                    <React.Fragment key={r.id}>
                       <motion.tr
-                        key={r.id}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: i * 0.04 }}
@@ -330,8 +364,9 @@ export default function ReferralsPage() {
                               </button>
                               <button
                                 type="button"
-                                onClick={() => cancelReferral(r.id)}
-                                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-rose-500 hover:bg-rose-50"
+                                onClick={() => cancelReferral(r)}
+                                disabled={cancelMutation.isPending}
+                                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-rose-500 hover:bg-rose-50 disabled:opacity-50"
                                 title="Откажи"
                               >
                                 <XCircle className="h-3.5 w-3.5" />
@@ -340,7 +375,6 @@ export default function ReferralsPage() {
                           )}
                         </td>
                       </motion.tr>
-                      {/* Outcome row */}
                       {r.status === "completed" && r.outcomeNote && (
                         <tr key={`${r.id}-outcome`} className="bg-emerald-50/60">
                           <td colSpan={9} className="px-3 py-2 text-xs text-emerald-800">
@@ -349,11 +383,11 @@ export default function ReferralsPage() {
                           </td>
                         </tr>
                       )}
-                    </>
+                    </React.Fragment>
                   );
                 })}
 
-                {displayed.length === 0 && (
+                {!isLoading && displayed.length === 0 && (
                   <tr>
                     <td colSpan={COLUMNS.length} className="px-4 py-10 text-center text-sm text-slate-400">
                       {t.doctorReferrals.noReferrals}

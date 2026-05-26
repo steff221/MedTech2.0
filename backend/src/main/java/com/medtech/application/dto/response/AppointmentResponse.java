@@ -6,6 +6,7 @@ import lombok.Builder;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Builder
 public record AppointmentResponse(
@@ -18,7 +19,7 @@ public record AppointmentResponse(
         Long hospitalId,
         String hospitalName,
         LocalDate appointmentDate,
-        String appointmentTime,
+        LocalTime appointmentTime,
         Integer durationMinutes,
         AppointmentStatus status,
         AppointmentType appointmentType,

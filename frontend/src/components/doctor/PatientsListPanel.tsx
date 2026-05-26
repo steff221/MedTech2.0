@@ -1,9 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { AlertCircle, AlertTriangle, Search, User } from "lucide-react";
+import { AlertCircle, AlertTriangle, Calendar, CheckCircle2, ChevronRight, Clock, User, XCircle } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Badge } from "@/components/common/Badge";
 import { Card } from "@/components/common/Card";
 import { EmptyState } from "@/components/common/EmptyState";
 import { Input } from "@/components/common/Input";
@@ -151,11 +150,8 @@ export function PatientsListPanel({ doctorId }: PatientsListPanelProps) {
   }, [summaries, tab, search]);
 
   return (
-    // The list sits in its own z-50 stacking context. The drawer is rendered
-    // OUTSIDE this wrapper so its overlay (fixed z-40, page context) is below
-    // the list (z-50, page context) — allowing direct patient switching.
     <>
-      <div className="relative z-50">
+      <div>
       <Card>
         <Input
           placeholder={t.doctorPatients.searchPlaceholder}
@@ -270,71 +266,104 @@ function PatientRow({
     (a) => a.status === "CANCELLED" || a.status === "NO_SHOW",
   ).length;
 
+  const isCritical = criticalFlag?.level === "critical";
+  const isWarning  = criticalFlag?.level === "warning";
+
   return (
     <button
       type="button"
       onClick={onSelect}
       className={cn(
-        "flex w-full items-center gap-4 rounded-xl border bg-white px-4 py-3 text-left transition-all hover:shadow-card",
-        criticalFlag?.level === "critical"
-          ? "border-rose-200 hover:border-rose-300"
-          : criticalFlag?.level === "warning"
-            ? "border-amber-200 hover:border-amber-300"
-            : "border-slate-200 hover:border-emerald-300",
+        "group flex w-full items-center gap-4 rounded-2xl border bg-white px-5 py-4 text-left transition-all duration-150",
+        isCritical ? "border-rose-200 hover:border-rose-300 hover:bg-rose-50/30 hover:shadow-sm"
+          : isWarning ? "border-amber-200 hover:border-amber-300 hover:bg-amber-50/30 hover:shadow-sm"
+          : "border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/20 hover:shadow-sm",
       )}
     >
+      {/* Avatar */}
       <div
         className={cn(
-          "flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-semibold",
-          criticalFlag?.level === "critical"
-            ? "bg-rose-100 text-rose-700"
-            : criticalFlag?.level === "warning"
-              ? "bg-amber-100 text-amber-700"
-              : "bg-emerald-100 text-emerald-700",
+          "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-sm font-bold tracking-wide",
+          isCritical ? "bg-rose-100 text-rose-700"
+            : isWarning ? "bg-amber-100 text-amber-700"
+            : "bg-emerald-100 text-emerald-700",
         )}
       >
         {initials(firstName, lastName)}
       </div>
+
+      {/* Body */}
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="font-semibold text-slate-900">{summary.patientName}</p>
+        {/* Name + alert badges */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-base font-semibold text-slate-900">{summary.patientName}</span>
           {summary.hasUrgent && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold text-rose-700">
+            <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rose-700">
               <AlertCircle className="h-3 w-3" /> {t.doctorPatients.urgentCase}
             </span>
           )}
-          {criticalFlag?.level === "critical" && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold text-rose-700">
+          {isCritical && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rose-700">
               <AlertTriangle className="h-3 w-3" /> {t.doctorPatients.criticalValue}
             </span>
           )}
-          {criticalFlag?.level === "warning" && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+          {isWarning && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700">
               <AlertTriangle className="h-3 w-3" /> {t.doctorPatients.warning}
             </span>
           )}
-          {summary.nextAppointment && (
-            <Badge tone="info">Претстоен · {formatDate(summary.nextAppointment.appointmentDate, "d MMM")}</Badge>
-          )}
         </div>
-        <p className="mt-0.5 text-xs text-slate-500">
-          {summary.appointments.length} {t.doctorPatients.appointments}
-          {totalCompleted > 0 ? ` · ${totalCompleted} ${t.doctorPatients.completed}` : ""}
-          {totalCancelled > 0 ? ` · ${totalCancelled} ${t.doctorPatients.cancelled}` : ""}
-          {summary.lastSeen ? ` · ${t.doctorPatients.lastSeen} ${formatDate(summary.lastSeen, "d MMM")}` : ""}
-        </p>
+
+        {/* Critical reason */}
         {criticalFlag && (
-          <p
-            className={cn(
-              "mt-0.5 text-[10px] font-medium",
-              criticalFlag.level === "critical" ? "text-rose-600" : "text-amber-600",
-            )}
-          >
+          <p className={cn(
+            "mt-0.5 text-xs font-medium",
+            isCritical ? "text-rose-600" : "text-amber-600",
+          )}>
             {criticalFlag.reason}
           </p>
         )}
+
+        {/* Stat chips */}
+        <div className="mt-2 flex flex-wrap gap-2">
+          <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-600">
+            <Calendar className="h-3 w-3 text-slate-400" />
+            {summary.appointments.length} {t.doctorPatients.appointments}
+          </span>
+          {totalCompleted > 0 && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs text-emerald-700">
+              <CheckCircle2 className="h-3 w-3" />
+              {totalCompleted} {t.doctorPatients.completed}
+            </span>
+          )}
+          {totalCancelled > 0 && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-500">
+              <XCircle className="h-3 w-3" />
+              {totalCancelled} {t.doctorPatients.cancelled}
+            </span>
+          )}
+          {summary.lastSeen && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-500">
+              <Clock className="h-3 w-3 text-slate-400" />
+              {t.doctorPatients.lastSeen} {formatDate(summary.lastSeen, "d MMM")}
+            </span>
+          )}
+        </div>
       </div>
-      <Search className="h-4 w-4 text-slate-300" />
+
+      {/* Right: next appointment or chevron */}
+      <div className="flex shrink-0 flex-col items-end gap-1.5">
+        {summary.nextAppointment ? (
+          <div className="rounded-xl bg-blue-50 px-3 py-1.5 text-right">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-500">Претстоен</p>
+            <p className="text-sm font-bold text-blue-700">
+              {formatDate(summary.nextAppointment.appointmentDate, "d MMM")}
+            </p>
+          </div>
+        ) : (
+          <ChevronRight className="h-4 w-4 text-slate-300 transition-colors group-hover:text-slate-400" />
+        )}
+      </div>
     </button>
   );
 }

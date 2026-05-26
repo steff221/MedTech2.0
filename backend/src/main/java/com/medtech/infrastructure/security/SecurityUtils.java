@@ -39,6 +39,9 @@ public final class SecurityUtils {
     }
 
     public static boolean hasRole(String role) {
-        return currentUserRole().filter(role::equals).isPresent();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) return false;
+        return auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().replaceFirst("^ROLE_", "").equals(role));
     }
 }

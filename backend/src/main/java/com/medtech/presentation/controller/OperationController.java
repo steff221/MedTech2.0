@@ -57,6 +57,15 @@ public class OperationController {
         return ResponseEntity.ok(mapper.toResponse(operationService.getById(id)));
     }
 
+    @GetMapping
+    @PreAuthorize("hasAnyRole('DOCTOR')")
+    @Operation(summary = "List the current doctor's operations (newest first)")
+    public ResponseEntity<Page<OperationResponse>> myOperations(Pageable pageable) {
+        Long userId = SecurityUtils.currentUserId()
+                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+        return ResponseEntity.ok(operationService.forCurrentDoctor(userId, pageable).map(mapper::toResponse));
+    }
+
     @GetMapping("/patient/{patientId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<OperationResponse>> history(@PathVariable Long patientId, Pageable pageable) {

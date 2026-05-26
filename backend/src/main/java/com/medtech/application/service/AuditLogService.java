@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+
 /**
  * Compliance-grade audit trail.
  *
@@ -92,6 +94,11 @@ public class AuditLogService {
     @Transactional(readOnly = true)
     public Page<AuditLog> forEntity(String entityType, Long entityId, Pageable pageable) {
         return auditLogRepository.findByEntityTypeAndEntityId(entityType, entityId, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<AuditLog> recent(Instant since, Pageable pageable) {
+        return auditLogRepository.findByCreatedAtAfterOrderByCreatedAtDesc(since, pageable);
     }
 
     private String toJsonOrNull(Object payload) {

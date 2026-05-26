@@ -28,6 +28,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -37,7 +38,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
@@ -81,7 +81,7 @@ class AppointmentServiceTest {
     void book_rejectsPastDate() {
         var req = new BookAppointmentRequest(
                 doctor.getId(), patient.getId(),
-                LocalDate.of(2026, 5, 1), "09:00",
+                LocalDate.of(2026, 5, 1), LocalTime.of(9, 0),
                 null, null, "checkup", null);
 
         assertThatThrownBy(() -> service.book(req))
@@ -95,12 +95,12 @@ class AppointmentServiceTest {
         var existing = Entities.appointment(99L, patient, doctor,
                 LocalDate.of(2026, 6, 2), "09:00", AppointmentStatus.SCHEDULED);
         when(appointmentRepository.lockConflicting(eq(doctor.getId()),
-                eq(LocalDate.of(2026, 6, 2)), eq("09:00"), any()))
+                eq(LocalDate.of(2026, 6, 2)), eq(LocalTime.of(9, 0)), any()))
                 .thenReturn(new ArrayList<>(List.of(existing)));
 
         var req = new BookAppointmentRequest(
                 doctor.getId(), patient.getId(),
-                LocalDate.of(2026, 6, 2), "09:00", null, null, null, null);
+                LocalDate.of(2026, 6, 2), LocalTime.of(9, 0), null, null, null, null);
 
         assertThatThrownBy(() -> service.book(req))
                 .isInstanceOf(ConflictException.class)
@@ -110,12 +110,12 @@ class AppointmentServiceTest {
 
     @Test
     void book_succeedsAndDefaultsDurationFromProps() {
-        when(appointmentRepository.lockConflicting(any(), any(), anyString(), any()))
+        when(appointmentRepository.lockConflicting(any(), any(), any(LocalTime.class), any()))
                 .thenReturn(new ArrayList<>());
 
         var req = new BookAppointmentRequest(
                 doctor.getId(), patient.getId(),
-                LocalDate.of(2026, 6, 5), "10:30",
+                LocalDate.of(2026, 6, 5), LocalTime.of(10, 30),
                 null, null, "check", null);
 
         Appointment saved = service.book(req);
@@ -167,14 +167,14 @@ class AppointmentServiceTest {
         Appointment appt = Entities.appointment(60L, patient, doctor,
                 LocalDate.of(2026, 6, 5), "09:00", AppointmentStatus.SCHEDULED);
         when(appointmentRepository.findById(60L)).thenReturn(Optional.of(appt));
-        when(appointmentRepository.lockConflicting(any(), any(), anyString(), any()))
+        when(appointmentRepository.lockConflicting(any(), any(), any(LocalTime.class), any()))
                 .thenReturn(new ArrayList<>());
 
         Appointment moved = service.reschedule(60L, new RescheduleAppointmentRequest(
-                LocalDate.of(2026, 6, 6), "11:00"));
+                LocalDate.of(2026, 6, 6), LocalTime.of(11, 0)));
 
         assertThat(moved.getAppointmentDate()).isEqualTo(LocalDate.of(2026, 6, 6));
-        assertThat(moved.getAppointmentTime()).isEqualTo("11:00");
+        assertThat(moved.getAppointmentTime()).isEqualTo(LocalTime.of(11, 0));
         assertThat(moved.getStatus()).isEqualTo(AppointmentStatus.RESCHEDULED);
     }
 }

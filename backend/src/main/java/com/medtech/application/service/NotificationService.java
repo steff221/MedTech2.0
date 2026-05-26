@@ -30,6 +30,11 @@ public class NotificationService {
     }
 
     @Transactional(readOnly = true)
+    public Page<Notification> listByType(String type, Pageable pageable) {
+        return notificationRepository.findByTypeOrderByCreatedAtDesc(type, pageable);
+    }
+
+    @Transactional(readOnly = true)
     public long unreadCount(Long userId) {
         return notificationRepository.countByUserIdAndReadFalse(userId);
     }
@@ -54,14 +59,14 @@ public class NotificationService {
                 .orElseThrow(() -> ResourceNotFoundException.of("User", userId));
         notificationRepository.save(Notification.create(user, type, title, body, referenceId));
 
-        // Push SSE event AFTER the transaction commits so the client's follow-up
-        // API call sees the committed notification row.
-        long unread = notificationRepository.countByUserIdAndReadFalse(userId);
+        // Push SSE event AFTER commit — count is fetched post-commit so it
+        // includes the new row and needs no manual +1 adjustment.
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
+                long unread = notificationRepository.countByUserIdAndReadFalse(userId);
                 sseRegistry.push(userId, "notification",
-                        Map.of("type", type, "title", title, "unreadCount", unread + 1));
+                        Map.of("type", type, "title", title, "unreadCount", unread));
             }
         });
     }

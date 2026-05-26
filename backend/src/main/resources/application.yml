@@ -14,7 +14,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5433/medtech
     username: medtech_app
-    password: MedTech123!@#
+    password: ${MEDTECH_DB_PASSWORD:}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 20
@@ -23,6 +23,11 @@ spring:
       idle-timeout: 600000
       max-lifetime: 1800000
       pool-name: MedTechHikariPool
+  data:
+    redis:
+      host: ${MEDTECH_REDIS_HOST:localhost}
+      port: ${MEDTECH_REDIS_PORT:6379}
+      timeout: 2000ms
   flyway:
     locations: classpath:database
     baseline-on-migrate: true
@@ -68,7 +73,7 @@ medtech:
     jwt:
       # 32+ byte secret — must be set via MEDTECH_SECURITY_JWT_SECRET env var; no default so startup fails fast if missing
       secret: ${MEDTECH_SECURITY_JWT_SECRET}
-      access-token-ttl-minutes: 60
+      access-token-ttl-minutes: 15
       refresh-token-ttl-days: 7
       issuer: medtech-backend
     # Refresh-token cookie Secure flag: false for dev (HTTP), true in prod profile.

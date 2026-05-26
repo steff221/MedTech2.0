@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import {
+  Bell,
   Calendar,
   ClipboardList,
   FileText,
@@ -20,6 +21,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type ComponentType, useState } from "react";
 import { LanguageToggle } from "@/components/common/LanguageToggle";
+import { NotificationBell } from "@/components/layout/NotificationBell";
 import { useAuth } from "@/hooks/useAuth";
 import { useDoctorProfile } from "@/hooks/useDoctor";
 import { useT } from "@/hooks/useT";
@@ -41,6 +43,7 @@ const NAV: NavItem[] = [
   { labelKey: "mkb10",          href: "/doctor/mkb10",               icon: ShieldPlus      },
   { labelKey: "guidelines",     href: "/doctor/guidelines",          icon: FileText        },
   { labelKey: "settings",       href: "/doctor/settings",            icon: Wrench          },
+  { labelKey: "notifications",  href: "/doctor/notifications",       icon: Bell            },
 ];
 
 export function DoctorTopNav() {
@@ -52,7 +55,7 @@ export function DoctorTopNav() {
 
   return (
     <>
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white shadow-sm">
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-slate-200 bg-white shadow-sm">
         {/* Brand bar */}
         <div className="flex h-12 items-center justify-between border-b border-slate-100 bg-slate-50/50 px-4 sm:px-6">
           <Link href="/doctor" className="flex items-center gap-2">
@@ -63,6 +66,7 @@ export function DoctorTopNav() {
 
           <div className="flex items-center gap-3">
             <LanguageToggle size="sm" />
+            <NotificationBell />
 
             {user && (
               <>

@@ -25,6 +25,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -51,12 +52,12 @@ class AppointmentControllerTest {
     @WithMockUser(roles = "PATIENT")
     void book_returns201() throws Exception {
         var req = new BookAppointmentRequest(20L, 10L,
-                LocalDate.now().plusDays(7), "09:00",
+                LocalDate.now().plusDays(7), LocalTime.of(9, 0),
                 null, null, "checkup", null);
         when(appointmentService.book(any())).thenReturn(null);
         when(appointmentMapper.toResponse(any())).thenReturn(
                 AppointmentResponse.builder().id(99L).status(AppointmentStatus.SCHEDULED)
-                        .appointmentDate(req.appointmentDate()).appointmentTime("09:00")
+                        .appointmentDate(req.appointmentDate()).appointmentTime(LocalTime.of(9, 0))
                         .createdAt(Instant.now()).build());
 
         mockMvc.perform(post("/api/appointments")
@@ -74,7 +75,7 @@ class AppointmentControllerTest {
         when(appointmentService.book(any())).thenThrow(
                 new ValidationException(ErrorCode.APPOINTMENT_IN_PAST, "past"));
         var req = new BookAppointmentRequest(20L, 10L,
-                LocalDate.now().plusDays(7), "09:00", null, null, "x", null);
+                LocalDate.now().plusDays(7), LocalTime.of(9, 0), null, null, "x", null);
 
         mockMvc.perform(post("/api/appointments")
                         .with(csrf())
@@ -90,7 +91,7 @@ class AppointmentControllerTest {
         when(appointmentService.book(any())).thenThrow(
                 new ConflictException(ErrorCode.APPOINTMENT_CONFLICT, "doctor busy"));
         var req = new BookAppointmentRequest(20L, 10L,
-                LocalDate.now().plusDays(7), "09:00", null, null, "x", null);
+                LocalDate.now().plusDays(7), LocalTime.of(9, 0), null, null, "x", null);
 
         mockMvc.perform(post("/api/appointments")
                         .with(csrf())

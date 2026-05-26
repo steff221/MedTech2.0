@@ -13,7 +13,7 @@ export const authService = {
     api.post<AuthResponse>("/auth/refresh", null, { headers: { "Content-Type": "application/json" } }).then((r) => r.data),
 
   logout: () =>
-    api.post<void>("/auth/logout", null).then((r) => r.data),
+    api.post<void>("/auth/logout", null, { headers: { "Content-Type": "application/json" } }).then((r) => r.data),
 
   forgotPassword: (email: string) =>
     api.post<void>("/auth/forgot-password", { email }).then((r) => r.data),

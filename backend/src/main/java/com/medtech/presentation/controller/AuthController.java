@@ -124,7 +124,7 @@ public class AuthController {
                 + "; Max-Age=" + maxAge
                 + "; HttpOnly"
                 + (secureCookie ? "; Secure" : "")
-                + "; SameSite=Lax");
+                + "; SameSite=Strict");
     }
 
     private void clearRefreshCookie(HttpServletResponse response) {
@@ -134,6 +134,6 @@ public class AuthController {
                 + "; Max-Age=0"
                 + "; HttpOnly"
                 + (secureCookie ? "; Secure" : "")
-                + "; SameSite=Lax");
+                + "; SameSite=Strict");
     }
 }

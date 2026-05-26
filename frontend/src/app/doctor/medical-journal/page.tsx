@@ -1,9 +1,10 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Download, FileSpreadsheet, FileText, Plus, Search } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Download, FileSpreadsheet, FileText, Plus, Search, X } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
+import toast from "react-hot-toast";
 import { Badge } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
 import { Card } from "@/components/common/Card";
@@ -39,8 +40,177 @@ const RESOURCES = [
   "Интернистички кабинет",
 ];
 
+// ── New report modal ──────────────────────────────────────────────────────────
+
+const REPORT_TYPE_OPTIONS = ["Месечна пријава", "Тримесечна", "Годишна"];
+
+const MONTHS_MK = [
+  "Јануари","Февруари","Март","Април","Мај","Јуни",
+  "Јули","Август","Септември","Октомври","Ноември","Декември",
+];
+
+interface NewReportModalProps {
+  onClose: () => void;
+  onCreated: (report: typeof MOCK_REPORTS[0]) => void;
+}
+
+function NewReportModal({ onClose, onCreated }: NewReportModalProps) {
+  const currentYear = new Date().getFullYear();
+  const [type, setType] = useState("Месечна пријава");
+  const [month, setMonth] = useState(MONTHS_MK[new Date().getMonth()]);
+  const [quarter, setQuarter] = useState("Q1");
+  const [year, setYear] = useState(String(currentYear));
+  const [patients, setPatients] = useState("");
+  const [diagnoses, setDiagnoses] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const period = type === "Месечна пријава"
+    ? `${month} ${year}`
+    : type === "Тримесечна"
+    ? `${quarter} ${year}`
+    : `Годишна ${year}`;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!patients || !diagnoses) return;
+    setSubmitting(true);
+    // Simulate async save
+    setTimeout(() => {
+      const now = new Date();
+      const id = `IP-${year}-${String(Math.floor(Math.random() * 900) + 100)}`;
+      onCreated({
+        id,
+        period,
+        type,
+        patients: Number(patients),
+        diagnoses: Number(diagnoses),
+        submitted: format(now, "dd.MM.yyyy"),
+        status: "draft",
+      });
+      toast.success("Пријавата е зачувана.");
+      onClose();
+    }, 400);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96, y: 12 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 12 }}
+        transition={{ duration: 0.2 }}
+        className="relative z-10 w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-2xl"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+          <h2 className="text-lg font-semibold text-slate-900">Нова пријава</h2>
+          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4 px-6 py-5">
+          {/* Type */}
+          <div>
+            <p className="mb-1.5 text-sm font-medium text-slate-700">Тип на пријава</p>
+            <div className="flex flex-wrap gap-1.5">
+              {REPORT_TYPE_OPTIONS.map((t) => (
+                <button key={t} type="button" onClick={() => setType(t)}
+                  className={cn(
+                    "rounded-full border px-3 py-1 text-xs font-medium transition-all",
+                    type === t
+                      ? "border-emerald-500 bg-emerald-500 text-white"
+                      : "border-slate-200 bg-white text-slate-700 hover:border-emerald-300",
+                  )}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Period */}
+          <div className="grid grid-cols-2 gap-3">
+            {type === "Месечна пријава" && (
+              <div>
+                <p className="mb-1.5 text-sm font-medium text-slate-700">Месец</p>
+                <select value={month} onChange={(e) => setMonth(e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200">
+                  {MONTHS_MK.map((m) => <option key={m}>{m}</option>)}
+                </select>
+              </div>
+            )}
+            {type === "Тримесечна" && (
+              <div>
+                <p className="mb-1.5 text-sm font-medium text-slate-700">Квартал</p>
+                <select value={quarter} onChange={(e) => setQuarter(e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200">
+                  {["Q1","Q2","Q3","Q4"].map((q) => <option key={q}>{q}</option>)}
+                </select>
+              </div>
+            )}
+            <div>
+              <p className="mb-1.5 text-sm font-medium text-slate-700">Година</p>
+              <select value={year} onChange={(e) => setYear(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200">
+                {[currentYear, currentYear - 1, currentYear - 2].map((y) => (
+                  <option key={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="rounded-lg bg-slate-50 px-4 py-2.5 text-sm">
+            <span className="text-slate-500">Период: </span>
+            <span className="font-semibold text-slate-800">{period}</span>
+          </div>
+
+          {/* Counts */}
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Број на пациенти *"
+              type="number"
+              min={0}
+              required
+              value={patients}
+              onChange={(e) => setPatients(e.target.value)}
+              placeholder="0"
+            />
+            <Input
+              label="Број на дијагнози *"
+              type="number"
+              min={0}
+              required
+              value={diagnoses}
+              onChange={(e) => setDiagnoses(e.target.value)}
+              placeholder="0"
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">
+            <Button type="button" variant="secondary" onClick={onClose}>Откажи</Button>
+            <Button type="submit" disabled={submitting}>
+              {submitting ? "…" : "Зачувај нацрт"}
+            </Button>
+          </div>
+        </form>
+      </motion.div>
+    </div>
+  );
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
+
 export default function MedicalJournalPage() {
   const { user } = useAuth();
+
+  const [showNewReport, setShowNewReport] = useState(false);
+  const [reports, setReports] = useState(MOCK_REPORTS);
 
   // Journal generator state
   const [resource, setResource] = useState<string | null>(null);
@@ -52,7 +222,7 @@ export default function MedicalJournalPage() {
   const [reportYear, setReportYear] = useState("2026");
   const [reportSearch, setReportSearch] = useState("");
 
-  const filteredReports = MOCK_REPORTS.filter((r) => {
+  const filteredReports = reports.filter((r) => {
     if (reportType !== "Сите" && r.type !== reportType) return false;
     if (!r.period.includes(reportYear)) return false;
     if (
@@ -70,7 +240,7 @@ export default function MedicalJournalPage() {
         title="Медицински дневник"
         breadcrumb={[{ label: "Медицински дневник" }]}
         actions={
-          <Button className="bg-white !text-emerald-700 hover:!bg-emerald-50">
+          <Button onClick={() => setShowNewReport(true)} className="bg-white !text-emerald-700 hover:!bg-emerald-50">
             <Plus className="h-4 w-4" /> Нова пријава
           </Button>
         }
@@ -282,6 +452,18 @@ export default function MedicalJournalPage() {
           </motion.div>
         </section>
       </div>
+
+      <AnimatePresence>
+        {showNewReport && (
+          <NewReportModal
+            onClose={() => setShowNewReport(false)}
+            onCreated={(r) => {
+              setReports((prev) => [r, ...prev]);
+              setShowNewReport(false);
+            }}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 }

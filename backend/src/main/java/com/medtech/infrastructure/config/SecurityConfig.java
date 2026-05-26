@@ -5,6 +5,7 @@ import com.medtech.infrastructure.security.JwtAuthenticationFilter;
 import com.medtech.infrastructure.security.JwtTokenProvider;
 import com.medtech.infrastructure.security.RateLimitFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -46,8 +47,8 @@ public class SecurityConfig {
      * never instantiate this filter or its {@link JwtTokenProvider} dependency.
      */
     @Bean
-    public RateLimitFilter rateLimitFilter() {
-        return new RateLimitFilter();
+    public RateLimitFilter rateLimitFilter(StringRedisTemplate redisTemplate) {
+        return new RateLimitFilter(redisTemplate);
     }
 
     @Bean
@@ -93,15 +94,15 @@ public class SecurityConfig {
                         "/api/auth/login",
                         "/api/auth/register",
                         "/api/auth/refresh",
+                        "/api/auth/logout",
                         "/api/auth/forgot-password",
                         "/api/auth/reset-password",
                         "/api/auth/verify-email",
-                        "/v3/api-docs/**",
-                        "/swagger-ui.html",
-                        "/swagger-ui/**",
                         "/actuator/health",
                         "/actuator/info"
                 ).permitAll()
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**")
+                    .hasRole("ADMIN")
                 // Public read-only directory endpoints — writes (e.g. /api/doctors/me) stay authenticated.
                 .requestMatchers(HttpMethod.GET, "/api/hospitals/**", "/api/doctors", "/api/doctors/{id:[0-9]+}", "/api/stats/**").permitAll()
                 .anyRequest().authenticated()

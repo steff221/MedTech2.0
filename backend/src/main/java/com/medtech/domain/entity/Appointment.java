@@ -15,6 +15,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "appointments")
@@ -45,8 +46,8 @@ public class Appointment {
     private LocalDate appointmentDate;
 
     /** Stored as {@code VARCHAR(10)} (e.g. {@code "09:30"}). */
-    @Column(name = "appointment_time", nullable = false, length = 10)
-    private String appointmentTime;
+    @Column(name = "appointment_time", nullable = false)
+    private LocalTime appointmentTime;
 
     @Column(name = "duration_minutes", nullable = false)
     private Integer durationMinutes = 30;

@@ -27,13 +27,14 @@ import com.medtech.infrastructure.exception.ResourceNotFoundException;
 import com.medtech.infrastructure.security.JwtProperties;
 import com.medtech.infrastructure.security.JwtTokenProvider;
 import io.jsonwebtoken.Claims;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -105,15 +106,15 @@ public class AuthService {
         User user = userRepository.findByEmailIgnoreCase(req.email())
                 .orElseThrow(AuthorizationException::invalidCredentials);
 
-        if (user.isLocked()) {
-            throw new AppException(ErrorCode.AUTH_ACCOUNT_LOCKED, HttpStatus.UNAUTHORIZED,
-                    "Account is temporarily locked. Try again later.") {};
-        }
         if (user.getStatus() != UserStatus.ACTIVE) {
             throw new AppException(ErrorCode.AUTH_ACCOUNT_INACTIVE, HttpStatus.UNAUTHORIZED,
                     "Account is not active") {};
         }
         if (!passwordEncoder.matches(req.password(), user.getPasswordHash())) {
+            if (user.isLocked()) {
+                throw new AppException(ErrorCode.AUTH_ACCOUNT_LOCKED, HttpStatus.UNAUTHORIZED,
+                        "Account is temporarily locked. Try again later.") {};
+            }
             int attempted = user.getFailedLoginCount() + 1;
             userRepository.incrementFailedLogins(user.getId());
             if (attempted >= MAX_FAILED_ATTEMPTS) {
@@ -135,7 +136,7 @@ public class AuthService {
         return res;
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
     public AuthResponse refresh(RefreshTokenRequest req) {
         Claims claims = tokenProvider.parse(req.refreshToken())
                 .orElseThrow(() -> new AppException(ErrorCode.AUTH_TOKEN_INVALID,
@@ -160,9 +161,17 @@ public class AuthService {
         }
 
         // Rotate: revoke the presented token, issue a fresh pair.
+        // @Version on RefreshToken raises ObjectOptimisticLockingFailureException if two
+        // concurrent requests both try to rotate the same token simultaneously.
         stored.setRevoked(true);
         stored.setRevokedAt(Instant.now());
-        refreshTokenRepository.save(stored);
+        try {
+            refreshTokenRepository.save(stored);
+        } catch (ObjectOptimisticLockingFailureException ex) {
+            log.warn("Concurrent refresh token rotation rejected for token hash {}", hash);
+            throw new AppException(ErrorCode.AUTH_TOKEN_INVALID, HttpStatus.UNAUTHORIZED,
+                    "Refresh token is being used concurrently — please retry") {};
+        }
 
         long userId = Long.parseLong(Objects.requireNonNull(claims.getSubject(), "JWT subject missing"));
         User user = userRepository.findById(userId)
@@ -316,11 +325,10 @@ public class AuthService {
         try {
             ServletRequestAttributes attrs =
                     (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
-            HttpServletRequest req = attrs.getRequest();
-            String forwarded = req.getHeader("X-Forwarded-For");
-            return (forwarded != null && !forwarded.isBlank())
-                    ? forwarded.split(",")[0].trim()
-                    : req.getRemoteAddr();
+            // forward-headers-strategy: framework already resolves the real IP from
+            // X-Forwarded-For via Spring's ForwardedHeaderFilter, so getRemoteAddr()
+            // returns the correct value without manual header parsing (which is spoofable).
+            return attrs.getRequest().getRemoteAddr();
         } catch (IllegalStateException e) {
             return null;
         }

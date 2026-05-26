@@ -137,7 +137,7 @@ public class AppointmentService {
 
         LocalDateTime startsAt = LocalDateTime.of(
                 appt.getAppointmentDate(),
-                LocalTime.parse(appt.getAppointmentTime()));
+                appt.getAppointmentTime());
         long hoursUntil = ChronoUnit.HOURS.between(LocalDateTime.now(clock), startsAt);
         if (hoursUntil < props.cancellationWindowHours()) {
             throw new ValidationException(ErrorCode.APPOINTMENT_CANCEL_WINDOW,

@@ -94,6 +94,6 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
            """)
     List<Appointment> lockConflicting(@Param("doctorId") Long doctorId,
                                       @Param("date") LocalDate date,
-                                      @Param("time") String time,
+                                      @Param("time") java.time.LocalTime time,
                                       @Param("statuses") java.util.Collection<AppointmentStatus> statuses);
 }

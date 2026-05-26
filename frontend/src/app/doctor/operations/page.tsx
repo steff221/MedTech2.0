@@ -1,9 +1,9 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { format } from "date-fns";
-import { Clock, Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Clock, Plus, Search, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import toast from "react-hot-toast";
 import { Badge } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
 import { Card } from "@/components/common/Card";
@@ -11,229 +11,329 @@ import { Input } from "@/components/common/Input";
 import { PageBanner } from "@/components/layout/PageBanner";
 import { useAuth } from "@/hooks/useAuth";
 import { useT } from "@/hooks/useT";
-import { translations } from "@/i18n/translations";
+import { operationService } from "@/services/operation.service";
+import { patientService } from "@/services/patient.service";
+import { hospitalService } from "@/services/hospital.service";
+import type { HospitalResponse, OperationResponse, OperationStatus, PatientResponse, ScheduleOperationRequest } from "@/types/api";
 import { cn } from "@/utils/cn";
 
-// ── Types ────────────────────────────────────────────────────────────────────
-type OpStatus = "planned" | "in_progress" | "completed" | "cancelled";
+// ── helpers ───────────────────────────────────────────────────────────────────
 
-interface Operation {
-  id: string;
-  patient: string;
-  referralId: string;
-  doctor: string;
-  type: string;
-  operationType: string;
-  room: string;
-  scheduledAt: string;
-  durationMin: number;
-  details: string;
-  status: OpStatus;
-  anesthesia: string;
+function formatScheduled(date: string, time: string | null): string {
+  const d = new Date(date + (time ? `T${time}` : ""));
+  return `${d.toLocaleDateString("mk-MK", { day: "2-digit", month: "2-digit", year: "numeric" })}${time ? ` ${time}` : ""}`;
 }
 
-// ── Mock data ─────────────────────────────────────────────────────────────────
-const MOCK_OPERATIONS: Operation[] = [
-  {
-    id: "OP-2026-012",
-    patient: "Александар Стојановски",
-    referralId: "UP-2026-002",
-    doctor: "Dr. Перовски / Хирург Димитров",
-    type: "Лапароскопска",
-    operationType: "Лапароскопска холецистектомија",
-    room: "Сала 2 (Лапароскопска)",
-    scheduledAt: "2026-05-21T09:00",
-    durationMin: 90,
-    details: "Симптоматска холелитијаза, рекурентни колики. ASA II. Лапароскопски пристап.",
-    status: "in_progress",
-    anesthesia: "Општа",
-  },
-  {
-    id: "OP-2026-011",
-    patient: "Борче Димовски",
-    referralId: "UP-2026-001",
-    doctor: "Dr. Перовски / Хирург Јовановски",
-    type: "Општа",
-    operationType: "Лапаротомија — адхезиолиза",
-    room: "Сала 1 (Општа)",
-    scheduledAt: "2026-05-21T11:30",
-    durationMin: 120,
-    details: "Хронични болки во абдомен, суспектни адхезии по претходна аппендектомија.",
-    status: "planned",
-    anesthesia: "Општа",
-  },
-  {
-    id: "OP-2026-010",
-    patient: "Сања Велкоска",
-    referralId: "UP-2026-003",
-    doctor: "Dr. Перовски / Кардиохирург Петров",
-    type: "Кардио",
-    operationType: "Коронарна артериска бај-пас операција (CABG)",
-    room: "Сала 3 (Кардиохирургија)",
-    scheduledAt: "2026-05-22T08:00",
-    durationMin: 240,
-    details: "Тројносадовна КАБ болест. EF 48%. Суспендиран на нитрати. Прехирурш. консулт завршен.",
-    status: "planned",
-    anesthesia: "Општа + кардиопулмонален бај-пас",
-  },
-  {
-    id: "OP-2026-009",
-    patient: "Горан Трајковски",
-    referralId: "UP-2026-004",
-    doctor: "Dr. Перовски / Уролог Николовски",
-    type: "Лапароскопска",
-    operationType: "Трансуретрална ресекција на простата (TURP)",
-    room: "Дневна болница",
-    scheduledAt: "2026-05-19T10:00",
-    durationMin: 75,
-    details: "BPH со значајна опструкција. IPSS скор 22. PSA во норма.",
-    status: "completed",
-    anesthesia: "Спинална",
-  },
-  {
-    id: "OP-2026-008",
-    patient: "Марија Петровска",
-    referralId: "UP-2025-041",
-    doctor: "Dr. Перовски / Гинеколог Илиевска",
-    type: "Гинеколошка",
-    operationType: "Лапароскопска цистектомија на јајник",
-    room: "Сала 2 (Лапароскопска)",
-    scheduledAt: "2026-05-15T08:30",
-    durationMin: 60,
-    details: "Ендометриоза стадиум II. Цист 4cm на лев јајник. CA-125 нормален.",
-    status: "completed",
-    anesthesia: "Општа",
-  },
-  {
-    id: "OP-2026-007",
-    patient: "Методи Стефановски",
-    referralId: "UP-2025-039",
-    doctor: "Dr. Перовски / Ортопед Стојановски",
-    type: "Ортопедска",
-    operationType: "Тотална замена на колено (TKR) — десно",
-    room: "Сала 1 (Општа)",
-    scheduledAt: "2026-05-10T07:30",
-    durationMin: 150,
-    details: "Гонартроза стадиум IV (К-Л). BMI 26. Ехокардио уредно. Претходна физиотерапија 6 мес.",
-    status: "completed",
-    anesthesia: "Спинална + седација",
-  },
-  {
-    id: "OP-2026-006",
-    patient: "Елена Николовска",
-    referralId: "UP-2025-036",
-    doctor: "Dr. Перовски / Хирург Јовановски",
-    type: "Општа",
-    operationType: "Херниорафија (Lichtenstein) — ингвинална десна",
-    room: "Дневна болница",
-    scheduledAt: "2026-04-28T09:00",
-    durationMin: 60,
-    details: "Директна ингвинална хернија десно, рецидив. Пациентот без придружни заболувања. ASA I.",
-    status: "completed",
-    anesthesia: "Локална + седација",
-  },
-  {
-    id: "OP-2026-005",
-    patient: "Ана Коцевска",
-    referralId: "UP-2025-033",
-    doctor: "Dr. Перовски / Гинеколог Илиевска",
-    type: "Гинеколошка",
-    operationType: "Хистероскопска миомектомија",
-    room: "Дневна болница",
-    scheduledAt: "2026-05-23T10:30",
-    durationMin: 45,
-    details: "Субмукозен миом тип 0, 2.5cm. Метрорагија. Хемоглобин 110 g/L. ASA I.",
-    status: "planned",
-    anesthesia: "Кратка општа",
-  },
-  {
-    id: "OP-2026-004",
-    patient: "Горан Трајковски",
-    referralId: "UP-2025-030",
-    doctor: "Dr. Перовски / Хирург Димитров",
-    type: "Лапароскопска",
-    operationType: "Лапароскопска апендектомија",
-    room: "Сала 2 (Лапароскопска)",
-    scheduledAt: "2026-04-05T16:00",
-    durationMin: 50,
-    details: "Акутен апендицитис — ургентна операција. Алварадо скор 8. CT потврдено.",
-    status: "completed",
-    anesthesia: "Општа",
-  },
-  {
-    id: "OP-2026-003",
-    patient: "Борче Димовски",
-    referralId: "UP-2025-028",
-    doctor: "Dr. Перовски / Кардиолог Петров",
-    type: "Кардио",
-    operationType: "Перкутана коронарна интервенција (PCI) — стент LAD",
-    room: "Сала 3 (Кардиохирургија)",
-    scheduledAt: "2026-03-18T11:00",
-    durationMin: 90,
-    details: "ACS NSTEMI. Тројносадовна болест. Стент поставен во LAD. TIMI flow 3 post-PCI.",
-    status: "cancelled",
-    anesthesia: "Локална + седација",
-  },
-];
+// ── Schedule modal ────────────────────────────────────────────────────────────
 
-const OP_TYPES = ["Сите", "Општа", "Лапароскопска", "Кардио", "Гинеколошка", "Ортопедска"];
-const ROOMS = ["Сала 1 (Општа)", "Сала 2 (Лапароскопска)", "Сала 3 (Кардиохирургија)", "Дневна болница"];
-const STATUSES: Array<OpStatus | "Сите"> = ["Сите", "planned", "in_progress", "completed", "cancelled"];
+interface ScheduleModalProps {
+  onClose: () => void;
+  onCreated: (op: OperationResponse) => void;
+}
+
+function ScheduleModal({ onClose, onCreated }: ScheduleModalProps) {
+  const t = useT();
+
+  const [patientQuery, setPatientQuery] = useState("");
+  const [patientResults, setPatientResults] = useState<PatientResponse[]>([]);
+  const [selectedPatient, setSelectedPatient] = useState<PatientResponse | null>(null);
+  const [hospitals, setHospitals] = useState<HospitalResponse[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+
+  const [form, setForm] = useState<Omit<ScheduleOperationRequest, "patientId" | "hospitalId">>({
+    operationName: "",
+    operationDate: "",
+    operationTime: "",
+    durationMinutes: undefined,
+    operationRoom: "",
+    anesthesiaType: "",
+    anesthesiologist: "",
+    surgicalTeam: "",
+    preOperativeNotes: "",
+    implantsUsed: "",
+  });
+  const [hospitalId, setHospitalId] = useState<number | "">("");
+
+  // Load hospitals once
+  useEffect(() => {
+    hospitalService.listActive().then(setHospitals).catch(() => {});
+  }, []);
+
+  // Patient search debounce
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    if (!patientQuery.trim() || selectedPatient) { setPatientResults([]); return; }
+    searchTimer.current = setTimeout(() => {
+      patientService.search(patientQuery, 0, 8).then((p) => setPatientResults(p.content)).catch(() => {});
+    }, 300);
+    return () => { if (searchTimer.current) clearTimeout(searchTimer.current); };
+  }, [patientQuery, selectedPatient]);
+
+  const set = (field: keyof typeof form, value: string | number | undefined) =>
+    setForm((f) => ({ ...f, [field]: value }));
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPatient || !hospitalId) return;
+    setSubmitting(true);
+    try {
+      const body: ScheduleOperationRequest = {
+        ...form,
+        patientId: selectedPatient.id,
+        hospitalId: hospitalId as number,
+        durationMinutes: form.durationMinutes || undefined,
+      };
+      const created = await operationService.schedule(body);
+      toast.success(t.doctorOperations.successMsg);
+      onCreated(created);
+      onClose();
+    } catch {
+      toast.error("Грешка при закажување. Обидете се повторно.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Panel */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96, y: 12 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 12 }}
+        transition={{ duration: 0.2 }}
+        className="relative z-10 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl"
+      >
+        {/* Header */}
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-4">
+          <h2 className="text-lg font-semibold text-slate-900">{t.doctorOperations.scheduleTitle}</h2>
+          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-5 px-6 py-5">
+          {/* Patient search */}
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">{t.doctorOperations.fieldPatient} *</label>
+            {selectedPatient ? (
+              <div className="flex items-center justify-between rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm">
+                <span className="font-medium text-emerald-800">{selectedPatient.firstName} {selectedPatient.lastName}</span>
+                <button type="button" onClick={() => { setSelectedPatient(null); setPatientQuery(""); }}
+                  className="ml-2 text-emerald-600 hover:text-emerald-800"><X className="h-4 w-4" /></button>
+              </div>
+            ) : (
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  value={patientQuery}
+                  onChange={(e) => setPatientQuery(e.target.value)}
+                  placeholder={t.doctorOperations.fieldPatientHint}
+                  className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-sm placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                />
+                {patientResults.length > 0 && (
+                  <ul className="absolute z-20 mt-1 w-full rounded-lg border border-slate-200 bg-white shadow-lg">
+                    {patientResults.map((p) => (
+                      <li key={p.id}>
+                        <button type="button"
+                          onClick={() => { setSelectedPatient(p); setPatientQuery(""); setPatientResults([]); }}
+                          className="w-full px-3 py-2 text-left text-sm hover:bg-emerald-50">
+                          <span className="font-medium text-slate-900">{p.firstName} {p.lastName}</span>
+                          <span className="ml-2 text-xs text-slate-400">{p.email}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Hospital */}
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">{t.doctorOperations.fieldHospital} *</label>
+            <select
+              required
+              value={hospitalId}
+              onChange={(e) => setHospitalId(e.target.value ? Number(e.target.value) : "")}
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+            >
+              <option value="">— избери болница —</option>
+              {hospitals.map((h) => <option key={h.id} value={h.id}>{h.name} ({h.city})</option>)}
+            </select>
+          </div>
+
+          {/* Operation name */}
+          <Input
+            label={`${t.doctorOperations.fieldOpName} *`}
+            required
+            value={form.operationName}
+            onChange={(e) => set("operationName", e.target.value)}
+            placeholder="пр. Лапароскопска холецистектомија"
+          />
+
+          {/* Date + Time row */}
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label={`${t.doctorOperations.fieldDate} *`}
+              type="date"
+              required
+              value={form.operationDate}
+              onChange={(e) => set("operationDate", e.target.value)}
+            />
+            <Input
+              label={t.doctorOperations.fieldTime}
+              type="time"
+              value={form.operationTime ?? ""}
+              onChange={(e) => set("operationTime", e.target.value)}
+            />
+          </div>
+
+          {/* Duration + Room */}
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label={t.doctorOperations.fieldDuration}
+              type="number"
+              min={1}
+              value={form.durationMinutes ?? ""}
+              onChange={(e) => set("durationMinutes", e.target.value ? Number(e.target.value) : undefined)}
+              placeholder="90"
+            />
+            <Input
+              label={t.doctorOperations.fieldRoom}
+              value={form.operationRoom ?? ""}
+              onChange={(e) => set("operationRoom", e.target.value)}
+              placeholder="Сала 2 (Лапароскопска)"
+            />
+          </div>
+
+          {/* Anesthesia + Anesthesiologist */}
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label={t.doctorOperations.fieldAnesthesia}
+              value={form.anesthesiaType ?? ""}
+              onChange={(e) => set("anesthesiaType", e.target.value)}
+              placeholder="Општа"
+            />
+            <Input
+              label={t.doctorOperations.fieldAnesthesiologist}
+              value={form.anesthesiologist ?? ""}
+              onChange={(e) => set("anesthesiologist", e.target.value)}
+            />
+          </div>
+
+          {/* Surgical team */}
+          <Input
+            label={t.doctorOperations.fieldTeam}
+            value={form.surgicalTeam ?? ""}
+            onChange={(e) => set("surgicalTeam", e.target.value)}
+            placeholder="Хирург Димитров, Мед. сестра Стоева…"
+          />
+
+          {/* Implants */}
+          <Input
+            label={t.doctorOperations.fieldImplants}
+            value={form.implantsUsed ?? ""}
+            onChange={(e) => set("implantsUsed", e.target.value)}
+          />
+
+          {/* Pre-op notes */}
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">{t.doctorOperations.fieldPreOpNotes}</label>
+            <textarea
+              rows={3}
+              value={form.preOperativeNotes ?? ""}
+              onChange={(e) => set("preOperativeNotes", e.target.value)}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+            />
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">
+            <Button type="button" variant="secondary" onClick={onClose}>{t.common.cancel ?? "Откажи"}</Button>
+            <Button type="submit" disabled={submitting || !selectedPatient || !hospitalId}>
+              {submitting ? "…" : t.doctorOperations.submitBtn}
+            </Button>
+          </div>
+        </form>
+      </motion.div>
+    </div>
+  );
+}
+
+// ── Status helpers ────────────────────────────────────────────────────────────
+
+type TonedStatus = { label: string; tone: "success" | "warning" | "info" | "neutral" | "danger" };
+
+function useStatusMeta(): Record<OperationStatus, TonedStatus> {
+  const t = useT();
+  return useMemo(() => ({
+    SCHEDULED:   { label: t.doctorOperations.statusScheduled,   tone: "info"    },
+    IN_PROGRESS: { label: t.doctorOperations.statusInProgress,  tone: "warning" },
+    COMPLETED:   { label: t.doctorOperations.statusCompleted,   tone: "success" },
+    CANCELLED:   { label: t.doctorOperations.statusCancelled,   tone: "neutral" },
+  }), [t]);
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function OperationsPage() {
   const { user } = useAuth();
   const t = useT();
+  const statusMeta = useStatusMeta();
 
-  function formatScheduled(iso: string) {
-    const d = new Date(iso);
-    const lang = t === translations.en ? "en-GB" : "mk-MK";
-    return `${d.toLocaleDateString(lang, { day: "2-digit", month: "2-digit", year: "numeric" })} ${d.toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" })}`;
-  }
+  const [operations, setOperations] = useState<OperationResponse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
 
-  const STATUS_META = useMemo<Record<OpStatus, { label: string; tone: "success" | "warning" | "info" | "neutral" }>>(() => ({
-    planned:     { label: t.doctorOperations.statusPlanned,     tone: "info"    },
-    in_progress: { label: t.doctorOperations.statusInProgress,  tone: "warning" },
-    completed:   { label: t.doctorOperations.statusCompleted,   tone: "success" },
-    cancelled:   { label: t.doctorOperations.statusCancelled,   tone: "neutral" },
-  }), [t]);
-
-  const STATUS_FILTER_LABELS = useMemo<Record<OpStatus | "Сите", string>>(() => ({
-    "Сите":       t.common.all,
-    planned:      t.doctorOperations.statusPlanned,
-    in_progress:  t.doctorOperations.statusInProgress,
-    completed:    t.doctorOperations.statusCompleted,
-    cancelled:    t.doctorOperations.statusCancelled,
-  }), [t]);
-
-  const [date, setDate] = useState("");
-  const [opType, setOpType] = useState("Сите");
-  const [room, setRoom] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<OpStatus | "Сите">("Сите");
+  // Filters
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<OperationStatus | "ALL">("ALL");
+  const [date, setDate] = useState("");
 
-  const filtered = MOCK_OPERATIONS.filter((op) => {
-    if (opType !== "Сите" && op.type !== opType) return false;
-    if (room && op.room !== room) return false;
-    if (statusFilter !== "Сите" && op.status !== statusFilter) return false;
-    if (date && !op.scheduledAt.startsWith(date)) return false;
-    if (
-      search &&
-      !op.patient.toLowerCase().includes(search.toLowerCase()) &&
-      !op.operationType.toLowerCase().includes(search.toLowerCase()) &&
-      !op.id.toLowerCase().includes(search.toLowerCase()) &&
-      !op.referralId.toLowerCase().includes(search.toLowerCase())
-    )
-      return false;
-    return true;
-  });
+  const load = useCallback(() => {
+    setLoading(true);
+    operationService.myOperations(0, 100)
+      .then((p) => setOperations(p.content))
+      .catch(() => toast.error("Неуспешно вчитување на операции."))
+      .finally(() => setLoading(false));
+  }, []);
 
-  // Stats
-  const today = format(new Date(), "yyyy-MM-dd");
-  const todayOps = MOCK_OPERATIONS.filter((o) => o.scheduledAt.startsWith(today));
-  const inProgress = MOCK_OPERATIONS.filter((o) => o.status === "in_progress").length;
-  const completedThisMonth = MOCK_OPERATIONS.filter(
-    (o) => o.status === "completed" && o.scheduledAt.startsWith("2026-05"),
+  useEffect(() => { load(); }, [load]);
+
+  const filtered = useMemo(() =>
+    operations.filter((op) => {
+      if (statusFilter !== "ALL" && op.status !== statusFilter) return false;
+      if (date && op.operationDate !== date) return false;
+      if (search) {
+        const q = search.toLowerCase();
+        if (!op.operationName.toLowerCase().includes(q) &&
+            !op.doctorName.toLowerCase().includes(q) &&
+            !(op.operationRoom ?? "").toLowerCase().includes(q)) return false;
+      }
+      return true;
+    }),
+    [operations, statusFilter, date, search],
+  );
+
+  const today = new Date().toISOString().slice(0, 10);
+  const todayCount = operations.filter((o) => o.operationDate === today).length;
+  const inProgressCount = operations.filter((o) => o.status === "IN_PROGRESS").length;
+  const completedMonth = operations.filter(
+    (o) => o.status === "COMPLETED" && o.operationDate.startsWith(new Date().toISOString().slice(0, 7)),
   ).length;
+
+  const STATUSES: Array<OperationStatus | "ALL"> = ["ALL", "SCHEDULED", "IN_PROGRESS", "COMPLETED", "CANCELLED"];
+  const statusLabel = (s: OperationStatus | "ALL") =>
+    s === "ALL" ? t.common.all : statusMeta[s].label;
 
   return (
     <>
@@ -242,16 +342,14 @@ export default function OperationsPage() {
       <div className="mx-auto max-w-7xl space-y-5 px-6 py-6">
         {/* Stats row */}
         <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
+          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}
           className="grid grid-cols-2 gap-4 md:grid-cols-4"
         >
           {[
-            { label: t.doctorOperations.statsToday,          value: todayOps.length.toString()        },
-            { label: t.doctorOperations.statsInProgress,     value: inProgress.toString()             },
-            { label: t.doctorOperations.statsCompletedMonth, value: completedThisMonth.toString()     },
-            { label: t.doctorOperations.statsTotal,          value: MOCK_OPERATIONS.length.toString() },
+            { label: t.doctorOperations.statsToday,          value: todayCount },
+            { label: t.doctorOperations.statsInProgress,     value: inProgressCount },
+            { label: t.doctorOperations.statsCompletedMonth, value: completedMonth },
+            { label: t.doctorOperations.statsTotal,          value: operations.length },
           ].map((s) => (
             <div key={s.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
               <p className="text-xs text-slate-500">{s.label}</p>
@@ -270,35 +368,17 @@ export default function OperationsPage() {
               </p>
             </div>
 
-            <div>
-              <p className="mb-1.5 block text-sm font-medium text-slate-700">{t.doctorOperations.filterDepartment}</p>
-              <div className="flex flex-wrap gap-1.5">
-                {OP_TYPES.map((opTypeKey) => (
-                  <button
-                    key={opTypeKey}
-                    type="button"
-                    onClick={() => setOpType(opTypeKey)}
-                    className={cn(
-                      "rounded-full border px-2.5 py-1 text-xs font-medium transition-all",
-                      opType === opTypeKey
-                        ? "border-emerald-500 bg-emerald-500 text-white"
-                        : "border-slate-200 bg-white text-slate-700 hover:border-emerald-300",
-                    )}
-                  >
-                    {opTypeKey === "Сите" ? t.common.all : opTypeKey}
-                  </button>
-                ))}
-              </div>
-            </div>
+            {/* Schedule button */}
+            <Button fullWidth onClick={() => setShowModal(true)}>
+              <Plus className="h-4 w-4" />
+              {t.doctorOperations.scheduleBtn}
+            </Button>
 
             <div>
               <p className="mb-1.5 block text-sm font-medium text-slate-700">{t.doctorOperations.filterStatus}</p>
               <div className="flex flex-wrap gap-1.5">
                 {STATUSES.map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => setStatusFilter(s)}
+                  <button key={s} type="button" onClick={() => setStatusFilter(s)}
                     className={cn(
                       "rounded-full border px-2.5 py-1 text-xs font-medium transition-all",
                       statusFilter === s
@@ -306,22 +386,25 @@ export default function OperationsPage() {
                         : "border-slate-200 bg-white text-slate-700 hover:border-emerald-300",
                     )}
                   >
-                    {STATUS_FILTER_LABELS[s]}
+                    {statusLabel(s)}
                   </button>
                 ))}
               </div>
             </div>
 
             <div>
-              <p className="mb-1.5 block text-sm font-medium text-slate-700">{t.doctorOperations.filterRoom}</p>
-              <select
-                value={room ?? ""}
-                onChange={(e) => setRoom(e.target.value || null)}
+              <p className="mb-1.5 block text-sm font-medium text-slate-700">{t.doctorOperations.filterDate}</p>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
-              >
-                <option value="">{t.doctorOperations.filterAllRooms}</option>
-                {ROOMS.map((r) => <option key={r}>{r}</option>)}
-              </select>
+              />
+              {date && (
+                <button onClick={() => setDate("")} className="mt-1 text-xs text-slate-400 hover:text-slate-600">
+                  {t.doctorOperations.filterReset}
+                </button>
+              )}
             </div>
 
             <div>
@@ -337,41 +420,16 @@ export default function OperationsPage() {
               </div>
             </div>
 
-            <Button
-              variant="secondary"
-              fullWidth
-              onClick={() => { setOpType("Сите"); setRoom(null); setStatusFilter("Сите"); setSearch(""); setDate(""); }}
-            >
+            <Button variant="secondary" fullWidth
+              onClick={() => { setStatusFilter("ALL"); setDate(""); setSearch(""); }}>
               {t.doctorOperations.filterReset}
             </Button>
           </Card>
 
-          {/* Main area */}
+          {/* Operations list */}
           <div className="space-y-4">
-            <Card>
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                <Input
-                  label={t.doctorOperations.filterDate}
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                />
-                <div className="flex items-end">
-                  <Button
-                    variant="secondary"
-                    fullWidth
-                    onClick={() => setDate(format(new Date(), "yyyy-MM-dd"))}
-                  >
-                    {t.doctorOperations.filterToday}
-                  </Button>
-                </div>
-              </div>
-            </Card>
-
             <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
+              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}
               className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card"
             >
               <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-2.5">
@@ -380,50 +438,65 @@ export default function OperationsPage() {
                 </p>
               </div>
 
-              <div className="space-y-0 divide-y divide-slate-100">
-                {filtered.length === 0 && (
+              <div className="divide-y divide-slate-100">
+                {loading && (
+                  <p className="py-10 text-center text-sm text-slate-400">Се вчитува…</p>
+                )}
+                {!loading && filtered.length === 0 && (
                   <p className="py-10 text-center text-sm text-slate-400">
                     {t.doctorOperations.noOps}
                   </p>
                 )}
 
-                {filtered.map((op, i) => {
-                  const s = STATUS_META[op.status];
+                {!loading && filtered.map((op, i) => {
+                  const s = statusMeta[op.status];
                   return (
                     <motion.div
                       key={op.id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                       transition={{ delay: i * 0.04 }}
                       className="p-4 hover:bg-emerald-50/30"
                     >
-                      <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div className="flex items-start gap-4">
+                        {/* Left */}
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="font-mono text-xs text-slate-400">{op.id}</span>
+                            <span className="font-mono text-xs text-slate-400">#{op.id}</span>
                             <Badge tone={s.tone}>{s.label}</Badge>
-                            {op.status === "in_progress" && (
+                            {op.status === "IN_PROGRESS" && (
                               <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600">
                                 <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-amber-500" />
                                 {t.doctorOperations.activeLabel}
                               </span>
                             )}
                           </div>
-                          <p className="mt-1 text-base font-semibold text-slate-900">{op.operationType}</p>
-                          <p className="mt-0.5 text-sm font-medium text-slate-700">{op.patient}</p>
-                          <p className="mt-0.5 text-xs text-slate-500">{op.doctor}</p>
+                          <p className="mt-1 text-base font-semibold text-slate-900">{op.operationName}</p>
+                          <p className="mt-0.5 text-sm font-medium text-slate-700">{op.hospitalName}</p>
+                          {op.surgicalTeam && (
+                            <p className="mt-0.5 text-xs text-slate-500">{op.surgicalTeam}</p>
+                          )}
+                          {op.preOperativeNotes && (
+                            <p className="mt-2 text-xs text-slate-600">{op.preOperativeNotes}</p>
+                          )}
                         </div>
-                        <div className="shrink-0 text-right">
-                          <p className="flex items-center gap-1 text-sm font-medium text-slate-700">
+
+                        {/* Right — fixed width, always aligned */}
+                        <div className="w-44 shrink-0 text-right">
+                          <p className="flex items-center justify-end gap-1 text-sm font-medium text-slate-700">
                             <Clock className="h-3.5 w-3.5 text-slate-400" />
-                            {formatScheduled(op.scheduledAt)}
+                            {formatScheduled(op.operationDate, op.operationTime)}
                           </p>
-                          <p className="text-xs text-slate-400">{op.durationMin} {t.doctorOperations.minutesShort} · {op.anesthesia}</p>
-                          <p className="mt-0.5 text-xs text-slate-500">{op.room}</p>
+                          {op.durationMinutes && (
+                            <p className="mt-0.5 text-xs text-slate-400">
+                              {op.durationMinutes} {t.doctorOperations.minutesShort}
+                              {op.anesthesiaType ? ` · ${op.anesthesiaType}` : ""}
+                            </p>
+                          )}
+                          {op.operationRoom && (
+                            <p className="mt-0.5 text-xs text-slate-500">{op.operationRoom}</p>
+                          )}
                         </div>
                       </div>
-                      <p className="mt-2 text-xs text-slate-600">{op.details}</p>
-                      <p className="mt-1 font-mono text-[10px] text-slate-400">{t.doctorOperations.referralLabel} {op.referralId}</p>
                     </motion.div>
                   );
                 })}
@@ -432,6 +505,16 @@ export default function OperationsPage() {
           </div>
         </div>
       </div>
+
+      {/* Schedule modal */}
+      <AnimatePresence>
+        {showModal && (
+          <ScheduleModal
+            onClose={() => setShowModal(false)}
+            onCreated={(op) => setOperations((prev) => [op, ...prev])}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 }

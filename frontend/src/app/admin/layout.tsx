@@ -3,14 +3,16 @@
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import Link from "next/link";
-import { Shield, LogOut, LayoutDashboard, Users } from "lucide-react";
+import { AlertTriangle, ClipboardList, LayoutDashboard, LogOut, Shield, Users } from "lucide-react";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { Spinner } from "@/components/common/Spinner";
 import { useAuth } from "@/hooks/useAuth";
 
 const NAV = [
-  { href: "/admin/dashboard", label: "Преглед", icon: LayoutDashboard },
-  { href: "/admin/users",     label: "Корисници", icon: Users },
+  { href: "/admin/dashboard",      label: "Преглед",       icon: LayoutDashboard },
+  { href: "/admin/users",          label: "Корисници",     icon: Users },
+  { href: "/admin/audit-logs",     label: "Ревизија",      icon: ClipboardList },
+  { href: "/admin/anomaly-alerts", label: "Аномалии",      icon: AlertTriangle },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

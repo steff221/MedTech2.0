@@ -78,6 +78,12 @@ public class OperationService {
                 .orElseThrow(() -> ResourceNotFoundException.of("Operation", id));
     }
 
+    public Page<Operation> forCurrentDoctor(Long userId, Pageable pageable) {
+        Doctor doctor = doctorRepository.findByUserId(userId)
+                .orElseThrow(() -> new AuthorizationException("Only DOCTOR users can view their operations"));
+        return operationRepository.findByDoctorIdOrderByOperationDateDesc(doctor.getId(), pageable);
+    }
+
     public Page<Operation> historyOf(Long patientId, Pageable pageable) {
         return operationRepository.findByPatientIdOrderByOperationDateDesc(patientId, pageable);
     }

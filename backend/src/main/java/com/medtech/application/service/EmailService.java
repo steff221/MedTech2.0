@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 /**
  * Writes email intents to the outbox table within the caller's transaction.
@@ -28,7 +29,7 @@ public class EmailService {
                                             String patientName,
                                             String doctorName,
                                             LocalDate date,
-                                            String time) {
+                                            LocalTime time) {
         enqueue(toEmail,
                 "Потврда за термин — " + date + " во " + time,
                 """
@@ -50,7 +51,7 @@ public class EmailService {
     public void sendAppointmentCancellation(String toEmail,
                                             String patientName,
                                             LocalDate date,
-                                            String time) {
+                                            LocalTime time) {
         enqueue(toEmail,
                 "Откажан термин — " + date + " во " + time,
                 """

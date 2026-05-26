@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Check, Pencil, X } from "lucide-react";
+import { Check, Droplet, Pencil, X } from "lucide-react";
 import { Card } from "@/components/common/Card";
 import { Skeleton } from "@/components/common/Skeleton";
 import { EmptyState } from "@/components/common/EmptyState";
@@ -193,7 +193,10 @@ export default function ProfilePage() {
           <dl className="mt-3 grid grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2">
             <Field label="Датум на раѓање"     value={p.dateOfBirth ?? "—"} />
             <Field label="Пол"                  value={p.gender === "M" ? "Машки" : p.gender === "F" ? "Женски" : p.gender === "O" ? "Друго" : "—"} />
-            <Field label="Крвна група"           value={p.bloodType ? p.bloodType.replace("_POS", "+").replace("_NEG", "−") : "—"} />
+            <div>
+              <dt className="text-xs text-slate-500">Крвна група</dt>
+              <dd className="mt-0.5"><BloodTypeBadge value={p.bloodType} /></dd>
+            </div>
             <Field label="Град"                  value={p.city ?? "—"} />
             <Field label="Адреса"                value={p.address ?? "—"} />
             <Field label="Алергии"               value={p.allergies ?? "—"} />
@@ -205,6 +208,21 @@ export default function ProfilePage() {
         </Card>
       )}
     </div>
+  );
+}
+
+function BloodTypeBadge({ value }: { value: string | null | undefined }) {
+  if (!value) return <span className="text-slate-400">—</span>;
+  const isNeg = value.endsWith("_NEG");
+  const label = value.replace("_POS", "+").replace("_NEG", "−");
+  return (
+    <span className={cn(
+      "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold",
+      isNeg ? "bg-blue-50 text-blue-700 ring-1 ring-blue-200" : "bg-red-50 text-red-700 ring-1 ring-red-200"
+    )}>
+      <Droplet className={cn("h-3 w-3", isNeg ? "text-blue-500" : "text-red-500")} />
+      {label}
+    </span>
   );
 }
 

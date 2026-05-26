@@ -1,57 +1,215 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Download, FileSpreadsheet, Plus, Search } from "lucide-react";
-import { useState } from "react";
+import { Download, FileSpreadsheet, Plus, Search, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { format, parseISO } from "date-fns";
 import { Badge } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
 import { Card } from "@/components/common/Card";
-import { Input } from "@/components/common/Input";
 import { PageBanner } from "@/components/layout/PageBanner";
+import { Skeleton } from "@/components/common/Skeleton";
 import { cn } from "@/utils/cn";
+import { reportService, type GenerateReportRequest } from "@/services/report.service";
+import type { DoctorReportResponse, ReportPeriodType } from "@/types/api";
+
+const PERIOD_TYPES: { value: ReportPeriodType | "ALL"; label: string }[] = [
+  { value: "ALL",       label: "Сите" },
+  { value: "MONTHLY",   label: "Месечна" },
+  { value: "QUARTERLY", label: "Тримесечна" },
+  { value: "ANNUAL",    label: "Годишна" },
+];
 
 const MONTHS = [
   "Јануари", "Февруари", "Март", "Април", "Мај", "Јуни",
   "Јули", "Август", "Септември", "Октомври", "Ноември", "Декември",
 ];
 
-const TYPES = ["Сите", "Месечна пријава", "Тримесечна", "Годишна"];
-
-const MOCK_REPORTS = [
-  { id: "IP-2026-005", period: "Мај 2026",      type: "Месечна пријава",  patients: 38, diagnoses: 52, submitted: "01.06.2026", status: "submitted" },
-  { id: "IP-2026-004", period: "Април 2026",    type: "Месечна пријава",  patients: 41, diagnoses: 58, submitted: "02.05.2026", status: "submitted" },
-  { id: "IP-2026-Q1",  period: "Q1 2026",       type: "Тримесечна",       patients: 112, diagnoses: 147, submitted: "05.04.2026", status: "submitted" },
-  { id: "IP-2026-003", period: "Март 2026",     type: "Месечна пријава",  patients: 35, diagnoses: 44, submitted: "31.03.2026", status: "submitted" },
-  { id: "IP-2026-002", period: "Февруари 2026", type: "Месечна пријава",  patients: 29, diagnoses: 37, submitted: "28.02.2026", status: "submitted" },
-  { id: "IP-2026-001", period: "Јануари 2026",  type: "Месечна пријава",  patients: 33, diagnoses: 41, submitted: "30.01.2026", status: "submitted" },
-  { id: "IP-2025-12",  period: "Декември 2025", type: "Месечна пријава",  patients: 27, diagnoses: 34, submitted: "—",          status: "draft"     },
-];
-
-const statusLabel: Record<string, { label: string; tone: "success" | "warning" | "info" }> = {
-  submitted: { label: "Поднесена",  tone: "success" },
-  draft:     { label: "Нацрт",      tone: "warning"  },
-  pending:   { label: "На чекање",  tone: "info"     },
+const STATUS_BADGE: Record<string, { label: string; tone: "success" | "warning" }> = {
+  SUBMITTED: { label: "Поднесена",  tone: "success" },
+  DRAFT:     { label: "Нацрт",      tone: "warning"  },
 };
 
-export default function IndividualReportsPage() {
-  const [type, setType] = useState("Сите");
-  const [year, setYear] = useState("2026");
-  const [search, setSearch] = useState("");
+const THIS_YEAR = new Date().getFullYear();
+const YEARS = Array.from({ length: 4 }, (_, i) => THIS_YEAR - i);
 
-  const filtered = MOCK_REPORTS.filter((r) => {
-    if (type !== "Сите" && r.type !== type) return false;
-    if (!r.period.includes(year)) return false;
-    if (search && !r.period.toLowerCase().includes(search.toLowerCase()) && !r.id.toLowerCase().includes(search.toLowerCase())) return false;
+// ── Generate report modal ──────────────────────────────────────────────────────
+function GenerateModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+  const [periodType, setPeriodType] = useState<ReportPeriodType>("MONTHLY");
+  const [year, setYear] = useState(THIS_YEAR);
+  const [unit, setUnit] = useState(new Date().getMonth() + 1);
+
+  const mutation = useMutation({
+    mutationFn: (req: GenerateReportRequest) => reportService.generate(req),
+    onSuccess: () => { onCreated(); onClose(); },
+  });
+
+  function submit() {
+    mutation.mutate({
+      periodType,
+      year,
+      periodUnit: periodType !== "ANNUAL" ? unit : undefined,
+    });
+  }
+
+  const unitOptions = periodType === "MONTHLY"
+    ? MONTHS.map((m, i) => ({ value: i + 1, label: m }))
+    : periodType === "QUARTERLY"
+    ? [1, 2, 3, 4].map((q) => ({ value: q, label: `Q${q}` }))
+    : [];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
+      >
+        <h2 className="text-lg font-bold text-slate-900">Генерирај нова пријава</h2>
+        <p className="mt-1 text-sm text-slate-500">
+          Системот ќе ги пресмета статистиките за избраниот период.
+        </p>
+
+        <div className="mt-5 space-y-4">
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">Тип на пријава</label>
+            <div className="flex gap-2">
+              {(["MONTHLY", "QUARTERLY", "ANNUAL"] as ReportPeriodType[]).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => { setPeriodType(t); setUnit(t === "MONTHLY" ? new Date().getMonth() + 1 : 1); }}
+                  className={cn(
+                    "flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-all",
+                    periodType === t
+                      ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                      : "border-slate-200 text-slate-600 hover:border-slate-300",
+                  )}
+                >
+                  {t === "MONTHLY" ? "Месечна" : t === "QUARTERLY" ? "Тримесечна" : "Годишна"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">Година</label>
+              <select
+                value={year}
+                onChange={(e) => setYear(Number(e.target.value))}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+              >
+                {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
+              </select>
+            </div>
+
+            {periodType !== "ANNUAL" && (
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                  {periodType === "MONTHLY" ? "Месец" : "Квартал"}
+                </label>
+                <select
+                  value={unit}
+                  onChange={(e) => setUnit(Number(e.target.value))}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                >
+                  {unitOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {mutation.error && (
+          <p className="mt-3 text-sm text-red-600">
+            {(mutation.error as { response?: { data?: { message?: string } } })?.response?.data?.message ?? "Грешка при генерирање."}
+          </p>
+        )}
+
+        <div className="mt-6 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+          >
+            Откажи
+          </button>
+          <button
+            type="button"
+            onClick={submit}
+            disabled={mutation.isPending}
+            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+          >
+            {mutation.isPending ? "Генерира…" : "Генерирај"}
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
+export default function IndividualReportsPage() {
+  const qc = useQueryClient();
+  const [typeFilter, setTypeFilter] = useState<ReportPeriodType | "ALL">("ALL");
+  const [yearFilter, setYearFilter] = useState(String(THIS_YEAR));
+  const [search, setSearch] = useState("");
+  const [showModal, setShowModal] = useState(false);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["doctor-reports"],
+    queryFn: () => reportService.myReports(0, 200),
+  });
+
+  const all = useMemo(() => data?.content ?? [], [data]);
+
+  const filtered = useMemo(() => all.filter((r) => {
+    if (typeFilter !== "ALL" && r.periodType !== typeFilter) return false;
+    if (!r.periodLabel.includes(yearFilter)) return false;
+    if (search && !r.periodLabel.toLowerCase().includes(search.toLowerCase())
+               && !r.reportNumber.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
+  }), [all, typeFilter, yearFilter, search]);
+
+  const summary = useMemo(() => {
+    const thisYear = all.filter((r) => r.periodLabel.includes(String(THIS_YEAR)));
+    return {
+      count:      thisYear.length,
+      patients:   thisYear.reduce((s, r) => s + r.patientCount, 0),
+      diagnoses:  thisYear.reduce((s, r) => s + r.diagnosisCount, 0),
+      lastPeriod: thisYear[0]?.periodLabel ?? "—",
+    };
+  }, [all]);
+
+  const submitMutation = useMutation({
+    mutationFn: (id: number) => reportService.submit(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["doctor-reports"] }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => reportService.delete(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["doctor-reports"] }),
   });
 
   return (
     <>
+      {showModal && (
+        <GenerateModal
+          onClose={() => setShowModal(false)}
+          onCreated={() => qc.invalidateQueries({ queryKey: ["doctor-reports"] })}
+        />
+      )}
+
       <PageBanner
         title="Индивидуални пријави"
         breadcrumb={[{ label: "Индивидуални пријави" }]}
         actions={
-          <Button className="bg-white !text-emerald-700 hover:!bg-emerald-50">
+          <Button
+            onClick={() => setShowModal(true)}
+            className="bg-white !text-emerald-700 hover:!bg-emerald-50"
+          >
             <Plus className="h-4 w-4" /> Нова пријава
           </Button>
         }
@@ -65,17 +223,23 @@ export default function IndividualReportsPage() {
           transition={{ duration: 0.3 }}
           className="grid grid-cols-2 gap-4 md:grid-cols-4"
         >
-          {[
-            { label: "Пријави оваа година", value: "6" },
-            { label: "Вкупно пациенти",     value: "288" },
-            { label: "Вкупно дијагнози",    value: "379" },
-            { label: "Последна пријава",    value: "Мај 2026" },
-          ].map((s) => (
-            <div key={s.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
-              <p className="text-xs text-slate-500">{s.label}</p>
-              <p className="mt-1.5 text-2xl font-bold text-slate-900">{s.value}</p>
-            </div>
-          ))}
+          {isLoading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-20 rounded-2xl" />
+            ))
+          ) : (
+            [
+              { label: `Пријави ${THIS_YEAR}`, value: summary.count },
+              { label: "Вкупно пациенти",      value: summary.patients },
+              { label: "Вкупно дијагнози",      value: summary.diagnoses },
+              { label: "Последна пријава",       value: summary.lastPeriod },
+            ].map((s) => (
+              <div key={s.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+                <p className="text-xs text-slate-500">{s.label}</p>
+                <p className="mt-1.5 text-2xl font-bold text-slate-900">{s.value}</p>
+              </div>
+            ))
+          )}
         </motion.div>
 
         {/* Filters */}
@@ -84,19 +248,19 @@ export default function IndividualReportsPage() {
             <div>
               <p className="mb-1.5 text-sm font-medium text-slate-700">Тип на пријава</p>
               <div className="flex flex-wrap gap-1.5">
-                {TYPES.map((t) => (
+                {PERIOD_TYPES.map(({ value, label }) => (
                   <button
-                    key={t}
+                    key={value}
                     type="button"
-                    onClick={() => setType(t)}
+                    onClick={() => setTypeFilter(value)}
                     className={cn(
                       "rounded-full border px-2.5 py-1 text-xs font-medium transition-all",
-                      type === t
+                      typeFilter === value
                         ? "border-emerald-500 bg-emerald-500 text-white"
                         : "border-slate-200 bg-white text-slate-700 hover:border-emerald-300",
                     )}
                   >
-                    {t}
+                    {label}
                   </button>
                 ))}
               </div>
@@ -104,13 +268,11 @@ export default function IndividualReportsPage() {
             <div>
               <p className="mb-1.5 text-sm font-medium text-slate-700">Година</p>
               <select
-                value={year}
-                onChange={(e) => setYear(e.target.value)}
+                value={yearFilter}
+                onChange={(e) => setYearFilter(e.target.value)}
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
               >
-                {["2026", "2025", "2024"].map((y) => (
-                  <option key={y}>{y}</option>
-                ))}
+                {YEARS.map((y) => <option key={y}>{y}</option>)}
               </select>
             </div>
             <div>
@@ -139,54 +301,116 @@ export default function IndividualReportsPage() {
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-xs text-slate-500">
                 <tr>
-                  {["Број", "Период", "Тип", "Пациенти", "Дијагнози", "Поднесено", "Статус", ""].map((c) => (
-                    <th key={c} className="border-b border-slate-200 px-4 py-2.5 text-left font-semibold">
-                      {c}
-                    </th>
+                  {["Број", "Период", "Тип", "Пациенти", "Дијагнози", "Термини", "Рецепти", "Генерирано", "Статус", ""].map((c) => (
+                    <th key={c} className="border-b border-slate-200 px-4 py-2.5 text-left font-semibold">{c}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((r, i) => {
-                  const s = statusLabel[r.status];
-                  return (
-                    <motion.tr
+                {isLoading
+                  ? Array.from({ length: 5 }).map((_, i) => (
+                      <tr key={i} className="border-b border-slate-100">
+                        {Array.from({ length: 10 }).map((__, j) => (
+                          <td key={j} className="px-4 py-3"><Skeleton className="h-4 w-full" /></td>
+                        ))}
+                      </tr>
+                    ))
+                  : filtered.length === 0
+                  ? (
+                    <tr>
+                      <td colSpan={10} className="py-12 text-center text-sm text-slate-400">
+                        Нема пријави за избраниот период.
+                      </td>
+                    </tr>
+                  )
+                  : filtered.map((r, i) => (
+                    <ReportRow
                       key={r.id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: i * 0.04 }}
-                      className="border-b border-slate-100 hover:bg-emerald-50/40"
-                    >
-                      <td className="px-4 py-3 font-mono text-xs text-slate-500">{r.id}</td>
-                      <td className="px-4 py-3 font-medium text-slate-900">{r.period}</td>
-                      <td className="px-4 py-3">
-                        <span className="inline-flex items-center gap-1.5 text-slate-700">
-                          <FileSpreadsheet className="h-3.5 w-3.5 text-slate-400" />
-                          {r.type}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 tabular-nums text-slate-700">{r.patients}</td>
-                      <td className="px-4 py-3 tabular-nums text-slate-700">{r.diagnoses}</td>
-                      <td className="px-4 py-3 text-slate-500">{r.submitted}</td>
-                      <td className="px-4 py-3">
-                        <Badge tone={s.tone}>{s.label}</Badge>
-                      </td>
-                      <td className="px-4 py-3">
-                        <button
-                          type="button"
-                          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-                        >
-                          <Download className="h-3.5 w-3.5" /> PDF
-                        </button>
-                      </td>
-                    </motion.tr>
-                  );
-                })}
+                      report={r}
+                      index={i}
+                      onSubmit={() => submitMutation.mutate(r.id)}
+                      onDelete={() => deleteMutation.mutate(r.id)}
+                    />
+                  ))
+                }
               </tbody>
             </table>
           </div>
         </motion.div>
       </div>
     </>
+  );
+}
+
+function ReportRow({
+  report: r,
+  index,
+  onSubmit,
+  onDelete,
+}: {
+  report: DoctorReportResponse;
+  index: number;
+  onSubmit: () => void;
+  onDelete: () => void;
+}) {
+  const s = STATUS_BADGE[r.status];
+  const typeLabel = r.periodType === "MONTHLY" ? "Месечна" : r.periodType === "QUARTERLY" ? "Тримесечна" : "Годишна";
+
+  return (
+    <motion.tr
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: index * 0.04 }}
+      className="border-b border-slate-100 hover:bg-emerald-50/40"
+    >
+      <td className="px-4 py-3 font-mono text-xs text-slate-500">{r.reportNumber}</td>
+      <td className="px-4 py-3 font-medium text-slate-900">{r.periodLabel}</td>
+      <td className="px-4 py-3">
+        <span className="inline-flex items-center gap-1.5 text-slate-700">
+          <FileSpreadsheet className="h-3.5 w-3.5 text-slate-400" />
+          {typeLabel}
+        </span>
+      </td>
+      <td className="px-4 py-3 tabular-nums text-slate-700">{r.patientCount}</td>
+      <td className="px-4 py-3 tabular-nums text-slate-700">{r.diagnosisCount}</td>
+      <td className="px-4 py-3 tabular-nums text-slate-700">{r.appointmentCount}</td>
+      <td className="px-4 py-3 tabular-nums text-slate-700">{r.prescriptionCount}</td>
+      <td className="px-4 py-3 text-slate-500 whitespace-nowrap">
+        {format(parseISO(r.createdAt), "dd.MM.yyyy")}
+      </td>
+      <td className="px-4 py-3">
+        <Badge tone={s.tone}>{s.label}</Badge>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-1">
+          {r.status === "DRAFT" && (
+            <>
+              <button
+                type="button"
+                onClick={onSubmit}
+                className="rounded-md px-2 py-1 text-xs font-medium text-emerald-600 hover:bg-emerald-50"
+              >
+                Поднеси
+              </button>
+              <button
+                type="button"
+                onClick={onDelete}
+                className="rounded-md p-1 text-slate-400 hover:bg-red-50 hover:text-red-500"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </>
+          )}
+          {r.status === "SUBMITTED" && (
+            <button
+              type="button"
+              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+            >
+              <Download className="h-3.5 w-3.5" /> PDF
+            </button>
+          )}
+        </div>
+      </td>
+    </motion.tr>
   );
 }

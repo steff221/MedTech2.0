@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -44,5 +45,15 @@ public class NotificationController {
         Long userId = SecurityUtils.currentUserId().orElseThrow();
         notificationService.markAllRead(userId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/by-type")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Page<NotificationResponse> byType(
+            @RequestParam String type,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size) {
+        return notificationService.listByType(type, PageRequest.of(page, size))
+                .map(NotificationResponse::from);
     }
 }

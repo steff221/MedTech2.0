@@ -45,9 +45,12 @@ public class PatientAccessGuard {
             return;
         }
 
-        // NURSE: broad clinical access — scoping by hospital requires a Nurse entity (future work)
+        // NURSE: PHI access blocked until hospital-scoped Nurse entity is implemented.
+        // Granting blanket access to all patients is a known privacy gap — deny until scoped.
         if (SecurityUtils.hasRole("NURSE")) {
-            return;
+            throw new AuthorizationException(
+                    "NURSE_PHI_ACCESS_DISABLED",
+                    "Nurse access to patient records is not yet enabled. Contact your administrator.");
         }
 
         if (SecurityUtils.hasRole("PATIENT")) {
