@@ -18,6 +18,8 @@ public interface AppointmentMapper {
     @Mapping(source = "doctor.specialization",      target = "doctorSpecialization")
     @Mapping(source = "hospital.id",                target = "hospitalId")
     @Mapping(source = "hospital.name",              target = "hospitalName")
+    @Mapping(target = "ratingId",                   ignore = true)
+    @Mapping(target = "ratingValue",                ignore = true)
     AppointmentResponse toResponse(Appointment appointment);
 
     @Named("fullName")

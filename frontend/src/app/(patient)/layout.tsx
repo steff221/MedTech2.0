@@ -17,7 +17,7 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
 
   useEffect(() => {
     if (!isHydrated) return;
-    if (!isAuthenticated) {
+    if (!user) {
       router.replace("/login");
       return;
     }

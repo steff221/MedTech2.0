@@ -105,6 +105,8 @@ export interface AppointmentResponse {
   cancellationReason: string | null;
   videoCallUrl: string | null;
   createdAt: string;
+  ratingId: number | null;
+  ratingValue: number | null;
 }
 
 export interface BookAppointmentRequest {
@@ -137,6 +139,31 @@ export interface DoctorResponse {
   hospitalId: number | null;
   hospitalName: string | null;
   hospitalCity: string | null;
+  averageRating: number | null;
+  ratingCount: number;
+}
+
+export interface RatingResponse {
+  id: number;
+  appointmentId: number;
+  doctorId: number;
+  patientName: string;
+  rating: number;
+  comment: string | null;
+  createdAt: string;
+}
+
+export interface CreateRatingRequest {
+  rating: number;
+  comment?: string;
+}
+
+export interface DoctorRatingSummaryResponse {
+  doctorId: number;
+  averageRating: number | null;
+  totalRatings: number;
+  distribution: Record<string, number>;
+  recentReviews: Page<RatingResponse>;
 }
 
 export interface HospitalResponse {
@@ -395,4 +422,29 @@ export interface DoctorReportResponse {
   status: ReportStatus;
   submittedAt: string | null;
   createdAt: string;
+}
+
+export interface MedicalRecordEventResponse {
+  id: number;
+  recordId: number;
+  eventType: string;
+  authorId: number;
+  authorName: string;
+  snapshot: string | null;
+  note: string | null;
+  createdAt: string;
+}
+
+export interface AvailabilitySlotResponse {
+  dayOfWeek: number; // 1=Monday … 7=Sunday
+  startTime: string; // "HH:mm:ss"
+  endTime: string;
+  active: boolean;
+}
+
+export interface AvailabilitySlotRequest {
+  dayOfWeek: number;
+  startTime: string | null;
+  endTime: string | null;
+  active: boolean;
 }

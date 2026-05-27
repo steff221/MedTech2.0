@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
+import { StarRating } from "@/components/common/StarRating";
 import { Card } from "@/components/common/Card";
 import { EmptyState } from "@/components/common/EmptyState";
 import { Input } from "@/components/common/Input";
@@ -357,6 +358,14 @@ function DoctorCard({
                 {doctor.hospitalName}
                 {doctor.hospitalCity ? ` · ${doctor.hospitalCity}` : ""}
               </p>
+            )}
+            {doctor.ratingCount > 0 && (
+              <div className="mt-1 flex items-center gap-1.5">
+                <StarRating value={Math.round(doctor.averageRating ?? 0)} readonly size="sm" />
+                <span className="text-xs text-slate-500">
+                  {doctor.averageRating?.toFixed(1)} ({doctor.ratingCount})
+                </span>
+              </div>
             )}
             {procedures.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1">

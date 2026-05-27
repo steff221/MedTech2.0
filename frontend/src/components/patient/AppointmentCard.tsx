@@ -1,12 +1,14 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Calendar, ChevronDown, Clock, Hospital, MapPin, Video, X } from "lucide-react";
+import { Calendar, ChevronDown, Clock, Hospital, MapPin, Star, Video, X } from "lucide-react";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { Badge, appointmentStatusTone } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
+import { StarRating } from "@/components/common/StarRating";
+import { RateAppointmentModal } from "@/components/patient/RateAppointmentModal";
 import { appointmentService } from "@/services/appointment.service";
 import { extractErrorMessage } from "@/services/api";
 import { formatDate, formatTime, initials } from "@/utils/format";
@@ -19,12 +21,15 @@ interface AppointmentCardProps {
 
 export function AppointmentCard({ appointment }: AppointmentCardProps) {
   const [expanded, setExpanded] = useState(false);
+  const [ratingModalOpen, setRatingModalOpen] = useState(false);
   const qc = useQueryClient();
   const t = useT();
   const isTerminal =
     appointment.status === "CANCELLED" ||
     appointment.status === "COMPLETED" ||
     appointment.status === "NO_SHOW";
+  const isCompleted = appointment.status === "COMPLETED";
+  const canRate = isCompleted && appointment.ratingId == null;
 
   const cancelMutation = useMutation({
     mutationFn: () => appointmentService.cancel(appointment.id, "Cancelled by patient"),
@@ -120,6 +125,31 @@ export function AppointmentCard({ appointment }: AppointmentCardProps) {
                   Приклучи се на видео-повик
                 </a>
               )}
+              {/* Rating section for completed appointments */}
+              {isCompleted && (
+                <div className="mt-3 pt-3 border-t border-slate-100">
+                  {canRate ? (
+                    <button
+                      type="button"
+                      onClick={() => setRatingModalOpen(true)}
+                      className="flex items-center gap-2 text-sm font-medium text-brand-600 hover:text-brand-700 transition-colors"
+                    >
+                      <Star className="h-4 w-4" />
+                      Rate this visit
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-slate-500">Your rating:</span>
+                      <StarRating
+                        value={appointment.ratingValue ?? 0}
+                        readonly
+                        size="sm"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
               {!isTerminal && (
                 <div className="flex gap-2 pt-2">
                   <Button
@@ -137,6 +167,13 @@ export function AppointmentCard({ appointment }: AppointmentCardProps) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <RateAppointmentModal
+        appointmentId={appointment.id}
+        doctorName={appointment.doctorName}
+        open={ratingModalOpen}
+        onClose={() => setRatingModalOpen(false)}
+      />
     </motion.div>
   );
 }

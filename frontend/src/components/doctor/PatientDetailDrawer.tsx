@@ -9,6 +9,7 @@ import {
   FileText,
   Pill,
   Plus,
+  Printer,
   Video,
   X,
 } from "lucide-react";
@@ -26,6 +27,8 @@ import { SickLeaveModal } from "./SickLeaveModal";
 import { useT } from "@/hooks/useT";
 import { patientService } from "@/services/patient.service";
 import { appointmentService } from "@/services/appointment.service";
+import { prescriptionService } from "@/services/prescription.service";
+import { useDoctorProfile } from "@/hooks/useDoctor";
 import { extractErrorMessage } from "@/services/api";
 import type {
   AppointmentResponse,
@@ -149,24 +152,33 @@ export function PatientDetailDrawer({
   }, [patient]);
 
   const drawerContent = (
-    <AnimatePresence>
-      {open && (
-        <>
+    <>
+      {/* Backdrop — separate AnimatePresence so it's removed from DOM quickly
+          and doesn't block clicks on the patient list during the drawer's slide-out */}
+      <AnimatePresence>
+        {open && (
           <motion.div
-              className="fixed inset-x-0 bottom-0 top-24 z-40 bg-slate-900/30 backdrop-blur-sm"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={onClose}
-            />
-            <motion.aside
-              role="dialog"
-              aria-modal="true"
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "spring", stiffness: 320, damping: 32 }}
-              className="fixed bottom-0 right-0 top-24 z-50 flex w-full flex-col bg-white shadow-2xl sm:w-[500px]"
+            className="fixed inset-x-0 bottom-0 top-24 z-40 bg-slate-900/30 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.12 }}
+            onClick={onClose}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Drawer panel */}
+      <AnimatePresence>
+        {open && (
+          <motion.aside
+            role="dialog"
+            aria-modal="true"
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", stiffness: 320, damping: 32 }}
+            className="fixed bottom-0 right-0 top-24 z-50 flex w-full flex-col bg-white shadow-2xl sm:w-[500px]"
             >
               {/* Header */}
               <div className="border-b border-slate-200 px-6 py-5">
@@ -201,9 +213,6 @@ export function PatientDetailDrawer({
                 <div className="mt-4 flex flex-wrap gap-2">
                   <Button size="sm" onClick={() => setSoapOpen(true)} disabled={!patientId}>
                     <Plus className="h-3.5 w-3.5" /> {t.doctorDrawer.addRecord}
-                  </Button>
-                  <Button size="sm" variant="secondary" onClick={() => setRxOpen(true)} disabled={!patientId}>
-                    <Plus className="h-3.5 w-3.5" /> {t.doctorDrawer.addPrescription}
                   </Button>
                   <Button
                     size="sm"
@@ -271,13 +280,14 @@ export function PatientDetailDrawer({
                   <PrescriptionsPanel
                     items={prescriptionsQuery.data?.content?.length ? prescriptionsQuery.data.content : mockPrescriptions}
                     loading={prescriptionsQuery.isLoading}
+                    patientId={patientId}
                   />
                 )}
               </div>
             </motion.aside>
-          </>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>
+    </>
   );
 
   return typeof window === "undefined"
@@ -561,11 +571,57 @@ function RecordsPanel({ items, loading }: { items: MedicalRecordResponse[]; load
   );
 }
 
-function PrescriptionsPanel({ items, loading }: { items: PrescriptionResponse[]; loading: boolean }) {
+function PrescriptionsPanel({ items, loading, patientId }: { items: PrescriptionResponse[]; loading: boolean; patientId: number | null }) {
   const t = useT();
+  const qc = useQueryClient();
+  const { data: doctor } = useDoctorProfile();
+
+  const cancelMutation = useMutation({
+    mutationFn: (id: number) => prescriptionService.cancel(id),
+    onSuccess: () => {
+      toast.success("Рецептот е откажан");
+      qc.invalidateQueries({ queryKey: ["patient", patientId, "prescriptions"] });
+    },
+    onError: () => toast.error("Неуспешно откажување"),
+  });
+
+  function handlePrint(p: PrescriptionResponse) {
+    const win = window.open("", "_blank", "width=800,height=600");
+    if (!win) return;
+    win.document.write(`<html><head><title>Рецепт — MedTech</title><style>
+      body{font-family:Arial,sans-serif;padding:40px;color:#1e293b}
+      .header{border-bottom:2px solid #0891b2;padding-bottom:16px;margin-bottom:24px}
+      .hospital{font-size:12px;color:#64748b}
+      .title{font-size:22px;font-weight:bold;margin-top:8px}
+      .section{margin-bottom:16px}
+      .label{font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.05em}
+      .value{font-size:15px;font-weight:500;margin-top:2px}
+      .footer{margin-top:60px;border-top:1px solid #e2e8f0;padding-top:16px;display:flex;justify-content:space-between;font-size:12px;color:#94a3b8}
+      .signature-line{border-bottom:1px solid #1e293b;width:200px;margin-top:40px}
+      @media print{body{padding:20px}}
+    </style></head><body>
+      <div class="header">
+        <div class="hospital">MedTech · ${doctor?.hospitalName ?? "Болница"}</div>
+        <div class="title">МЕДИЦИНСКИ РЕЦЕПТ</div>
+      </div>
+      <div class="section"><div class="label">Доктор</div><div class="value">д-р ${doctor?.firstName ?? ""} ${doctor?.lastName ?? ""} · ${doctor?.specialization ?? ""}</div></div>
+      <div class="section"><div class="label">Лек</div><div class="value">${p.medicationName}</div></div>
+      <div class="section"><div class="label">Доза / Фреквенција</div><div class="value">${p.dosage} — ${p.frequency}</div></div>
+      ${p.route ? `<div class="section"><div class="label">Начин</div><div class="value">${p.route}</div></div>` : ""}
+      ${p.durationDays ? `<div class="section"><div class="label">Траење</div><div class="value">${p.durationDays} денови</div></div>` : ""}
+      ${p.instructions ? `<div class="section"><div class="label">Инструкции</div><div class="value">${p.instructions}</div></div>` : ""}
+      <div class="section"><div class="label">Датум</div><div class="value">${format(parseISO(p.startDate), "d MMMM yyyy")}</div></div>
+      <div style="margin-top:40px"><div class="label">Потпис на доктор</div><div class="signature-line"></div></div>
+      <div class="footer"><span>Издадено преку MedTech</span><span>Рецепт #${p.id}</span></div>
+      <script>window.onload=()=>{window.print();window.close()}</script>
+    </body></html>`);
+    win.document.close();
+  }
+
   if (loading) return <Skeleton className="h-32" />;
   if (items.length === 0)
     return <p className="text-sm text-slate-500">{t.doctorDrawer.noPrescriptions}</p>;
+
   return (
     <ul className="space-y-2">
       {items.map((p) => (
@@ -581,8 +637,29 @@ function PrescriptionsPanel({ items, loading }: { items: PrescriptionResponse[];
                 <p className="mt-0.5 text-[11px] italic text-slate-400">{p.instructions}</p>
               )}
             </div>
-            <Badge tone={p.status === "ACTIVE" ? "success" : "neutral"}>{p.status === "ACTIVE" ? t.doctorDrawer.prescriptionActive : p.status}</Badge>
+            <Badge tone={p.status === "ACTIVE" ? "success" : "neutral"}>
+              {p.status === "ACTIVE" ? t.doctorDrawer.prescriptionActive : p.status}
+            </Badge>
           </div>
+          {p.status === "ACTIVE" && (
+            <div className="mt-2 flex gap-2 border-t border-slate-100 pt-2">
+              <button
+                type="button"
+                onClick={() => handlePrint(p)}
+                className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50"
+              >
+                <Printer className="h-3.5 w-3.5" /> Печати рецепт
+              </button>
+              <button
+                type="button"
+                disabled={cancelMutation.isPending}
+                onClick={() => cancelMutation.mutate(p.id)}
+                className="flex items-center gap-1.5 rounded-lg border border-red-200 px-2.5 py-1 text-xs font-medium text-red-500 transition-colors hover:bg-red-50 disabled:opacity-50"
+              >
+                <X className="h-3.5 w-3.5" /> Откажи
+              </button>
+            </div>
+          )}
         </li>
       ))}
     </ul>

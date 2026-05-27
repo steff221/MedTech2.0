@@ -12,6 +12,7 @@ import com.medtech.application.dto.response.PatientResponse;
 import com.medtech.application.dto.response.PrescriptionResponse;
 import com.medtech.application.service.AppointmentService;
 import com.medtech.application.service.AuditLogService;
+import com.medtech.application.service.DoctorRatingService;
 import com.medtech.application.service.MedicalRecordService;
 import com.medtech.application.service.PatientService;
 import com.medtech.application.service.PrescriptionService;
@@ -54,6 +55,7 @@ public class PatientController {
     private final MedicalRecordMapper medicalRecordMapper;
     private final PrescriptionMapper prescriptionMapper;
 
+    private final DoctorRatingService doctorRatingService;
     private final PatientAccessGuard accessGuard;
     private final AuditLogService auditLogService;
 
@@ -110,7 +112,9 @@ public class PatientController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<AppointmentResponse>> appointments(@PathVariable Long id, Pageable pageable) {
         accessGuard.assertCanAccessPatient(id);
-        return ResponseEntity.ok(appointmentService.listForPatient(id, pageable).map(appointmentMapper::toResponse));
+        Page<AppointmentResponse> page = appointmentService.listForPatient(id, pageable)
+                .map(appointmentMapper::toResponse);
+        return ResponseEntity.ok(doctorRatingService.enrichWithRatingIds(page));
     }
 
     @GetMapping("/{id}/medical-records")

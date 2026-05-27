@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
+  Activity,
+  Printer,
   Search,
   User,
   Calendar,
@@ -13,6 +15,8 @@ import {
   MapPin,
   Heart,
   AlertCircle,
+  Thermometer,
+  Weight,
 } from "lucide-react";
 import { Skeleton } from "@/components/common/Skeleton";
 import { doctorService } from "@/services/doctor.service";
@@ -22,7 +26,188 @@ import { hospitalService } from "@/services/hospital.service";
 import type { PatientResponse, AppointmentResponse } from "@/types/api";
 import { format, parseISO } from "date-fns";
 
-type Tab = "patients" | "today" | "doctors";
+type Tab = "patients" | "today" | "doctors" | "vitals";
+
+// ── Vitals entry panel ────────────────────────────────────────────────────────
+function VitalsTab() {
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [selectedPatient, setSelectedPatient] = useState<PatientResponse | null>(null);
+  const [form, setForm] = useState({ bloodPressure: "", heartRate: "", temperature: "", weight: "", height: "", notes: "" });
+
+  const handleSearch = (val: string) => {
+    setSearch(val);
+    clearTimeout((handleSearch as any)._t);
+    (handleSearch as any)._t = setTimeout(() => setDebouncedSearch(val), 350);
+  };
+
+  const patients = useQuery({
+    queryKey: ["nurse-vitals-patients", debouncedSearch],
+    queryFn: () => patientService.search(debouncedSearch, 0, 10),
+    enabled: debouncedSearch.length >= 2,
+  });
+
+  function printVitals() {
+    if (!selectedPatient) return;
+    const now = format(new Date(), "dd.MM.yyyy HH:mm");
+    const win = window.open("", "_blank", "width=700,height=600");
+    if (!win) return;
+    win.document.write(`<!DOCTYPE html><html><head>
+      <meta charset="utf-8"/><title>Витали — ${selectedPatient.firstName} ${selectedPatient.lastName}</title>
+      <style>
+        body{font-family:Arial,sans-serif;padding:40px;color:#1e293b;max-width:600px;margin:0 auto}
+        h1{font-size:20px;margin-bottom:4px}
+        .sub{color:#64748b;font-size:13px;margin-bottom:28px}
+        table{width:100%;border-collapse:collapse}
+        th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#64748b;padding:8px 12px;border-bottom:2px solid #e2e8f0}
+        td{padding:10px 12px;border-bottom:1px solid #f1f5f9;font-size:14px}
+        .label{font-weight:600;color:#334155;width:160px}
+        .footer{margin-top:32px;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:12px;display:flex;justify-content:space-between}
+        @media print{body{padding:20px}}
+      </style>
+    </head><body>
+      <h1>Лист на витали</h1>
+      <p class="sub">Пациент: <strong>${selectedPatient.firstName} ${selectedPatient.lastName}</strong> &nbsp;·&nbsp; ${now}</p>
+      <table>
+        <thead><tr><th>Параметар</th><th>Вредност</th><th>Референтни вредности</th></tr></thead>
+        <tbody>
+          ${form.bloodPressure ? `<tr><td class="label">Крвен притисок</td><td>${form.bloodPressure} mmHg</td><td>90/60 – 120/80 mmHg</td></tr>` : ""}
+          ${form.heartRate ? `<tr><td class="label">Пулс</td><td>${form.heartRate} bpm</td><td>60 – 100 bpm</td></tr>` : ""}
+          ${form.temperature ? `<tr><td class="label">Температура</td><td>${form.temperature} °C</td><td>36.1 – 37.2 °C</td></tr>` : ""}
+          ${form.weight ? `<tr><td class="label">Тежина</td><td>${form.weight} kg</td><td>—</td></tr>` : ""}
+          ${form.height ? `<tr><td class="label">Висина</td><td>${form.height} cm</td><td>—</td></tr>` : ""}
+          ${form.notes ? `<tr><td class="label">Забелешки</td><td colspan="2">${form.notes}</td></tr>` : ""}
+        </tbody>
+      </table>
+      <div class="footer">
+        <span>Медицинска сестра: ________________________</span>
+        <span>МедТех 2.0 &nbsp;·&nbsp; ${now}</span>
+      </div>
+      <script>window.onload=()=>{window.print();window.close()}</script>
+    </body></html>`);
+    win.document.close();
+  }
+
+  function inputField(label: string, key: keyof typeof form, placeholder: string, icon: React.ReactNode, unit?: string) {
+    return (
+      <div>
+        <label className="mb-1 block text-xs font-medium text-slate-600">{label}</label>
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">{icon}</span>
+            <input
+              type={key === "bloodPressure" || key === "notes" ? "text" : "number"}
+              step="any"
+              value={form[key]}
+              onChange={(e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))}
+              placeholder={placeholder}
+              className="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/20"
+            />
+          </div>
+          {unit && <span className="w-10 text-xs text-slate-400">{unit}</span>}
+        </div>
+      </div>
+    );
+  }
+
+  const hasAnyValue = Object.values(form).some((v) => v.trim() !== "");
+
+  return (
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      {/* Patient picker */}
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-slate-800">
+          <User className="h-4 w-4 text-emerald-500" /> Избери пациент
+        </h2>
+        {selectedPatient ? (
+          <div className="flex items-center justify-between rounded-lg bg-emerald-50 px-4 py-3">
+            <div>
+              <p className="font-semibold text-slate-800">{selectedPatient.firstName} {selectedPatient.lastName}</p>
+              <p className="text-xs text-slate-500">{selectedPatient.email}</p>
+            </div>
+            <button onClick={() => setSelectedPatient(null)} className="text-slate-400 hover:text-slate-700">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Пребарај пациент…"
+                value={search}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 py-2.5 pl-9 pr-4 text-sm placeholder:text-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/20"
+              />
+            </div>
+            <div className="divide-y divide-slate-100">
+              {debouncedSearch.length < 2 && (
+                <p className="py-6 text-center text-sm text-slate-400">Внеси барем 2 карактери.</p>
+              )}
+              {patients.isLoading && [0, 1, 2].map(i => <Skeleton key={i} className="mb-2 h-12" />)}
+              {patients.data?.content.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => setSelectedPatient(p)}
+                  className="flex w-full items-center gap-3 rounded-lg px-2 py-3 text-left transition-colors hover:bg-slate-50"
+                >
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100">
+                    <User className="h-4 w-4 text-emerald-600" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-slate-800">{p.firstName} {p.lastName}</p>
+                    <p className="truncate text-xs text-slate-500">{p.email}</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" />
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Vitals form */}
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="mb-1 flex items-center gap-2 text-base font-semibold text-slate-800">
+          <Activity className="h-4 w-4 text-emerald-500" /> Внеси витали
+        </h2>
+        <p className="mb-4 text-xs text-slate-400">Пополни и отпечати лист за лекарот</p>
+        {!selectedPatient ? (
+          <div className="flex h-48 items-center justify-center text-sm text-slate-400">
+            Прво избери пациент
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {inputField("Крвен притисок", "bloodPressure", "120/80", <Heart className="h-3.5 w-3.5" />, "mmHg")}
+            {inputField("Пулс", "heartRate", "72", <Activity className="h-3.5 w-3.5" />, "bpm")}
+            {inputField("Температура", "temperature", "36.6", <Thermometer className="h-3.5 w-3.5" />, "°C")}
+            {inputField("Тежина", "weight", "70", <Weight className="h-3.5 w-3.5" />, "kg")}
+            {inputField("Висина", "height", "175", <User className="h-3.5 w-3.5" />, "cm")}
+            <div>
+              <label className="mb-1 block text-xs font-medium text-slate-600">Забелешки</label>
+              <textarea
+                value={form.notes}
+                onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
+                placeholder="Дополнителни забелешки…"
+                rows={2}
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/20"
+              />
+            </div>
+            <button
+              type="button"
+              disabled={!hasAnyValue}
+              onClick={printVitals}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+            >
+              <Printer className="h-4 w-4" /> Отпечати лист на витали
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 const STATUS_STYLES: Record<string, string> = {
   SCHEDULED: "bg-blue-50 text-blue-700",
@@ -288,8 +473,9 @@ export default function NurseDashboard() {
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "patients", label: "Пациенти" },
-    { id: "today", label: "Денес" },
-    { id: "doctors", label: "Лекари" },
+    { id: "today",    label: "Денес" },
+    { id: "doctors",  label: "Лекари" },
+    { id: "vitals",   label: "Витали" },
   ];
 
   return (
@@ -452,6 +638,9 @@ export default function NurseDashboard() {
           </div>
         </div>
       )}
+
+      {/* Vitals tab */}
+      {tab === "vitals" && <VitalsTab />}
 
       {/* Doctors tab */}
       {tab === "doctors" && (

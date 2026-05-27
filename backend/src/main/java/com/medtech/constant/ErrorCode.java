@@ -27,9 +27,10 @@ public final class ErrorCode {
     public static final String AUTH_RESET_TOKEN_INVALID      = "AUTH_RESET_TOKEN_INVALID";
 
     // Domain
-    public static final String APPOINTMENT_CONFLICT         = "APPOINTMENT_CONFLICT";
-    public static final String APPOINTMENT_IN_PAST          = "APPOINTMENT_IN_PAST";
-    public static final String APPOINTMENT_CANCEL_WINDOW    = "APPOINTMENT_CANCEL_WINDOW";
+    public static final String APPOINTMENT_CONFLICT               = "APPOINTMENT_CONFLICT";
+    public static final String APPOINTMENT_IN_PAST                = "APPOINTMENT_IN_PAST";
+    public static final String APPOINTMENT_CANCEL_WINDOW          = "APPOINTMENT_CANCEL_WINDOW";
+    public static final String APPOINTMENT_OUTSIDE_AVAILABILITY   = "APPOINTMENT_OUTSIDE_AVAILABILITY";
     public static final String PRESCRIPTION_REFILLS_EXHAUSTED = "PRESCRIPTION_REFILLS_EXHAUSTED";
     public static final String PRESCRIPTION_EXPIRED         = "PRESCRIPTION_EXPIRED";
     public static final String MEDICAL_RECORD_IMMUTABLE     = "MEDICAL_RECORD_IMMUTABLE";

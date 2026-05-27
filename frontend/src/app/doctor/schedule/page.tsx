@@ -1,19 +1,95 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { CalendarPlus, UserPlus, Video, X } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { CalendarPlus, Check, ExternalLink, Link2, UserPlus, Video, X } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 import { Skeleton } from "@/components/common/Skeleton";
 import { PageBanner } from "@/components/layout/PageBanner";
 import { CompleteDoctorProfilePrompt } from "@/components/doctor/CompleteDoctorProfilePrompt";
 import { WeeklyCalendar } from "@/components/doctor/WeeklyCalendar";
 import { appointmentService } from "@/services/appointment.service";
+import { extractErrorMessage } from "@/services/api";
 import { useDoctorProfile } from "@/hooks/useDoctor";
 import { useT } from "@/hooks/useT";
 import { cn } from "@/utils/cn";
 import { useMemo, useState } from "react";
 import { BookAppointmentModal } from "@/components/doctor/BookAppointmentModal";
 import type { AppointmentResponse } from "@/types/api";
+
+// ── Video URL modal ───────────────────────────────────────────────────────────
+function SetVideoModal({ appointment, onClose }: { appointment: AppointmentResponse; onClose: () => void }) {
+  const qc = useQueryClient();
+  const [url, setUrl] = useState(appointment.videoCallUrl ?? "");
+
+  const mutation = useMutation({
+    mutationFn: (videoCallUrl: string) => appointmentService.setVideoUrl(appointment.id, videoCallUrl),
+    onSuccess: () => {
+      toast.success("Видео линкот е зачуван");
+      qc.invalidateQueries({ queryKey: ["appointments-today-waiting"] });
+      onClose();
+    },
+    onError: (err) => toast.error(extractErrorMessage(err) ?? "Грешка"),
+  });
+
+  function autoGenerate() {
+    const room = `medtech-${appointment.id}-${Math.random().toString(36).slice(2, 7)}`;
+    setUrl(`https://meet.jit.si/${room}`);
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-4 flex items-center gap-2">
+          <Video className="h-5 w-5 text-violet-600" />
+          <h2 className="text-base font-bold text-slate-900">Постави видео линк</h2>
+        </div>
+        <p className="mb-4 text-sm text-slate-500">
+          Пациент: <strong>{appointment.patientName}</strong> · {appointment.appointmentTime.slice(0, 5)}
+        </p>
+        <div className="flex gap-2">
+          <input
+            type="url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="https://meet.jit.si/..."
+            className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-200"
+          />
+          {url && (
+            <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center rounded-lg border border-slate-200 p-2 text-slate-400 hover:text-slate-700">
+              <ExternalLink className="h-4 w-4" />
+            </a>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={autoGenerate}
+          className="mt-2 flex items-center gap-1.5 text-xs font-medium text-violet-600 hover:text-violet-700"
+        >
+          <Link2 className="h-3.5 w-3.5" /> Автоматски генерирај Jitsi соба
+        </button>
+        <div className="mt-5 flex justify-end gap-2">
+          <button type="button" onClick={onClose} className="rounded-lg px-4 py-2 text-sm text-slate-500 hover:bg-slate-100">
+            Откажи
+          </button>
+          <button
+            type="button"
+            disabled={!url.trim() || mutation.isPending}
+            onClick={() => mutation.mutate(url.trim())}
+            className="flex items-center gap-1.5 rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50"
+          >
+            <Check className="h-4 w-4" /> Зачувај
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
 
 // ── Waiting room ──────────────────────────────────────────────────────────────
 const TODAY = new Date().toISOString().slice(0, 10);
@@ -72,6 +148,8 @@ function WaitingRoom() {
       cancellationReason: null,
       videoCallUrl: null,
       createdAt: TODAY,
+      ratingId: null,
+      ratingValue: null,
     };
     setWalkIns((prev) => [...prev, entry]);
     setWalkInName("");
@@ -82,6 +160,7 @@ function WaitingRoom() {
   const patients = [...basePatients, ...walkIns];
 
   const [statuses, setStatuses] = useState<Record<number, WaitingStatus>>({});
+  const [videoModalAppt, setVideoModalAppt] = useState<AppointmentResponse | null>(null);
 
   const getStatus = (id: number): WaitingStatus => statuses[id] ?? "waiting";
 
@@ -229,18 +308,36 @@ function WaitingRoom() {
                     {p.durationMinutes} {t.doctorSchedule.minutesShort}
                   </td>
                   <td className="px-4 py-3">
-                    <button
-                      type="button"
-                      onClick={() => cycle(p.id)}
-                      title={t.doctorSchedule.clickToCycle}
-                      className={cn(
-                        "rounded-full px-3 py-1 text-xs font-semibold transition-all hover:opacity-80 active:scale-95",
-                        m.bg,
-                        m.text,
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => cycle(p.id)}
+                        title={t.doctorSchedule.clickToCycle}
+                        className={cn(
+                          "rounded-full px-3 py-1 text-xs font-semibold transition-all hover:opacity-80 active:scale-95",
+                          m.bg,
+                          m.text,
+                        )}
+                      >
+                        {m.label}
+                      </button>
+                      {isVirtual && (
+                        <button
+                          type="button"
+                          onClick={() => setVideoModalAppt(p)}
+                          className={cn(
+                            "flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold transition-colors",
+                            p.videoCallUrl
+                              ? "bg-violet-100 text-violet-700 hover:bg-violet-200"
+                              : "bg-slate-100 text-slate-500 hover:bg-violet-100 hover:text-violet-700",
+                          )}
+                          title="Постави видео линк"
+                        >
+                          <Video className="h-3 w-3" />
+                          {p.videoCallUrl ? "Линк" : "Постави"}
+                        </button>
                       )}
-                    >
-                      {m.label}
-                    </button>
+                    </div>
                   </td>
                 </motion.tr>
               );
@@ -251,6 +348,13 @@ function WaitingRoom() {
           {t.doctorSchedule.clickToCycle}
         </p>
       </div>
+
+      {videoModalAppt && (
+        <SetVideoModal
+          appointment={videoModalAppt}
+          onClose={() => setVideoModalAppt(null)}
+        />
+      )}
     </div>
   );
 }

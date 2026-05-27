@@ -10,6 +10,7 @@ import com.medtech.domain.entity.Hospital;
 import com.medtech.domain.entity.Patient;
 import com.medtech.domain.entity.User;
 import com.medtech.domain.repository.AppointmentRepository;
+import com.medtech.domain.repository.DoctorAvailabilityRepository;
 import com.medtech.domain.repository.DoctorRepository;
 import com.medtech.domain.repository.PatientRepository;
 import com.medtech.domain.vo.AppointmentStatus;
@@ -48,6 +49,7 @@ class AppointmentServiceTest {
     @Mock AppointmentRepository appointmentRepository;
     @Mock PatientRepository patientRepository;
     @Mock DoctorRepository doctorRepository;
+    @Mock DoctorAvailabilityRepository availabilityRepository;
     @Mock EmailService emailService;
     @Mock NotificationService notificationService;
 
@@ -69,7 +71,10 @@ class AppointmentServiceTest {
 
         AppointmentProperties props = new AppointmentProperties(30, 24);
         service = new AppointmentService(appointmentRepository, patientRepository,
-                doctorRepository, props, fixedClock, emailService, notificationService);
+                doctorRepository, availabilityRepository, props, fixedClock, emailService, notificationService);
+
+        // No availability configured by default → validation skipped
+        lenient().when(availabilityRepository.findByDoctorId(any())).thenReturn(List.of());
 
         lenient().when(patientRepository.findById(patient.getId())).thenReturn(Optional.of(patient));
         lenient().when(doctorRepository.findById(doctor.getId())).thenReturn(Optional.of(doctor));

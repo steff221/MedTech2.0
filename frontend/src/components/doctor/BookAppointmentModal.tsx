@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -13,6 +13,7 @@ import { Input } from "@/components/common/Input";
 import { Button } from "@/components/common/Button";
 import { appointmentService } from "@/services/appointment.service";
 import { patientService } from "@/services/patient.service";
+import { availabilityService } from "@/services/availability.service";
 import { useDoctorProfile } from "@/hooks/useDoctor";
 import { useT } from "@/hooks/useT";
 import { cn } from "@/utils/cn";
@@ -57,6 +58,7 @@ export function BookAppointmentModal({ open, onClose }: Props) {
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -67,6 +69,27 @@ export function BookAppointmentModal({ open, onClose }: Props) {
       appointmentTime: "09:00",
     },
   });
+
+  const selectedDate = watch("appointmentDate");
+
+  const { data: availabilitySlots } = useQuery({
+    queryKey: ["doctor-availability", doctor?.id],
+    queryFn: () => availabilityService.getForDoctor(doctor!.id),
+    enabled: !!doctor,
+  });
+
+  const availabilityHint = (() => {
+    if (!availabilitySlots || availabilitySlots.length === 0 || !selectedDate) return null;
+    const dow = new Date(selectedDate + "T12:00:00").getDay(); // 0=Sun
+    const isoDow = dow === 0 ? 7 : dow; // convert to ISO: 1=Mon…7=Sun
+    const slot = availabilitySlots.find((s) => s.dayOfWeek === isoDow);
+    if (!slot) return null;
+    if (!slot.active) return { available: false, label: t.doctorAvailability.notAvailable };
+    return {
+      available: true,
+      label: `${t.doctorAvailability.availableHint} ${slot.startTime.slice(0, 5)} – ${slot.endTime.slice(0, 5)}`,
+    };
+  })();
 
   const book = useMutation({
     mutationFn: (data: FormData) => {
@@ -90,12 +113,12 @@ export function BookAppointmentModal({ open, onClose }: Props) {
     onError: (err) => toast.error(extractErrorMessage(err) ?? "Failed to book appointment"),
   });
 
-  function handleClose() {
+  const handleClose = useCallback(() => {
     reset();
     setSelectedPatient(null);
     setPatientSearch("");
     onClose();
-  }
+  }, [reset, onClose]);
 
   useEffect(() => {
     if (!open) return;
@@ -104,7 +127,7 @@ export function BookAppointmentModal({ open, onClose }: Props) {
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [open]);
+  }, [open, handleClose]);
 
   if (typeof window === "undefined") return null;
 
@@ -222,6 +245,19 @@ export function BookAppointmentModal({ open, onClose }: Props) {
                   )}
                 </div>
               </div>
+
+              {/* Availability hint */}
+              {availabilityHint && (
+                <div className={cn(
+                  "flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium",
+                  availabilityHint.available
+                    ? "bg-emerald-50 text-emerald-700"
+                    : "bg-rose-50 text-rose-600",
+                )}>
+                  <span>{availabilityHint.available ? "✓" : "✗"}</span>
+                  {availabilityHint.label}
+                </div>
+              )}
 
               {/* Duration + Type */}
               <div className="grid grid-cols-2 gap-3">

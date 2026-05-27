@@ -56,6 +56,22 @@ const mk = {
     prescriptions:   "Рецепти",
     overview:        "Преглед",
     notifications:   "Известувања",
+    availability:    "Работно расписание",
+  },
+
+  // ── Doctor availability ───────────────────────────────────────────────────
+  doctorAvailability: {
+    title:        "Работно расписание",
+    subtitle:     "Поставете ги вашите работни часови за секој ден во неделата",
+    save:         "Зачувај расписание",
+    saved:        "Расписанието е зачувано",
+    from:         "Од",
+    to:           "До",
+    workingDay:   "Работен ден",
+    dayNames:     ["", "Понеделник", "Вторник", "Среда", "Четврток", "Петок", "Сабота", "Недела"],
+    availableHint: "Достапно:",
+    notAvailable:  "Недостапен тој ден",
+    noSchedule:    "Лекарот нема поставено работно расписание",
   },
 
   // ── Doctor home tiles ─────────────────────────────────────────────────────
@@ -518,6 +534,21 @@ const en: typeof mk = {
     prescriptions:   "Prescriptions",
     overview:        "Overview",
     notifications:   "Notifications",
+    availability:    "Working hours",
+  },
+
+  doctorAvailability: {
+    title:        "Working hours",
+    subtitle:     "Set your available hours for each day of the week",
+    save:         "Save schedule",
+    saved:        "Schedule saved",
+    from:         "From",
+    to:           "To",
+    workingDay:   "Working day",
+    dayNames:     ["", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+    availableHint: "Available:",
+    notAvailable:  "Not available that day",
+    noSchedule:    "Doctor has not set up a working schedule",
   },
 
   doctorHome: {

@@ -342,6 +342,47 @@ export default function IndividualReportsPage() {
   );
 }
 
+function printReport(r: DoctorReportResponse) {
+  const typeLabel = r.periodType === "MONTHLY" ? "Месечна" : r.periodType === "QUARTERLY" ? "Тримесечна" : "Годишна";
+  const win = window.open("", "_blank", "width=800,height=700");
+  if (!win) return;
+  win.document.write(`<!DOCTYPE html><html><head>
+    <meta charset="utf-8"/>
+    <title>Пријава ${r.reportNumber}</title>
+    <style>
+      body{font-family:Arial,sans-serif;padding:40px;color:#1e293b;max-width:700px;margin:0 auto}
+      h1{font-size:22px;margin-bottom:4px}
+      .sub{color:#64748b;font-size:13px;margin-bottom:32px}
+      table{width:100%;border-collapse:collapse;margin-top:16px}
+      th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#64748b;padding:8px 12px;border-bottom:2px solid #e2e8f0}
+      td{padding:10px 12px;border-bottom:1px solid #f1f5f9;font-size:14px}
+      .row-label{font-weight:600;color:#334155}
+      .footer{margin-top:40px;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:12px}
+      @media print{body{padding:20px}}
+    </style>
+  </head><body>
+    <h1>Индивидуална лекарска пријава</h1>
+    <p class="sub">${typeLabel} пријава &nbsp;·&nbsp; ${r.reportNumber} &nbsp;·&nbsp; ${r.periodLabel}</p>
+    <table>
+      <thead><tr>
+        <th>Параметар</th><th>Вредност</th>
+      </tr></thead>
+      <tbody>
+        <tr><td class="row-label">Период</td><td>${r.periodStart} – ${r.periodEnd}</td></tr>
+        <tr><td class="row-label">Број на пациенти</td><td>${r.patientCount}</td></tr>
+        <tr><td class="row-label">Број на дијагнози</td><td>${r.diagnosisCount}</td></tr>
+        <tr><td class="row-label">Број на термини</td><td>${r.appointmentCount}</td></tr>
+        <tr><td class="row-label">Број на рецепти</td><td>${r.prescriptionCount}</td></tr>
+        <tr><td class="row-label">Статус</td><td>${r.status === "SUBMITTED" ? "Поднесена" : "Нацрт"}</td></tr>
+        ${r.submittedAt ? `<tr><td class="row-label">Поднесена на</td><td>${format(parseISO(r.submittedAt), "dd.MM.yyyy HH:mm")}</td></tr>` : ""}
+      </tbody>
+    </table>
+    <div class="footer">MedTech 2.0 &nbsp;·&nbsp; Генерирано: ${format(new Date(), "dd.MM.yyyy HH:mm")}</div>
+    <script>window.onload=()=>{window.print();window.close()}</script>
+  </body></html>`);
+  win.document.close();
+}
+
 function ReportRow({
   report: r,
   index,
@@ -404,6 +445,7 @@ function ReportRow({
           {r.status === "SUBMITTED" && (
             <button
               type="button"
+              onClick={() => printReport(r)}
               className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-900"
             >
               <Download className="h-3.5 w-3.5" /> PDF

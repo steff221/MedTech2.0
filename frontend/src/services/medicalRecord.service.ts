@@ -1,6 +1,7 @@
 import { api } from "./api";
 import type {
   CreateMedicalRecordRequest,
+  MedicalRecordEventResponse,
   MedicalRecordResponse,
 } from "@/types/api";
 
@@ -10,4 +11,7 @@ export const medicalRecordService = {
 
   getById: (id: number) =>
     api.get<MedicalRecordResponse>(`/medical-records/${id}`).then((r) => r.data),
+
+  getHistory: (id: number) =>
+    api.get<MedicalRecordEventResponse[]>(`/medical-records/${id}/history`).then((r) => r.data),
 };

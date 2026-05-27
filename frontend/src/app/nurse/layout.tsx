@@ -15,7 +15,7 @@ export default function NurseLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (!isHydrated) return;
-    if (!isAuthenticated) { router.replace("/login"); return; }
+    if (!user) { router.replace("/login"); return; }
     if (user?.role === "DOCTOR") router.replace("/doctor");
     if (user?.role === "PATIENT") router.replace("/dashboard");
   }, [isHydrated, isAuthenticated, user, router]);

@@ -24,5 +24,7 @@ public record DoctorResponse(
         UserStatus status,
         Long hospitalId,
         String hospitalName,
-        String hospitalCity
+        String hospitalCity,
+        Double averageRating,
+        int ratingCount
 ) {}

@@ -7,8 +7,10 @@ import com.medtech.application.dto.request.RescheduleAppointmentRequest;
 import com.medtech.constant.ErrorCode;
 import com.medtech.domain.entity.Appointment;
 import com.medtech.domain.entity.Doctor;
+import com.medtech.domain.entity.DoctorAvailability;
 import com.medtech.domain.entity.Patient;
 import com.medtech.domain.repository.AppointmentRepository;
+import com.medtech.domain.repository.DoctorAvailabilityRepository;
 import com.medtech.domain.repository.DoctorRepository;
 import com.medtech.domain.repository.PatientRepository;
 import com.medtech.domain.vo.AppointmentStatus;
@@ -54,6 +56,7 @@ public class AppointmentService {
     private final AppointmentRepository appointmentRepository;
     private final PatientRepository patientRepository;
     private final DoctorRepository doctorRepository;
+    private final DoctorAvailabilityRepository availabilityRepository;
     private final AppointmentProperties props;
     private final Clock clock;
     private final EmailService emailService;
@@ -70,6 +73,25 @@ public class AppointmentService {
                 .orElseThrow(() -> ResourceNotFoundException.of("Patient", req.patientId()));
         Doctor doctor = doctorRepository.findById(Objects.requireNonNull(req.doctorId()))
                 .orElseThrow(() -> ResourceNotFoundException.of("Doctor", req.doctorId()));
+
+        // Validate against doctor's configured working hours (if any have been set).
+        List<DoctorAvailability> slots = availabilityRepository.findByDoctorId(doctor.getId());
+        if (!slots.isEmpty()) {
+            int dow = req.appointmentDate().getDayOfWeek().getValue();
+            DoctorAvailability slot = slots.stream()
+                    .filter(s -> s.getDayOfWeek() == dow && s.isActive())
+                    .findFirst()
+                    .orElseThrow(() -> new ValidationException(
+                            ErrorCode.APPOINTMENT_OUTSIDE_AVAILABILITY,
+                            "Doctor is not available on " + req.appointmentDate().getDayOfWeek()));
+            LocalTime apptTime = req.appointmentTime();
+            if (apptTime.isBefore(slot.getStartTime()) || !apptTime.isBefore(slot.getEndTime())) {
+                throw new ValidationException(
+                        ErrorCode.APPOINTMENT_OUTSIDE_AVAILABILITY,
+                        "Appointment time " + apptTime + " is outside working hours ("
+                                + slot.getStartTime() + "–" + slot.getEndTime() + ")");
+            }
+        }
 
         // Pessimistic lock on existing same-slot rows to prevent the classic
         // double-booking race between two concurrent transactions.

@@ -2,7 +2,9 @@ package com.medtech.presentation.controller;
 
 import com.medtech.application.dto.mapper.DoctorMapper;
 import com.medtech.application.dto.request.CreateDoctorRequest;
+import com.medtech.application.dto.request.UpdateDoctorRequest;
 import com.medtech.application.dto.response.DoctorResponse;
+import com.medtech.application.service.DoctorRatingService;
 import com.medtech.application.service.DoctorService;
 import com.medtech.infrastructure.exception.AuthorizationException;
 import com.medtech.infrastructure.security.SecurityUtils;
@@ -15,15 +17,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import com.medtech.application.dto.request.UpdateDoctorRequest;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/doctors")
@@ -32,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class DoctorController {
 
     private final DoctorService doctorService;
+    private final DoctorRatingService ratingService;
     private final DoctorMapper mapper;
 
     @GetMapping
@@ -41,14 +39,47 @@ public class DoctorController {
             @RequestParam(required = false) Long hospitalId,
             @RequestParam(required = false) String city,
             Pageable pageable) {
-        return ResponseEntity.ok(
-                doctorService.search(specialization, hospitalId, city, pageable).map(mapper::toResponse));
+        Page<DoctorResponse> page = doctorService.search(specialization, hospitalId, city, pageable)
+                .map(mapper::toResponse);
+        List<Long> ids = page.getContent().stream().map(DoctorResponse::id).toList();
+        Map<Long, double[]> aggregates = ratingService.getAggregatesForDoctors(ids);
+        Page<DoctorResponse> enriched = page.map(d -> {
+            double[] agg = aggregates.get(d.id());
+            return agg == null ? d : DoctorResponse.builder()
+                    .id(d.id()).userId(d.userId()).email(d.email())
+                    .firstName(d.firstName()).lastName(d.lastName())
+                    .licenseNumber(d.licenseNumber()).specialization(d.specialization())
+                    .subSpecialization(d.subSpecialization()).qualification(d.qualification())
+                    .experienceYears(d.experienceYears()).officeNumber(d.officeNumber())
+                    .consultationFee(d.consultationFee()).availabilityHours(d.availabilityHours())
+                    .bio(d.bio()).status(d.status())
+                    .hospitalId(d.hospitalId()).hospitalName(d.hospitalName()).hospitalCity(d.hospitalCity())
+                    .averageRating(agg[0]).ratingCount((int) agg[1])
+                    .build();
+        });
+        return ResponseEntity.ok(enriched);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get a doctor by id (public profile)")
     public ResponseEntity<DoctorResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(mapper.toResponse(doctorService.getById(id)));
+        DoctorResponse d = mapper.toResponse(doctorService.getById(id));
+        Map<Long, double[]> agg = ratingService.getAggregatesForDoctors(List.of(id));
+        double[] stats = agg.get(id);
+        if (stats != null) {
+            d = DoctorResponse.builder()
+                    .id(d.id()).userId(d.userId()).email(d.email())
+                    .firstName(d.firstName()).lastName(d.lastName())
+                    .licenseNumber(d.licenseNumber()).specialization(d.specialization())
+                    .subSpecialization(d.subSpecialization()).qualification(d.qualification())
+                    .experienceYears(d.experienceYears()).officeNumber(d.officeNumber())
+                    .consultationFee(d.consultationFee()).availabilityHours(d.availabilityHours())
+                    .bio(d.bio()).status(d.status())
+                    .hospitalId(d.hospitalId()).hospitalName(d.hospitalName()).hospitalCity(d.hospitalCity())
+                    .averageRating(stats[0]).ratingCount((int) stats[1])
+                    .build();
+        }
+        return ResponseEntity.ok(d);
     }
 
     @PostMapping("/me")

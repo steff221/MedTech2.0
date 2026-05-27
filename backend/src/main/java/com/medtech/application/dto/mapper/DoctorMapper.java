@@ -15,5 +15,7 @@ public interface DoctorMapper {
     @Mapping(source = "hospital.id",    target = "hospitalId")
     @Mapping(source = "hospital.name",  target = "hospitalName")
     @Mapping(source = "hospital.city",  target = "hospitalCity")
+    @Mapping(target = "averageRating",  ignore = true)
+    @Mapping(target = "ratingCount",    ignore = true)
     DoctorResponse toResponse(Doctor doctor);
 }

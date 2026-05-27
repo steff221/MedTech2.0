@@ -5,6 +5,7 @@ import Image from "next/image";
 import {
   Bell,
   Calendar,
+  Clock,
   ClipboardList,
   FileText,
   LogOut,
@@ -35,15 +36,16 @@ type NavItem = {
 };
 
 const NAV: NavItem[] = [
-  { labelKey: "referrals",      href: "/doctor/referrals",          icon: ClipboardList   },
-  { labelKey: "schedule",       href: "/doctor/schedule",            icon: Calendar        },
-  { labelKey: "patients",       href: "/doctor/patients",            icon: Users           },
-  { labelKey: "operations",     href: "/doctor/operations",          icon: Scissors        },
-  { labelKey: "medicalJournal", href: "/doctor/medical-journal",     icon: Notebook        },
-  { labelKey: "mkb10",          href: "/doctor/mkb10",               icon: ShieldPlus      },
-  { labelKey: "guidelines",     href: "/doctor/guidelines",          icon: FileText        },
-  { labelKey: "settings",       href: "/doctor/settings",            icon: Wrench          },
-  { labelKey: "notifications",  href: "/doctor/notifications",       icon: Bell            },
+  { labelKey: "referrals",      href: "/doctor/referrals",       icon: ClipboardList   },
+  { labelKey: "schedule",       href: "/doctor/schedule",        icon: Calendar        },
+  { labelKey: "patients",       href: "/doctor/patients",        icon: Users           },
+  { labelKey: "operations",     href: "/doctor/operations",      icon: Scissors        },
+  { labelKey: "medicalJournal", href: "/doctor/medical-journal", icon: Notebook        },
+  { labelKey: "mkb10",          href: "/doctor/mkb10",           icon: ShieldPlus      },
+  { labelKey: "guidelines",     href: "/doctor/guidelines",      icon: FileText        },
+  { labelKey: "settings",       href: "/doctor/settings",        icon: Wrench          },
+  { labelKey: "notifications",  href: "/doctor/notifications",   icon: Bell            },
+  { labelKey: "availability",   href: "/doctor/availability",    icon: Clock           },
 ];
 
 export function DoctorTopNav() {
