@@ -214,6 +214,9 @@ export function PatientDetailDrawer({
                   <Button size="sm" onClick={() => setSoapOpen(true)} disabled={!patientId}>
                     <Plus className="h-3.5 w-3.5" /> {t.doctorDrawer.addRecord}
                   </Button>
+                  <Button size="sm" variant="secondary" onClick={() => setRxOpen(true)} disabled={!patientId}>
+                    <Pill className="h-3.5 w-3.5" /> + Рецепт
+                  </Button>
                   <Button
                     size="sm"
                     variant="secondary"
@@ -588,7 +591,13 @@ function PrescriptionsPanel({ items, loading, patientId }: { items: Prescription
   function handlePrint(p: PrescriptionResponse) {
     const win = window.open("", "_blank", "width=800,height=600");
     if (!win) return;
-    win.document.write(`<html><head><title>Рецепт — MedTech</title><style>
+
+    const esc = (s: string | null | undefined) =>
+      (s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+    const doc = win.document;
+    doc.open();
+    doc.write(`<html><head><title>Рецепт — MedTech</title><style>
       body{font-family:Arial,sans-serif;padding:40px;color:#1e293b}
       .header{border-bottom:2px solid #0891b2;padding-bottom:16px;margin-bottom:24px}
       .hospital{font-size:12px;color:#64748b}
@@ -601,21 +610,21 @@ function PrescriptionsPanel({ items, loading, patientId }: { items: Prescription
       @media print{body{padding:20px}}
     </style></head><body>
       <div class="header">
-        <div class="hospital">MedTech · ${doctor?.hospitalName ?? "Болница"}</div>
+        <div class="hospital">MedTech · ${esc(doctor?.hospitalName ?? "Болница")}</div>
         <div class="title">МЕДИЦИНСКИ РЕЦЕПТ</div>
       </div>
-      <div class="section"><div class="label">Доктор</div><div class="value">д-р ${doctor?.firstName ?? ""} ${doctor?.lastName ?? ""} · ${doctor?.specialization ?? ""}</div></div>
-      <div class="section"><div class="label">Лек</div><div class="value">${p.medicationName}</div></div>
-      <div class="section"><div class="label">Доза / Фреквенција</div><div class="value">${p.dosage} — ${p.frequency}</div></div>
-      ${p.route ? `<div class="section"><div class="label">Начин</div><div class="value">${p.route}</div></div>` : ""}
-      ${p.durationDays ? `<div class="section"><div class="label">Траење</div><div class="value">${p.durationDays} денови</div></div>` : ""}
-      ${p.instructions ? `<div class="section"><div class="label">Инструкции</div><div class="value">${p.instructions}</div></div>` : ""}
-      <div class="section"><div class="label">Датум</div><div class="value">${format(parseISO(p.startDate), "d MMMM yyyy")}</div></div>
+      <div class="section"><div class="label">Доктор</div><div class="value">д-р ${esc(doctor?.firstName)} ${esc(doctor?.lastName)} · ${esc(doctor?.specialization)}</div></div>
+      <div class="section"><div class="label">Лек</div><div class="value">${esc(p.medicationName)}</div></div>
+      <div class="section"><div class="label">Доза / Фреквенција</div><div class="value">${esc(p.dosage)} — ${esc(p.frequency)}</div></div>
+      ${p.route ? `<div class="section"><div class="label">Начин</div><div class="value">${esc(p.route)}</div></div>` : ""}
+      ${p.durationDays ? `<div class="section"><div class="label">Траење</div><div class="value">${esc(String(p.durationDays))} денови</div></div>` : ""}
+      ${p.instructions ? `<div class="section"><div class="label">Инструкции</div><div class="value">${esc(p.instructions)}</div></div>` : ""}
+      <div class="section"><div class="label">Датум</div><div class="value">${esc(format(parseISO(p.startDate), "d MMMM yyyy"))}</div></div>
       <div style="margin-top:40px"><div class="label">Потпис на доктор</div><div class="signature-line"></div></div>
-      <div class="footer"><span>Издадено преку MedTech</span><span>Рецепт #${p.id}</span></div>
+      <div class="footer"><span>Издадено преку MedTech</span><span>Рецепт #${esc(String(p.id))}</span></div>
       <script>window.onload=()=>{window.print();window.close()}</script>
     </body></html>`);
-    win.document.close();
+    doc.close();
   }
 
   if (loading) return <Skeleton className="h-32" />;

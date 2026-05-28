@@ -8,6 +8,7 @@ import com.medtech.application.dto.request.SetVideoUrlRequest;
 import com.medtech.application.dto.response.AppointmentResponse;
 import com.medtech.application.service.AppointmentService;
 import com.medtech.domain.entity.Appointment;
+import com.medtech.infrastructure.exception.AuthorizationException;
 import com.medtech.infrastructure.security.PatientAccessGuard;
 import com.medtech.infrastructure.security.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -47,6 +48,10 @@ public class AppointmentController {
     @PreAuthorize("hasAnyRole('PATIENT', 'NURSE')")
     @Operation(summary = "Book a new appointment")
     public ResponseEntity<AppointmentResponse> book(@Valid @RequestBody BookAppointmentRequest request) {
+        // PATIENT role: enforce they can only book for their own patient record
+        if (SecurityUtils.hasRole("PATIENT")) {
+            accessGuard.assertCanAccessPatient(request.patientId());
+        }
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(mapper.toResponse(appointmentService.book(request)));
     }
@@ -120,8 +125,21 @@ public class AppointmentController {
     @Operation(summary = "Cancel an appointment (soft delete via status change)")
     public ResponseEntity<AppointmentResponse> cancel(@PathVariable Long id,
                                                       @Valid @RequestBody(required = false) CancelAppointmentRequest request) {
-        String actor = SecurityUtils.currentUserId().map(id2 -> "user:" + id2).orElse("SYSTEM");
+        Appointment appt = appointmentService.getById(id);
+        assertCanCancelAppointment(appt);
+        String actor = SecurityUtils.currentUserId().map(uid -> "user:" + uid).orElse("SYSTEM");
         CancelAppointmentRequest body = request != null ? request : new CancelAppointmentRequest(null);
         return ResponseEntity.ok(mapper.toResponse(appointmentService.cancel(id, body, actor)));
+    }
+
+    private void assertCanCancelAppointment(Appointment appt) {
+        if (SecurityUtils.hasRole("ADMIN") || SecurityUtils.hasRole("NURSE")) return;
+        Long currentUserId = SecurityUtils.currentUserId()
+                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+        boolean isPatient = appt.getPatient().getUser().getId().equals(currentUserId);
+        boolean isDoctor  = appt.getDoctor().getUser().getId().equals(currentUserId);
+        if (!isPatient && !isDoctor) {
+            throw new AuthorizationException("You are not authorized to cancel this appointment");
+        }
     }
 }

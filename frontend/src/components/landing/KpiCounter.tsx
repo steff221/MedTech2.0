@@ -7,6 +7,7 @@ interface KpiCounterProps {
   label: string;
   sub?: string;
   durationMs?: number;
+  dark?: boolean;
 }
 
 // easeOutCubic — fast start, gentle settle
@@ -17,6 +18,7 @@ export function KpiCounter({
   label,
   sub,
   durationMs = 1400,
+  dark = false,
 }: KpiCounterProps) {
   const [display, setDisplay] = useState(0);
   const rafRef = useRef<number | null>(null);
@@ -39,12 +41,12 @@ export function KpiCounter({
   }, [value, durationMs]);
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-sm">
-      <p className="text-xs text-white/50">{label}</p>
-      <p className="mt-2 text-4xl font-bold tabular-nums text-white">
+    <div className={`rounded-2xl border p-5 ${dark ? "border-white/10 bg-white/[0.03] backdrop-blur-sm" : "border-gray-200 bg-white shadow-sm"}`}>
+      <p className={`text-xs ${dark ? "text-white/50" : "text-gray-500"}`}>{label}</p>
+      <p className={`mt-2 text-4xl font-bold tabular-nums ${dark ? "text-white" : "text-gray-900"}`}>
         {display.toLocaleString()}
       </p>
-      {sub && <p className="mt-1 text-xs text-white/40">{sub}</p>}
+      {sub && <p className={`mt-1 text-xs ${dark ? "text-white/40" : "text-gray-400"}`}>{sub}</p>}
     </div>
   );
 }

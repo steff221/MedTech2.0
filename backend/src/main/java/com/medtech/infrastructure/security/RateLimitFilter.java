@@ -66,9 +66,13 @@ public class RateLimitFilter extends OncePerRequestFilter {
     }
 
     private String resolveClientIp(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
+        // X-Real-IP is set by nginx from its own $remote_addr — cannot be spoofed by the client
+        // because the backend port is not exposed to the host (compose-internal only).
+        // X-Forwarded-For is intentionally NOT used: nginx appends to whatever the client sends,
+        // so taking the first element is trivially bypassable.
+        String realIp = request.getHeader("X-Real-IP");
+        if (realIp != null && !realIp.isBlank()) {
+            return realIp.trim();
         }
         return request.getRemoteAddr();
     }

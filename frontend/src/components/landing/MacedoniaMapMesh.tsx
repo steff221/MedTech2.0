@@ -19,6 +19,7 @@ interface MapNode {
 
 interface MacedoniaMapMeshProps {
   nodes: MapNode[];
+  dark?: boolean;
 }
 
 function projectX(lon: number): number {
@@ -29,7 +30,7 @@ function projectY(lat: number): number {
   return ((MK_GEO.latMax - lat) / (MK_GEO.latMax - MK_GEO.latMin)) * MK_SVG_HEIGHT;
 }
 
-export function MacedoniaMapMesh({ nodes }: MacedoniaMapMeshProps) {
+export function MacedoniaMapMesh({ nodes, dark = false }: MacedoniaMapMeshProps) {
   const hospitalPoints = useMemo(
     () => nodes.map((n) => ({ ...n, x: projectX(n.lon), y: projectY(n.lat) })),
     [nodes],
@@ -337,12 +338,12 @@ export function MacedoniaMapMesh({ nodes }: MacedoniaMapMeshProps) {
               <motion.text
                 x={n.x + r + 6}
                 y={n.y + 3.5}
-                fill="#d1fae5"
+                fill={dark ? "#6ee7b7" : "#065f46"}
                 fontSize={9}
                 fontWeight={500}
                 letterSpacing={0.3}
                 initial={{ opacity: 0 }}
-                animate={{ opacity: 0.8 }}
+                animate={{ opacity: dark ? 0.8 : 0.9 }}
                 transition={{ duration: 0.6, delay: delay + 0.35, ease: "easeOut" }}
               >
                 {n.name}

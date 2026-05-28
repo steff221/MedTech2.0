@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Building2, Filter, MapPin, Stethoscope, X } from "lucide-react";
+import { ArrowUpDown, Building2, Calendar, Filter, MapPin, Stethoscope, X } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -13,14 +13,15 @@ import { EmptyState } from "@/components/common/EmptyState";
 import { Input } from "@/components/common/Input";
 import { Skeleton } from "@/components/common/Skeleton";
 import { Spinner } from "@/components/common/Spinner";
+import { BookAppointmentWizard } from "@/components/patient/BookAppointmentWizard";
 import { doctorService } from "@/services/doctor.service";
 import { hospitalService } from "@/services/hospital.service";
+import { usePatientProfile } from "@/hooks/usePatient";
 import { cn } from "@/utils/cn";
 import { initials } from "@/utils/format";
 import { PROCEDURES, parseDoctorProcedures } from "@/utils/procedures";
 import type { DoctorResponse, HospitalResponse } from "@/types/api";
 
-// Leaflet bundles `window` — never SSR it.
 const HospitalsMap = dynamic(() => import("@/components/patient/HospitalsMap"), {
   ssr: false,
   loading: () => (
@@ -31,22 +32,33 @@ const HospitalsMap = dynamic(() => import("@/components/patient/HospitalsMap"), 
 });
 
 const SPECIALTIES = [
-  "Cardiology",
-  "Dermatology",
-  "Family Medicine",
-  "Internal Medicine",
-  "Neurology",
-  "Pediatrics",
-  "Orthopedics",
-  "Gynecology",
-  "Psychiatry",
+  "Cardiology", "Dermatology", "Family Medicine", "Internal Medicine",
+  "Neurology", "Pediatrics", "Orthopedics", "Gynecology", "Psychiatry",
 ];
 
-export default function DoctorsMapPage() {
-  const [specialty, setSpecialty] = useState<string | null>(null);
-  const [procedure, setProcedure] = useState<string | null>(null);
+const SPECIALTY_MK: Record<string, string> = {
+  "Cardiology":        "Кардиологија",
+  "Dermatology":       "Дерматологија",
+  "Family Medicine":   "Општа медицина",
+  "Internal Medicine": "Интерна медицина",
+  "Neurology":         "Неурологија",
+  "Pediatrics":        "Педијатрија",
+  "Orthopedics":       "Ортопедија",
+  "Gynecology":        "Гинекологија",
+  "Psychiatry":        "Психијатрија",
+};
+
+type SortKey = "rating" | "experience" | "name";
+
+export default function DoctorsPage() {
+  const [specialty, setSpecialty]             = useState<string | null>(null);
+  const [procedure, setProcedure]             = useState<string | null>(null);
   const [selectedHospitalId, setSelectedHospitalId] = useState<number | null>(null);
-  const [search, setSearch] = useState("");
+  const [search, setSearch]                   = useState("");
+  const [sort, setSort]                       = useState<SortKey>("rating");
+  const [bookDoctor, setBookDoctor]           = useState<DoctorResponse | null>(null);
+
+  const profile = usePatientProfile();
 
   const hospitalsQuery = useQuery({
     queryKey: ["hospitals", "active"],
@@ -58,49 +70,39 @@ export default function DoctorsMapPage() {
     queryFn: () => doctorService.search({ size: 100 }),
   });
 
-  const hospitals = useMemo<HospitalResponse[]>(() => hospitalsQuery.data ?? [], [hospitalsQuery.data]);
+  const hospitals  = useMemo<HospitalResponse[]>(() => hospitalsQuery.data ?? [], [hospitalsQuery.data]);
   const allDoctors = useMemo<DoctorResponse[]>(() => doctorsQuery.data?.content ?? [], [doctorsQuery.data]);
 
-  // Client-side filtering — keeps the map and the list in sync without N round-trips.
   const filteredDoctors = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return allDoctors.filter((d) => {
+    let list = allDoctors.filter((d) => {
       if (specialty && d.specialization !== specialty) return false;
-      if (
-        selectedHospitalId !== null &&
-        d.hospitalId !== selectedHospitalId
-      )
-        return false;
-      if (
-        procedure &&
-        !parseDoctorProcedures(d.subSpecialization).some(
-          (p) => p.toLowerCase() === procedure.toLowerCase(),
-        )
-      )
-        return false;
+      if (selectedHospitalId !== null && d.hospitalId !== selectedHospitalId) return false;
+      if (procedure && !parseDoctorProcedures(d.subSpecialization).some(
+        (p) => p.toLowerCase() === procedure.toLowerCase())) return false;
       if (q) {
         const hay = `${d.firstName} ${d.lastName} ${d.specialization} ${d.hospitalName ?? ""}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
     });
-  }, [allDoctors, specialty, procedure, selectedHospitalId, search]);
 
-  // For the map: which hospital pins should be highlighted given current
-  // filters (ignoring the hospital selection itself, otherwise only the
-  // selected pin would ever light up).
+    list = [...list].sort((a, b) => {
+      if (sort === "rating")     return (b.averageRating ?? 0) - (a.averageRating ?? 0);
+      if (sort === "experience") return (b.experienceYears ?? 0) - (a.experienceYears ?? 0);
+      return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`);
+    });
+
+    return list;
+  }, [allDoctors, specialty, procedure, selectedHospitalId, search, sort]);
+
   const matchingHospitalIds = useMemo(() => {
     const q = search.trim().toLowerCase();
     const ids = new Set<number>();
     allDoctors.forEach((d) => {
       if (specialty && d.specialization !== specialty) return;
-      if (
-        procedure &&
-        !parseDoctorProcedures(d.subSpecialization).some(
-          (p) => p.toLowerCase() === procedure.toLowerCase(),
-        )
-      )
-        return;
+      if (procedure && !parseDoctorProcedures(d.subSpecialization).some(
+        (p) => p.toLowerCase() === procedure.toLowerCase())) return;
       if (q) {
         const hay = `${d.firstName} ${d.lastName} ${d.specialization} ${d.hospitalName ?? ""}`.toLowerCase();
         if (!hay.includes(q)) return;
@@ -114,84 +116,70 @@ export default function DoctorsMapPage() {
     const m = new Map<number, number>();
     allDoctors.forEach((d) => {
       if (specialty && d.specialization !== specialty) return;
-      if (
-        procedure &&
-        !parseDoctorProcedures(d.subSpecialization).some(
-          (p) => p.toLowerCase() === procedure.toLowerCase(),
-        )
-      )
-        return;
+      if (procedure && !parseDoctorProcedures(d.subSpecialization).some(
+        (p) => p.toLowerCase() === procedure.toLowerCase())) return;
       if (d.hospitalId == null) return;
       m.set(d.hospitalId, (m.get(d.hospitalId) ?? 0) + 1);
     });
     return m;
   }, [allDoctors, specialty, procedure]);
 
-  const anyFilter =
-    !!specialty || !!procedure || selectedHospitalId !== null || !!search;
+  const anyFilter = !!specialty || !!procedure || selectedHospitalId !== null || !!search;
 
   return (
     <div className="mx-auto max-w-7xl space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Find a doctor</h1>
+        <h1 className="text-2xl font-bold text-slate-900">Најди доктор</h1>
         <p className="text-sm text-slate-500">
-          Browse the network across Macedonia — filter by specialty, procedure, or hospital.
+          Прегледај ги сите доктори — филтрирај по специјалност, процедура или болница.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[300px_1fr_320px]">
-        {/* ===== Filters ===== */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[300px_1fr_340px]">
+
+        {/* Filters */}
         <Card className="lg:sticky lg:top-4 lg:max-h-[calc(100vh-100px)] lg:overflow-y-auto">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-              <Filter className="h-4 w-4" /> Filters
+              <Filter className="h-4 w-4" /> Филтри
             </div>
             {anyFilter && (
               <button
                 type="button"
-                onClick={() => {
-                  setSpecialty(null);
-                  setProcedure(null);
-                  setSelectedHospitalId(null);
-                  setSearch("");
-                }}
+                onClick={() => { setSpecialty(null); setProcedure(null); setSelectedHospitalId(null); setSearch(""); }}
                 className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-900"
               >
-                <X className="h-3.5 w-3.5" /> Clear
+                <X className="h-3.5 w-3.5" /> Исчисти
               </button>
             )}
           </div>
 
           <div className="mt-4">
             <Input
-              label="Search"
-              placeholder="Doctor name or hospital…"
+              label="Пребарај"
+              placeholder="Ime на доктор или болница…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
 
-          <FilterGroup icon={Stethoscope} title="Specialty">
+          <FilterGroup icon={Stethoscope} title="Специјалност">
             {SPECIALTIES.map((s) => (
               <Pill key={s} active={specialty === s} onClick={() => setSpecialty(specialty === s ? null : s)}>
-                {s}
+                {SPECIALTY_MK[s] ?? s}
               </Pill>
             ))}
           </FilterGroup>
 
-          <FilterGroup icon={MapPin} title="Procedure">
+          <FilterGroup icon={MapPin} title="Процедура">
             {PROCEDURES.slice(0, 18).map((p) => (
-              <Pill
-                key={p}
-                active={procedure === p}
-                onClick={() => setProcedure(procedure === p ? null : p)}
-              >
+              <Pill key={p} active={procedure === p} onClick={() => setProcedure(procedure === p ? null : p)}>
                 {p}
               </Pill>
             ))}
           </FilterGroup>
 
-          <FilterGroup icon={Building2} title="Hospital">
+          <FilterGroup icon={Building2} title="Болница">
             {hospitalsQuery.isLoading ? (
               <Skeleton className="h-10" />
             ) : (
@@ -199,9 +187,7 @@ export default function DoctorsMapPage() {
                 <Pill
                   key={h.id}
                   active={selectedHospitalId === h.id}
-                  onClick={() =>
-                    setSelectedHospitalId(selectedHospitalId === h.id ? null : h.id)
-                  }
+                  onClick={() => setSelectedHospitalId(selectedHospitalId === h.id ? null : h.id)}
                 >
                   {h.name}
                   <span className="ml-1 text-[10px] opacity-70">· {h.city}</span>
@@ -211,49 +197,56 @@ export default function DoctorsMapPage() {
           </FilterGroup>
         </Card>
 
-        {/* ===== Map ===== */}
+        {/* Map */}
         <Card padded={false} className="overflow-hidden">
           <div className="h-[calc(100vh-180px)] min-h-[500px] w-full">
             <HospitalsMap
               hospitals={hospitals}
               matchingHospitalIds={matchingHospitalIds}
               selectedHospitalId={selectedHospitalId}
-              onSelectHospital={(id) =>
-                setSelectedHospitalId(selectedHospitalId === id ? null : id)
-              }
+              onSelectHospital={(id) => setSelectedHospitalId(selectedHospitalId === id ? null : id)}
               doctorCountByHospital={doctorCountByHospital}
             />
           </div>
         </Card>
 
-        {/* ===== Results ===== */}
+        {/* Results */}
         <div className="lg:sticky lg:top-4 lg:max-h-[calc(100vh-100px)] lg:overflow-y-auto">
-          <div className="mb-3 flex items-baseline justify-between">
+          {/* Header + sort */}
+          <div className="mb-3 flex items-center justify-between gap-2">
             <h2 className="text-sm font-semibold text-slate-900">
-              {filteredDoctors.length} doctor{filteredDoctors.length === 1 ? "" : "s"}
+              {filteredDoctors.length} доктор{filteredDoctors.length === 1 ? "" : "и"}
             </h2>
-            {selectedHospitalId !== null && (
-              <button
-                type="button"
-                onClick={() => setSelectedHospitalId(null)}
-                className="text-xs font-medium text-slate-500 hover:text-slate-900"
-              >
-                ✕ clear hospital
-              </button>
-            )}
+            <div className="flex items-center gap-1">
+              <ArrowUpDown className="h-3.5 w-3.5 text-slate-400" />
+              {(["rating", "experience", "name"] as SortKey[]).map((key) => {
+                const labels: Record<SortKey, string> = { rating: "Оценка", experience: "Искуство", name: "Ime" };
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setSort(key)}
+                    className={cn(
+                      "rounded-md px-2 py-1 text-xs font-medium transition-colors",
+                      sort === key ? "bg-brand-50 text-brand-700" : "text-slate-500 hover:text-slate-800",
+                    )}
+                  >
+                    {labels[key]}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {doctorsQuery.isLoading ? (
             <div className="space-y-3">
-              {[0, 1, 2].map((i) => (
-                <Skeleton key={i} className="h-32" />
-              ))}
+              {[0, 1, 2].map((i) => <Skeleton key={i} className="h-36" />)}
             </div>
           ) : filteredDoctors.length === 0 ? (
             <EmptyState
               icon={Stethoscope}
-              title="No doctors match"
-              description="Try clearing a filter or selecting another hospital on the map."
+              title="Нема доктори"
+              description="Пробајте да исчистите некој филтер или изберете друга болница."
             />
           ) : (
             <motion.div
@@ -265,17 +258,14 @@ export default function DoctorsMapPage() {
               {filteredDoctors.map((d) => (
                 <motion.div
                   key={d.id}
-                  variants={{
-                    hidden: { opacity: 0, y: 10 },
-                    visible: { opacity: 1, y: 0, transition: { duration: 0.25 } },
-                  }}
+                  variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0, transition: { duration: 0.25 } } }}
                 >
                   <DoctorCard
                     doctor={d}
                     highlightProcedure={procedure}
-                    onClick={() => {
-                      if (d.hospitalId != null) setSelectedHospitalId(d.hospitalId);
-                    }}
+                    canBook={!!profile.data}
+                    onBook={() => setBookDoctor(d)}
+                    onLocate={() => { if (d.hospitalId != null) setSelectedHospitalId(d.hospitalId); }}
                   />
                 </motion.div>
               ))}
@@ -283,19 +273,21 @@ export default function DoctorsMapPage() {
           )}
         </div>
       </div>
+
+      {profile.data && (
+        <BookAppointmentWizard
+          open={!!bookDoctor}
+          onClose={() => setBookDoctor(null)}
+          patientId={profile.data.id}
+          initialDoctor={bookDoctor ?? undefined}
+        />
+      )}
     </div>
   );
 }
 
-function FilterGroup({
-  icon: Icon,
-  title,
-  children,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  children: React.ReactNode;
-}) {
+// ── Sub-components ────────────────────────────────────────────────────────────
+function FilterGroup({ icon: Icon, title, children }: { icon: React.ComponentType<{ className?: string }>; title: string; children: React.ReactNode }) {
   return (
     <div className="mt-5">
       <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -306,15 +298,7 @@ function FilterGroup({
   );
 }
 
-function Pill({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
+function Pill({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
       type="button"
@@ -332,66 +316,68 @@ function Pill({
 }
 
 function DoctorCard({
-  doctor,
-  highlightProcedure,
-  onClick,
+  doctor, highlightProcedure, canBook, onBook, onLocate,
 }: {
   doctor: DoctorResponse;
   highlightProcedure: string | null;
-  onClick: () => void;
+  canBook: boolean;
+  onBook: () => void;
+  onLocate: () => void;
 }) {
   const procedures = parseDoctorProcedures(doctor.subSpecialization);
   return (
-    <button type="button" onClick={onClick} className="w-full text-left">
-      <Card hover>
-        <div className="flex items-start gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700">
-            {initials(doctor.firstName, doctor.lastName)}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-semibold text-slate-900">
-              Dr. {doctor.firstName} {doctor.lastName}
-            </p>
-            <p className="text-xs font-medium text-brand-600">{doctor.specialization}</p>
-            {doctor.hospitalName && (
-              <p className="mt-0.5 truncate text-xs text-slate-500">
-                {doctor.hospitalName}
-                {doctor.hospitalCity ? ` · ${doctor.hospitalCity}` : ""}
-              </p>
-            )}
-            {doctor.ratingCount > 0 && (
-              <div className="mt-1 flex items-center gap-1.5">
-                <StarRating value={Math.round(doctor.averageRating ?? 0)} readonly size="sm" />
-                <span className="text-xs text-slate-500">
-                  {doctor.averageRating?.toFixed(1)} ({doctor.ratingCount})
-                </span>
-              </div>
-            )}
-            {procedures.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-1">
-                {procedures.slice(0, 5).map((p) => (
-                  <Badge
-                    key={p}
-                    tone={
-                      highlightProcedure &&
-                      p.toLowerCase() === highlightProcedure.toLowerCase()
-                        ? "info"
-                        : "neutral"
-                    }
-                  >
-                    {p}
-                  </Badge>
-                ))}
-                {procedures.length > 5 && (
-                  <span className="text-[10px] text-slate-500">
-                    +{procedures.length - 5}
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
+    <Card hover>
+      <div className="flex items-start gap-3">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700">
+          {initials(doctor.firstName, doctor.lastName)}
         </div>
-      </Card>
-    </button>
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-semibold text-slate-900">Dr. {doctor.firstName} {doctor.lastName}</p>
+          <p className="text-xs font-medium text-brand-600">
+            {SPECIALTY_MK[doctor.specialization] ?? doctor.specialization}
+          </p>
+          {doctor.hospitalName && (
+            <button type="button" onClick={onLocate} className="mt-0.5 flex items-center gap-1 truncate text-xs text-slate-500 hover:text-brand-600 transition-colors">
+              <MapPin className="h-3 w-3 shrink-0" />
+              {doctor.hospitalName}{doctor.hospitalCity ? ` · ${doctor.hospitalCity}` : ""}
+            </button>
+          )}
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+            {doctor.ratingCount > 0 && (
+              <div className="flex items-center gap-1">
+                <StarRating value={Math.round(doctor.averageRating ?? 0)} readonly size="sm" />
+                <span className="text-xs text-slate-500">{doctor.averageRating?.toFixed(1)} ({doctor.ratingCount})</span>
+              </div>
+            )}
+            {doctor.experienceYears != null && (
+              <span className="text-xs text-slate-400">{doctor.experienceYears} год. искуство</span>
+            )}
+            {doctor.consultationFee != null && (
+              <span className="text-xs text-slate-400">{doctor.consultationFee} ден.</span>
+            )}
+          </div>
+          {procedures.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {procedures.slice(0, 4).map((p) => (
+                <Badge key={p} tone={highlightProcedure && p.toLowerCase() === highlightProcedure.toLowerCase() ? "info" : "neutral"}>
+                  {p}
+                </Badge>
+              ))}
+              {procedures.length > 4 && <span className="text-[10px] text-slate-400">+{procedures.length - 4}</span>}
+            </div>
+          )}
+        </div>
+      </div>
+      {canBook && (
+        <button
+          type="button"
+          onClick={onBook}
+          className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-brand-500 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-600"
+        >
+          <Calendar className="h-3.5 w-3.5" />
+          Закажи преглед
+        </button>
+      )}
+    </Card>
   );
 }

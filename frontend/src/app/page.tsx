@@ -20,7 +20,7 @@ export default function HomePage() {
 
   if (!isHydrated) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0d1117]">
+      <div className="flex min-h-screen items-center justify-center bg-white">
         <Spinner className="h-8 w-8" />
       </div>
     );
@@ -30,7 +30,7 @@ export default function HomePage() {
   // landing page doesn't flash on logged-in users.
   if (isAuthenticated) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0d1117]">
+      <div className="flex min-h-screen items-center justify-center bg-white">
         <Spinner className="h-8 w-8" />
       </div>
     );

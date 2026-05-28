@@ -1,10 +1,11 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Calendar, ChevronDown, Clock, Hospital, MapPin, Star, Video, X } from "lucide-react";
+import { ArrowRight, Calendar, ChevronDown, Clock, Hospital, MapPin, Star, Video, X } from "lucide-react";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import Link from "next/link";
 import { Badge, appointmentStatusTone } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
 import { StarRating } from "@/components/common/StarRating";
@@ -150,8 +151,8 @@ export function AppointmentCard({ appointment }: AppointmentCardProps) {
                 </div>
               )}
 
-              {!isTerminal && (
-                <div className="flex gap-2 pt-2">
+              <div className="flex flex-wrap items-center gap-2 pt-2">
+                {!isTerminal && (
                   <Button
                     size="sm"
                     variant="danger"
@@ -161,8 +162,14 @@ export function AppointmentCard({ appointment }: AppointmentCardProps) {
                     <X className="h-3.5 w-3.5" />
                     {t.appointments.cancelBtn}
                   </Button>
-                </div>
-              )}
+                )}
+                <Link
+                  href={`/appointments/${appointment.id}`}
+                  className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50 transition-colors"
+                >
+                  Детали <ArrowRight className="h-3 w-3" />
+                </Link>
+              </div>
             </div>
           </motion.div>
         )}

@@ -1,5 +1,6 @@
 package com.medtech.presentation.controller;
 
+import com.medtech.domain.entity.Patient;
 import com.medtech.application.dto.mapper.AppointmentMapper;
 import com.medtech.application.dto.mapper.MedicalRecordMapper;
 import com.medtech.application.dto.mapper.PatientMapper;
@@ -101,10 +102,18 @@ public class PatientController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('PATIENT')")
+    @PreAuthorize("hasAnyRole('PATIENT', 'ADMIN')")
     @Operation(summary = "Update patient demographics (self) or any (admin)")
     public ResponseEntity<PatientResponse> update(@PathVariable Long id,
                                                   @Valid @RequestBody UpdatePatientRequest request) {
+        if (SecurityUtils.hasRole("PATIENT")) {
+            Long userId = SecurityUtils.currentUserId()
+                    .orElseThrow(() -> new AuthorizationException("Authentication required"));
+            Patient owned = patientService.getByUserId(userId);
+            if (!owned.getId().equals(id)) {
+                throw new AuthorizationException("Patients may only update their own profile");
+            }
+        }
         return ResponseEntity.ok(patientMapper.toResponse(patientService.update(id, request)));
     }
 

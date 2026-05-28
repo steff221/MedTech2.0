@@ -76,6 +76,42 @@ public class StatsService {
                         ((Number) r[1]).longValue()))
                 .toList();
 
+        @SuppressWarnings("unchecked")
+        List<Object[]> apptDayRows = em.createNativeQuery("""
+                SELECT d::date, COALESCE(c.count, 0)
+                FROM generate_series(CAST(:from AS date), CAST(:to AS date), '1 day') AS d
+                LEFT JOIN (
+                    SELECT appointment_date, COUNT(*) AS count
+                    FROM appointments
+                    WHERE appointment_date >= CAST(:from AS date)
+                    GROUP BY appointment_date
+                ) c ON c.appointment_date = d
+                ORDER BY d
+                """)
+                .setParameter("from", Date.valueOf(weekAgo))
+                .setParameter("to", Date.valueOf(today))
+                .getResultList();
+        List<DayCount> apptByDay = apptDayRows.stream()
+                .map(r -> new DayCount(
+                        ((Date) r[0]).toLocalDate(),
+                        ((Number) r[1]).longValue()))
+                .toList();
+
+        @SuppressWarnings("unchecked")
+        List<Object[]> specRows = em.createNativeQuery("""
+                SELECT d.specialization, COUNT(d.id)
+                FROM doctors d
+                WHERE d.status = 'ACTIVE'
+                GROUP BY d.specialization
+                ORDER BY COUNT(d.id) DESC
+                LIMIT 6
+                """).getResultList();
+        List<StatsOverviewResponse.SpecCount> topSpecs = specRows.stream()
+                .map(r -> new StatsOverviewResponse.SpecCount(
+                        (String) r[0],
+                        ((Number) r[1]).longValue()))
+                .toList();
+
         return StatsOverviewResponse.builder()
                 .date(today)
                 .prescriptionsToday(prescriptionsToday)
@@ -84,6 +120,8 @@ public class StatsService {
                 .activeDoctors(activeDoctors)
                 .appointmentsByHospital(byHospital)
                 .prescriptionsByDay(byDay)
+                .appointmentsByDay(apptByDay)
+                .topSpecializations(topSpecs)
                 .build();
     }
 

@@ -20,7 +20,7 @@ import {
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { format, addDays, startOfDay, getDay } from "date-fns";
+import { format, addDays, startOfDay, getDay, parseISO } from "date-fns";
 import { mk as mkLocale } from "date-fns/locale";
 import { Button } from "@/components/common/Button";
 import { Modal } from "@/components/common/Modal";
@@ -38,6 +38,7 @@ interface BookAppointmentWizardProps {
   open: boolean;
   onClose: () => void;
   patientId: number;
+  initialDoctor?: DoctorResponse;
 }
 
 // ── Specialties ───────────────────────────────────────────────────────────────
@@ -91,10 +92,10 @@ function jsToIso(jsDay: number): number {
 }
 
 // ── Wizard ────────────────────────────────────────────────────────────────────
-export function BookAppointmentWizard({ open, onClose, patientId }: BookAppointmentWizardProps) {
-  const [step, setStep]                   = useState<1 | 2 | 3 | 4>(1);
-  const [specialty, setSpecialty]         = useState<string | null>(null);
-  const [doctor, setDoctor]               = useState<DoctorResponse | null>(null);
+export function BookAppointmentWizard({ open, onClose, patientId, initialDoctor }: BookAppointmentWizardProps) {
+  const [step, setStep]                   = useState<1 | 2 | 3 | 4>(initialDoctor ? 3 : 1);
+  const [specialty, setSpecialty]         = useState<string | null>(initialDoctor?.specialization ?? null);
+  const [doctor, setDoctor]               = useState<DoctorResponse | null>(initialDoctor ?? null);
   const [date, setDate]                   = useState<string | null>(null);
   const [time, setTime]                   = useState<string | null>(null);
   const [appointmentType, setAppointmentType] = useState<AppointmentType>("CONSULTATION");
@@ -105,7 +106,7 @@ export function BookAppointmentWizard({ open, onClose, patientId }: BookAppointm
   const qc = useQueryClient();
 
   const dateOptions = useMemo(
-    () => Array.from({ length: 14 }, (_, i) => addDays(startOfDay(new Date()), i)),
+    () => Array.from({ length: 14 }, (_, i) => addDays(startOfDay(new Date()), i + 1)),
     [],
   );
 
@@ -133,7 +134,7 @@ export function BookAppointmentWizard({ open, onClose, patientId }: BookAppointm
   // Compute available time slots for the selected date
   const availableSlots = useMemo(() => {
     if (!date || !availQuery.data) return null;
-    const jsDay = getDay(new Date(date));
+    const jsDay = getDay(parseISO(date)); // parseISO treats "yyyy-MM-dd" as local date, avoiding UTC midnight off-by-one
     const slot = availQuery.data.find((s) => s.dayOfWeek === jsToIso(jsDay) && s.active);
     if (!slot) return [];
     const all = generateSlots(slot.startTime, slot.endTime);
@@ -168,9 +169,9 @@ export function BookAppointmentWizard({ open, onClose, patientId }: BookAppointm
   });
 
   const reset = () => {
-    setStep(1);
-    setSpecialty(null);
-    setDoctor(null);
+    setStep(initialDoctor ? 3 : 1);
+    setSpecialty(initialDoctor?.specialization ?? null);
+    setDoctor(initialDoctor ?? null);
     setDate(null);
     setTime(null);
     setReason("");
@@ -364,7 +365,6 @@ export function BookAppointmentWizard({ open, onClose, patientId }: BookAppointm
                   {dateOptions.map((d) => {
                     const value = format(d, "yyyy-MM-dd");
                     const selected = date === value;
-                    const isToday = value === format(new Date(), "yyyy-MM-dd");
                     return (
                       <button
                         key={value}
@@ -378,7 +378,7 @@ export function BookAppointmentWizard({ open, onClose, patientId }: BookAppointm
                         )}
                       >
                         <span className="text-[10px] font-bold uppercase tracking-wide">
-                          {isToday ? "Денес" : format(d, "EEE", { locale: mkLocale })}
+                          {format(d, "EEE", { locale: mkLocale })}
                         </span>
                         <span className="text-lg font-bold leading-tight">{format(d, "d")}</span>
                         <span className="text-[10px] opacity-80">{format(d, "MMM", { locale: mkLocale })}</span>

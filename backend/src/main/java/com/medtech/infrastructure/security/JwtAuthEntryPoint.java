@@ -18,6 +18,7 @@ import java.time.Instant;
 /**
  * Returns a structured 401 JSON body when an unauthenticated request hits a
  * protected endpoint (instead of Spring's default empty 403).
+ * 
  */
 @Component
 @RequiredArgsConstructor

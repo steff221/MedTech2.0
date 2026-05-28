@@ -16,8 +16,11 @@ public record StatsOverviewResponse(
         long activePatients,
         long activeDoctors,
         List<HospitalCount> appointmentsByHospital,
-        List<DayCount> prescriptionsByDay
+        List<DayCount> prescriptionsByDay,
+        List<DayCount> appointmentsByDay,
+        List<SpecCount> topSpecializations
 ) {
     public record HospitalCount(String hospital, String city, long count) {}
     public record DayCount(LocalDate day, long count) {}
+    public record SpecCount(String specialization, long count) {}
 }

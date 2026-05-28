@@ -6,6 +6,7 @@ import com.medtech.application.dto.request.UpdateOperationStatusRequest;
 import com.medtech.application.dto.response.OperationResponse;
 import com.medtech.application.service.OperationService;
 import com.medtech.infrastructure.exception.AuthorizationException;
+import com.medtech.infrastructure.security.PatientAccessGuard;
 import com.medtech.infrastructure.security.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,6 +33,7 @@ public class OperationController {
 
     private final OperationService operationService;
     private final OperationMapper mapper;
+    private final PatientAccessGuard accessGuard;
 
     @PostMapping
     @PreAuthorize("hasAnyRole('DOCTOR')")
@@ -69,6 +71,7 @@ public class OperationController {
     @GetMapping("/patient/{patientId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<OperationResponse>> history(@PathVariable Long patientId, Pageable pageable) {
+        accessGuard.assertCanAccessPatient(patientId);
         return ResponseEntity.ok(operationService.historyOf(patientId, pageable).map(mapper::toResponse));
     }
 }

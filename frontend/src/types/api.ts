@@ -283,6 +283,8 @@ export interface StatsOverviewResponse {
   activeDoctors: number;
   appointmentsByHospital: Array<{ hospital: string; city: string; count: number }>;
   prescriptionsByDay: Array<{ day: string; count: number }>;
+  appointmentsByDay: Array<{ day: string; count: number }>;
+  topSpecializations: Array<{ specialization: string; count: number }>;
 }
 
 export type AuditAction = "INSERT" | "UPDATE" | "DELETE" | "VIEW" | "LOGIN" | "LOGOUT";
