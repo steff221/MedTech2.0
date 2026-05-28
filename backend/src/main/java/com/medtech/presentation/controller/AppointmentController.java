@@ -102,6 +102,8 @@ public class AppointmentController {
     @Operation(summary = "Move an appointment to a new date / time")
     public ResponseEntity<AppointmentResponse> reschedule(@PathVariable Long id,
                                                           @Valid @RequestBody RescheduleAppointmentRequest request) {
+        Appointment appt = appointmentService.getById(id);
+        assertCanActOnAppointment(appt);
         return ResponseEntity.ok(mapper.toResponse(appointmentService.reschedule(id, request)));
     }
 
@@ -109,6 +111,12 @@ public class AppointmentController {
     @PreAuthorize("hasRole('DOCTOR')")
     @Operation(summary = "Doctor marks an appointment COMPLETED")
     public ResponseEntity<AppointmentResponse> complete(@PathVariable Long id) {
+        Appointment appt = appointmentService.getById(id);
+        Long currentUserId = SecurityUtils.currentUserId()
+                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+        if (!appt.getDoctor().getUser().getId().equals(currentUserId)) {
+            throw new AuthorizationException("You are not the assigned doctor for this appointment");
+        }
         return ResponseEntity.ok(mapper.toResponse(appointmentService.complete(id)));
     }
 
@@ -117,6 +125,12 @@ public class AppointmentController {
     @Operation(summary = "Doctor sets or updates the video call URL for a virtual appointment")
     public ResponseEntity<AppointmentResponse> setVideoUrl(@PathVariable Long id,
                                                            @Valid @RequestBody SetVideoUrlRequest request) {
+        Appointment appt = appointmentService.getById(id);
+        Long currentUserId = SecurityUtils.currentUserId()
+                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+        if (!appt.getDoctor().getUser().getId().equals(currentUserId)) {
+            throw new AuthorizationException("You are not the assigned doctor for this appointment");
+        }
         return ResponseEntity.ok(mapper.toResponse(appointmentService.setVideoCallUrl(id, request.videoCallUrl())));
     }
 
@@ -130,6 +144,17 @@ public class AppointmentController {
         String actor = SecurityUtils.currentUserId().map(uid -> "user:" + uid).orElse("SYSTEM");
         CancelAppointmentRequest body = request != null ? request : new CancelAppointmentRequest(null);
         return ResponseEntity.ok(mapper.toResponse(appointmentService.cancel(id, body, actor)));
+    }
+
+    private void assertCanActOnAppointment(Appointment appt) {
+        if (SecurityUtils.hasRole("ADMIN") || SecurityUtils.hasRole("NURSE")) return;
+        Long currentUserId = SecurityUtils.currentUserId()
+                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+        boolean isPatient = appt.getPatient().getUser().getId().equals(currentUserId);
+        boolean isDoctor  = appt.getDoctor().getUser().getId().equals(currentUserId);
+        if (!isPatient && !isDoctor) {
+            throw new AuthorizationException("You are not authorized to modify this appointment");
+        }
     }
 
     private void assertCanCancelAppointment(Appointment appt) {

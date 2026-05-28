@@ -61,6 +61,9 @@ export function SickLeaveModal({ open, onClose, patientName, patientDob }: SickL
     return diff > 0 ? diff : 1;
   };
 
+  const esc = (s: string | null | undefined) =>
+    (s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
   const onSubmit = (data: FormData) => {
     const doctorName = user ? `д-р ${user.firstName} ${user.lastName}` : "Доктор";
     const fromFmt = data.fromDate.split("-").reverse().join(".");
@@ -74,7 +77,7 @@ export function SickLeaveModal({ open, onClose, patientName, patientDob }: SickL
       return;
     }
 
-    win.document.write(`<!DOCTYPE html><html><head><title>Болничко — ${patientName}</title>
+    win.document.write(`<!DOCTYPE html><html><head><title>Болничко — ${esc(patientName)}</title>
 <style>
   body { font-family: Arial, sans-serif; padding: 48px; color: #1e293b; max-width: 700px; margin: auto; }
   .top { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #10b981; padding-bottom: 16px; margin-bottom: 32px; }
@@ -98,12 +101,12 @@ export function SickLeaveModal({ open, onClose, patientName, patientDob }: SickL
 </div>
 <h1>Потврда за привремена спреченост за работа</h1>
 <div class="grid">
-  <div><div class="lbl">Пациент</div><div class="val">${patientName}</div></div>
+  <div><div class="lbl">Пациент</div><div class="val">${esc(patientName)}</div></div>
   <div><div class="lbl">Датум на раѓање</div><div class="val">${patientDob ? patientDob.split("-").reverse().join(".") : "—"}</div></div>
   <div><div class="lbl">Период на боледување</div><div class="val">${fromFmt} — ${toFmt} <span class="days-chip">${days} ${days === 1 ? "ден" : "дена"}</span></div></div>
-  <div><div class="lbl">Лекар</div><div class="val">${doctorName}</div></div>
-  <div class="full"><div class="lbl">Дијагноза / причина${mkb10Code ? ` (${mkb10Code})` : ""}</div><div class="val">${data.reason}</div></div>
-  ${data.notes ? `<div class="full"><div class="lbl">Напомена за работодавач</div><div class="val">${data.notes}</div></div>` : ""}
+  <div><div class="lbl">Лекар</div><div class="val">${esc(doctorName)}</div></div>
+  <div class="full"><div class="lbl">Дијагноза / причина${mkb10Code ? ` (${esc(mkb10Code)})` : ""}</div><div class="val">${esc(data.reason)}</div></div>
+  ${data.notes ? `<div class="full"><div class="lbl">Напомена за работодавач</div><div class="val">${esc(data.notes)}</div></div>` : ""}
 </div>
 <div class="sigs">
   <div class="sig"><div class="sig-line"></div><div class="sig-lbl">Потпис на пациентот</div></div>
@@ -111,7 +114,7 @@ export function SickLeaveModal({ open, onClose, patientName, patientDob }: SickL
 </div>
 <div class="footer">
   <span>Издадено преку MedTech платформата</span>
-  <span>Потврда за боледување · ${patientName}</span>
+  <span>Потврда за боледување · ${esc(patientName)}</span>
 </div>
 <script>window.onload = () => { window.print(); window.close(); }</script>
 </body></html>`);

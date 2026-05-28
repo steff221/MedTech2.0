@@ -56,7 +56,9 @@ public class OperationController {
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<OperationResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(mapper.toResponse(operationService.getById(id)));
+        var operation = operationService.getById(id);
+        accessGuard.assertCanAccessPatient(operation.getPatient().getId());
+        return ResponseEntity.ok(mapper.toResponse(operation));
     }
 
     @GetMapping
