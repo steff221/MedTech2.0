@@ -194,7 +194,7 @@ export function PatientDetailDrawer({
                       <h2 className="text-lg font-semibold text-slate-900">{patientName}</h2>
                       {patient && (
                         <p className="text-sm text-slate-500">
-                          {ageYears ?? "?"} год · {patient.gender ?? "?"} · <BloodTypeBadge value={patient.bloodType} />
+                          {ageYears ?? "?"} {t.doctorDrawer.ageUnit} · {patient.gender ?? "?"} · <BloodTypeBadge value={patient.bloodType} />
                         </p>
                       )}
                     </div>
@@ -215,7 +215,7 @@ export function PatientDetailDrawer({
                     <Plus className="h-3.5 w-3.5" /> {t.doctorDrawer.addRecord}
                   </Button>
                   <Button size="sm" variant="secondary" onClick={() => setRxOpen(true)} disabled={!patientId}>
-                    <Pill className="h-3.5 w-3.5" /> + Рецепт
+                    <Pill className="h-3.5 w-3.5" /> + {t.doctorDrawer.addPrescription}
                   </Button>
                   <Button
                     size="sm"

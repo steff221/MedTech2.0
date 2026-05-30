@@ -3,12 +3,23 @@
 import { Bell, Calendar, LayoutDashboard, Stethoscope, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { useT } from "@/hooks/useT";
+import { useAuth } from "@/hooks/useAuth";
+import { notificationService } from "@/services/notification.service";
 import { cn } from "@/utils/cn";
 
 export function MobilePatientNav() {
   const pathname = usePathname();
   const t = useT();
+  const { user } = useAuth();
+
+  const { data: unreadCount = 0 } = useQuery({
+    queryKey: ["notifications-unread"],
+    queryFn: notificationService.unreadCount,
+    refetchInterval: 60_000,
+    enabled: !!user,
+  });
 
   const items = [
     { href: "/dashboard",      icon: LayoutDashboard, label: t.nav.dashboard     },
@@ -32,7 +43,14 @@ export function MobilePatientNav() {
                 active ? "text-brand-600" : "text-slate-400 hover:text-slate-700",
               )}
             >
-              <item.icon className={cn("h-5 w-5", active && "text-brand-600")} />
+              <span className="relative">
+                <item.icon className={cn("h-5 w-5", active && "text-brand-600")} />
+                {item.href === "/notifications" && unreadCount > 0 && (
+                  <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-0.5 text-[9px] font-bold text-white leading-none">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </span>
               <span className="truncate">{item.label}</span>
               {active && (
                 <span className="absolute top-0 left-1/2 h-0.5 w-8 -translate-x-1/2 rounded-full bg-brand-500" />

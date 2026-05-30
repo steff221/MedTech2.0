@@ -38,6 +38,7 @@ function greet(t: ReturnType<typeof import("@/hooks/useT").useT>): string {
 
 // ── Next appointment countdown card ──────────────────────────────────────────
 function NextAppointmentCard({ appt }: { appt: AppointmentResponse }) {
+  const t = useT();
   const days = differenceInDays(
     parseISO(appt.appointmentDate),
     new Date(),
@@ -46,10 +47,10 @@ function NextAppointmentCard({ appt }: { appt: AppointmentResponse }) {
   const isTomorrow = days === 1;
 
   const dayLabel = isToday
-    ? "Денес"
+    ? t.dashboard.today
     : isTomorrow
-    ? "Утре"
-    : `За ${days} дена`;
+    ? t.dashboard.tomorrow
+    : `${t.dashboard.inDays} ${days} ${t.dashboard.days}`;
 
   return (
     <motion.div
@@ -70,7 +71,7 @@ function NextAppointmentCard({ appt }: { appt: AppointmentResponse }) {
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-white/60">
-            Следен термин
+            {t.dashboard.nextAppt}
           </p>
           <p className="mt-2 text-3xl font-bold">{dayLabel}</p>
           <p className="mt-1 text-lg font-semibold text-white/90">
@@ -102,7 +103,7 @@ function NextAppointmentCard({ appt }: { appt: AppointmentResponse }) {
         href="/appointments"
         className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-white/70 hover:text-white transition-colors"
       >
-        Сите термини <ChevronRight className="h-3.5 w-3.5" />
+        {t.dashboard.allAppts} <ChevronRight className="h-3.5 w-3.5" />
       </Link>
     </motion.div>
   );
@@ -341,36 +342,36 @@ export default function DashboardPage() {
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <StatCard
                 icon={Calendar}
-                label="Термини"
+                label={t.dashboard.statAppointments}
                 value={upcoming.length}
-                sub="Закажани"
+                sub={t.dashboard.statScheduled}
                 href="/appointments"
                 color="bg-sky-500"
                 delay={0.12}
               />
               <StatCard
                 icon={Pill}
-                label="Рецепти"
+                label={t.dashboard.statPrescriptions}
                 value={activePrescriptions.length}
-                sub="Активни"
+                sub={t.dashboard.statActive}
                 href="/prescriptions"
                 color="bg-violet-500"
                 delay={0.16}
               />
               <StatCard
                 icon={ClipboardList}
-                label="Упати"
+                label={t.dashboard.statReferrals}
                 value={activeReferrals.length}
-                sub="Активни"
+                sub={t.dashboard.statActive}
                 href="/referrals"
                 color="bg-amber-500"
                 delay={0.2}
               />
               <StatCard
                 icon={FileText}
-                label="Записи"
+                label={t.dashboard.statRecords}
                 value={records.data?.totalElements ?? "—"}
-                sub="Вкупно"
+                sub={t.dashboard.statTotal}
                 href="/health-records"
                 color="bg-emerald-500"
                 delay={0.24}
@@ -390,7 +391,7 @@ export default function DashboardPage() {
                     {t.dashboard.upcomingTitle}
                   </h2>
                   <Link href="/appointments" className="text-xs font-medium text-brand-600 hover:text-brand-700">
-                    Сите →
+                    {t.dashboard.allAppts}
                   </Link>
                 </div>
                 <ul className="divide-y divide-slate-50">
@@ -407,7 +408,7 @@ export default function DashboardPage() {
                         </p>
                       </div>
                       <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
-                        Закажан
+                        {t.dashboard.scheduledBadge}
                       </span>
                     </li>
                   ))}
@@ -425,14 +426,14 @@ export default function DashboardPage() {
               transition={{ duration: 0.4, delay: 0.15 }}
               className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm"
             >
-              <h2 className="mb-4 text-sm font-semibold text-slate-800">Брзи акции</h2>
+              <h2 className="mb-4 text-sm font-semibold text-slate-800">{t.dashboard.quickActions}</h2>
               <div className="space-y-2">
                 {[
-                  { href: "/appointments", label: "Закажи термин", icon: Calendar, color: "text-sky-600 bg-sky-50" },
-                  { href: "/health-records", label: "Здравствен досие", icon: Activity, color: "text-emerald-600 bg-emerald-50" },
-                  { href: "/prescriptions", label: "Моите рецепти", icon: Pill, color: "text-violet-600 bg-violet-50" },
-                  { href: "/doctors", label: "Најди лекар", icon: Stethoscope, color: "text-amber-600 bg-amber-50" },
-                  { href: "/referrals", label: "Моите упати", icon: ClipboardList, color: "text-rose-600 bg-rose-50" },
+                  { href: "/appointments",   label: t.dashboard.actionBook,           icon: Calendar,     color: "text-sky-600 bg-sky-50" },
+                  { href: "/health-records", label: t.dashboard.actionHealthRecords,   icon: Activity,     color: "text-emerald-600 bg-emerald-50" },
+                  { href: "/prescriptions",  label: t.dashboard.actionPrescriptions,   icon: Pill,         color: "text-violet-600 bg-violet-50" },
+                  { href: "/doctors",        label: t.dashboard.actionFindDoctor,      icon: Stethoscope,  color: "text-amber-600 bg-amber-50" },
+                  { href: "/referrals",      label: t.dashboard.actionReferrals,       icon: ClipboardList,color: "text-rose-600 bg-rose-50" },
                 ].map(({ href, label, icon: Icon, color }) => (
                   <Link
                     key={href}

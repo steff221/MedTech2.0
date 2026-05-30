@@ -12,24 +12,10 @@ import { Skeleton } from "@/components/common/Skeleton";
 import { cn } from "@/utils/cn";
 import { referralService } from "@/services/referral.service";
 import { usePatientProfile } from "@/hooks/usePatient";
+import { useT } from "@/hooks/useT";
 import type { ReferralResponse, ReferralStatus, ReferralType } from "@/types/api";
 
 type Filter = "ALL" | ReferralStatus;
-
-const FILTERS: { key: Filter; label: string }[] = [
-  { key: "ALL",       label: "Сите"      },
-  { key: "ACTIVE",    label: "Активни"   },
-  { key: "COMPLETED", label: "Завршени"  },
-  { key: "CANCELLED", label: "Откажани"  },
-];
-
-const TYPE_LABELS: Record<ReferralType, string> = {
-  GENERAL_MEDICINE: "Општа медицина",
-  SPECIALIST:       "Специјалист",
-  LABORATORY:       "Лабораторија",
-  DIAGNOSTICS:      "Дијагностика",
-  HOSPITAL:         "Болница",
-};
 
 function statusTone(s: ReferralStatus) {
   if (s === "ACTIVE")    return "info"    as const;
@@ -37,15 +23,18 @@ function statusTone(s: ReferralStatus) {
   return "neutral" as const;
 }
 
-function statusLabel(s: ReferralStatus) {
-  if (s === "ACTIVE")    return "Активен";
-  if (s === "COMPLETED") return "Завршен";
-  return "Откажан";
-}
-
 export default function PatientReferralsPage() {
   const profile = usePatientProfile();
+  const t = useT();
+  const rt = t.patientReferrals;
   const [filter, setFilter] = useState<Filter>("ALL");
+
+  const FILTERS: { key: Filter; label: string }[] = [
+    { key: "ALL",       label: rt.filterAll      },
+    { key: "ACTIVE",    label: rt.filterActive   },
+    { key: "COMPLETED", label: rt.filterDone     },
+    { key: "CANCELLED", label: rt.filterCancelled },
+  ];
 
   const referrals = useQuery({
     queryKey: ["patient", profile.data?.id, "referrals"],
@@ -73,13 +62,10 @@ export default function PatientReferralsPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
       >
-        <h1 className="text-3xl font-bold text-slate-900">Упати</h1>
-        <p className="mt-1 text-slate-500">
-          Медицински упати издадени од вашиот лекар.
-        </p>
+        <h1 className="text-3xl font-bold text-slate-900">{rt.title}</h1>
+        <p className="mt-1 text-slate-500">{rt.subtitle}</p>
       </motion.div>
 
-      {/* Filter tabs */}
       <Card>
         <div className="flex flex-wrap gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
           {FILTERS.map((f) => {
@@ -116,15 +102,12 @@ export default function PatientReferralsPage() {
           {[0, 1, 2].map((i) => <Skeleton key={i} className="h-40" />)}
         </div>
       ) : !profile.data ? (
-        <EmptyState
-          title="Профилот не е поставен"
-          description="Пополни го пациентскиот профил за да ги видиш упатите."
-        />
+        <EmptyState title={rt.noProfile} description={rt.noProfileDesc} />
       ) : filtered.length === 0 ? (
         <EmptyState
           icon={ClipboardList}
-          title={filter === "ACTIVE" ? "Нема активни упати" : "Нема упати"}
-          description="Кога лекар ќе издаде упат, ќе се прикаже овде."
+          title={filter === "ACTIVE" ? rt.noActive : rt.noReferrals}
+          description={rt.noReferralsDesc}
         />
       ) : (
         <motion.div
@@ -137,8 +120,8 @@ export default function PatientReferralsPage() {
             <motion.div
               key={r.id}
               variants={{
-                hidden:   { opacity: 0, y: 10 },
-                visible:  { opacity: 1, y: 0, transition: { duration: 0.3 } },
+                hidden:  { opacity: 0, y: 10 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
               }}
             >
               <ReferralCard referral={r} />
@@ -151,6 +134,23 @@ export default function PatientReferralsPage() {
 }
 
 function ReferralCard({ referral: r }: { referral: ReferralResponse }) {
+  const t = useT();
+  const rt = t.patientReferrals;
+
+  const TYPE_LABELS: Record<ReferralType, string> = {
+    GENERAL_MEDICINE: rt.typeGeneral,
+    SPECIALIST:       rt.typeSpecialist,
+    LABORATORY:       rt.typeLab,
+    DIAGNOSTICS:      rt.typeDiag,
+    HOSPITAL:         rt.typeHospital,
+  };
+
+  const STATUS_LABELS: Record<ReferralStatus, string> = {
+    ACTIVE:    rt.statusActive,
+    COMPLETED: rt.statusDone,
+    CANCELLED: rt.statusCancelled,
+  };
+
   const isActive    = r.status === "ACTIVE";
   const isCompleted = r.status === "COMPLETED";
 
@@ -162,11 +162,10 @@ function ReferralCard({ referral: r }: { referral: ReferralResponse }) {
       )}
     >
       <div className="flex items-start gap-4">
-        {/* Icon */}
         <div
           className={cn(
             "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl",
-            isActive    ? "bg-blue-100 text-blue-700"    :
+            isActive    ? "bg-blue-100 text-blue-700" :
             isCompleted ? "bg-emerald-100 text-emerald-700" :
             "bg-slate-100 text-slate-500",
           )}
@@ -175,40 +174,36 @@ function ReferralCard({ referral: r }: { referral: ReferralResponse }) {
         </div>
 
         <div className="min-w-0 flex-1">
-          {/* Header row */}
           <div className="flex flex-wrap items-baseline gap-2">
             <h3 className="text-lg font-bold text-slate-900">{r.referredTo}</h3>
-            <Badge tone={statusTone(r.status)}>{statusLabel(r.status)}</Badge>
+            <Badge tone={statusTone(r.status)}>{STATUS_LABELS[r.status]}</Badge>
             <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
               {TYPE_LABELS[r.referralType] ?? r.referralType}
             </span>
           </div>
 
-          {/* Referral number + doctor */}
           <p className="mt-0.5 text-sm text-slate-500">
             <span className="font-mono text-xs">{r.referralNumber}</span>
             {r.doctorName && <> · Dr. {r.doctorName}</>}
           </p>
 
-          {/* Key dates */}
           <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-600">
             <span className="flex items-center gap-1.5">
               <Calendar className="h-4 w-4 text-slate-400" />
-              Издаден: {format(parseISO(r.createdAt), "d MMM yyyy")}
+              {rt.issuedOn} {format(parseISO(r.createdAt), "d MMM yyyy")}
             </span>
             <span className="flex items-center gap-1.5">
               <Clock className="h-4 w-4 text-slate-400" />
-              Закажан за: {format(parseISO(r.scheduledDate), "d MMM yyyy")}
+              {rt.scheduledFor} {format(parseISO(r.scheduledDate), "d MMM yyyy")}
             </span>
             {r.mkb10Code && (
               <span className="flex items-center gap-1.5">
                 <FileText className="h-4 w-4 text-slate-400" />
-                МКБ10: <span className="font-mono">{r.mkb10Code}</span>
+                {rt.icd10} <span className="font-mono">{r.mkb10Code}</span>
               </span>
             )}
           </div>
 
-          {/* Description */}
           {r.description && r.description !== "—" && (
             <p className="mt-2 flex items-start gap-1.5 text-sm text-slate-600">
               <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
@@ -216,11 +211,10 @@ function ReferralCard({ referral: r }: { referral: ReferralResponse }) {
             </p>
           )}
 
-          {/* Outcome (completed referrals) */}
           {isCompleted && r.outcomeNote && (
             <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
               <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wide">
-                Наод · {r.outcomeDate ? format(parseISO(r.outcomeDate), "d MMM yyyy") : ""}
+                {rt.outcome} · {r.outcomeDate ? format(parseISO(r.outcomeDate), "d MMM yyyy") : ""}
               </p>
               <p className="mt-1 text-sm text-emerald-900">{r.outcomeNote}</p>
             </div>

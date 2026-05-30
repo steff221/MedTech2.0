@@ -32,6 +32,12 @@ export function AppointmentCard({ appointment }: AppointmentCardProps) {
   const isCompleted = appointment.status === "COMPLETED";
   const canRate = isCompleted && appointment.ratingId == null;
 
+  const accentColor =
+    appointment.status === "COMPLETED" ? "bg-emerald-500" :
+    appointment.status === "CANCELLED" ? "bg-rose-400" :
+    appointment.status === "NO_SHOW"   ? "bg-slate-400" :
+    "bg-amber-400";
+
   const cancelMutation = useMutation({
     mutationFn: () => appointmentService.cancel(appointment.id, "Cancelled by patient"),
     onSuccess: () => {
@@ -55,7 +61,7 @@ export function AppointmentCard({ appointment }: AppointmentCardProps) {
       className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card"
     >
       {/* Left accent bar */}
-      <div className="absolute inset-y-0 left-0 w-1 rounded-l-2xl bg-brand-500" />
+      <div className={`absolute inset-y-0 left-0 w-1 rounded-l-2xl ${accentColor}`} />
 
       <button
         type="button"
@@ -123,7 +129,7 @@ export function AppointmentCard({ appointment }: AppointmentCardProps) {
                   className="mb-3 flex items-center gap-2 rounded-lg bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors w-fit"
                 >
                   <Video className="h-4 w-4" />
-                  Приклучи се на видео-повик
+                  {t.appointments.joinVideoCall}
                 </a>
               )}
               {/* Rating section for completed appointments */}
@@ -136,7 +142,7 @@ export function AppointmentCard({ appointment }: AppointmentCardProps) {
                       className="flex items-center gap-2 text-sm font-medium text-brand-600 hover:text-brand-700 transition-colors"
                     >
                       <Star className="h-4 w-4" />
-                      Rate this visit
+                      {t.appointments.rateVisit}
                     </button>
                   ) : (
                     <div className="flex items-center gap-2">
@@ -167,7 +173,7 @@ export function AppointmentCard({ appointment }: AppointmentCardProps) {
                   href={`/appointments/${appointment.id}`}
                   className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50 transition-colors"
                 >
-                  Детали <ArrowRight className="h-3 w-3" />
+                  {t.appointments.details} <ArrowRight className="h-3 w-3" />
                 </Link>
               </div>
             </div>

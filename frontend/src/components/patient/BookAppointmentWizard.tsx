@@ -30,6 +30,7 @@ import { extractErrorMessage } from "@/services/api";
 import { doctorService } from "@/services/doctor.service";
 import { appointmentService } from "@/services/appointment.service";
 import { availabilityService } from "@/services/availability.service";
+import { useT } from "@/hooks/useT";
 import { cn } from "@/utils/cn";
 import { initials } from "@/utils/format";
 import type { AppointmentType, DoctorResponse } from "@/types/api";
@@ -41,34 +42,28 @@ interface BookAppointmentWizardProps {
   initialDoctor?: DoctorResponse;
 }
 
-// ── Specialties ───────────────────────────────────────────────────────────────
-const SPECIALTIES: { value: string; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-  { value: "Cardiology",       label: "Кардиологија",       icon: Heart       },
-  { value: "Dermatology",      label: "Дерматологија",      icon: Activity    },
-  { value: "Family Medicine",  label: "Општа медицина",     icon: Stethoscope },
-  { value: "Internal Medicine",label: "Интерна медицина",   icon: Syringe     },
-  { value: "Neurology",        label: "Неурологија",        icon: Brain       },
-  { value: "Pediatrics",       label: "Педијатрија",        icon: Baby        },
-  { value: "Orthopedics",      label: "Ортопедија",         icon: Activity    },
-  { value: "Psychiatry",       label: "Психијатрија",       icon: Smile       },
-  { value: "Ophthalmology",    label: "Офталмологија",      icon: Eye         },
-  { value: "Pulmonology",      label: "Пулмологија",        icon: Wind        },
-];
-
-const APPOINTMENT_TYPES: { value: AppointmentType; label: string }[] = [
-  { value: "CONSULTATION", label: "Консултација"  },
-  { value: "FOLLOW_UP",    label: "Контрола"      },
-  { value: "PROCEDURE",    label: "Процедура"     },
-  { value: "CHECKUP",      label: "Систематски"   },
-  { value: "VIRTUAL",      label: "Виртуелен"     },
-];
-
-const STEP_TITLES: Record<1 | 2 | 3 | 4, string> = {
-  1: "Изберете специјалност",
-  2: "Изберете доктор",
-  3: "Датум и термин",
-  4: "Потврда на закажување",
+// ── Specialties (icons only — labels come from translations) ──────────────
+const SPECIALTY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  "Cardiology":        Heart,
+  "Dermatology":       Activity,
+  "Family Medicine":   Stethoscope,
+  "Internal Medicine": Syringe,
+  "Neurology":         Brain,
+  "Pediatrics":        Baby,
+  "Orthopedics":       Activity,
+  "Psychiatry":        Smile,
+  "Ophthalmology":     Eye,
+  "Pulmonology":       Wind,
 };
+
+const SPECIALTY_VALUES = [
+  "Cardiology", "Dermatology", "Family Medicine", "Internal Medicine",
+  "Neurology", "Pediatrics", "Orthopedics", "Psychiatry", "Ophthalmology", "Pulmonology",
+];
+
+const APPOINTMENT_TYPE_VALUES: AppointmentType[] = [
+  "CONSULTATION", "FOLLOW_UP", "PROCEDURE", "CHECKUP", "VIRTUAL",
+];
 
 // ── Slot generation ───────────────────────────────────────────────────────────
 function generateSlots(startTime: string, endTime: string, interval = 30): string[] {
@@ -86,13 +81,15 @@ function generateSlots(startTime: string, endTime: string, interval = 30): strin
   return slots;
 }
 
-// js getDay() returns 0=Sun; ISO: 1=Mon…7=Sun
 function jsToIso(jsDay: number): number {
   return jsDay === 0 ? 7 : jsDay;
 }
 
 // ── Wizard ────────────────────────────────────────────────────────────────────
 export function BookAppointmentWizard({ open, onClose, patientId, initialDoctor }: BookAppointmentWizardProps) {
+  const t = useT();
+  const wt = t.bookingWizard;
+
   const [step, setStep]                   = useState<1 | 2 | 3 | 4>(initialDoctor ? 3 : 1);
   const [specialty, setSpecialty]         = useState<string | null>(initialDoctor?.specialization ?? null);
   const [doctor, setDoctor]               = useState<DoctorResponse | null>(initialDoctor ?? null);
@@ -105,36 +102,39 @@ export function BookAppointmentWizard({ open, onClose, patientId, initialDoctor 
 
   const qc = useQueryClient();
 
+  const stepTitles: Record<1 | 2 | 3 | 4, string> = {
+    1: wt.step1Title,
+    2: wt.step2Title,
+    3: wt.step3Title,
+    4: wt.step4Title,
+  };
+
   const dateOptions = useMemo(
     () => Array.from({ length: 14 }, (_, i) => addDays(startOfDay(new Date()), i + 1)),
     [],
   );
 
-  // Step 2 — doctors for selected specialty
   const doctorsQuery = useQuery({
     queryKey: ["doctors", { specialization: specialty }],
     queryFn: () => doctorService.search({ specialization: specialty ?? undefined, size: 50 }),
     enabled: step >= 2 && !!specialty,
   });
 
-  // Step 3 — doctor's weekly availability
   const availQuery = useQuery({
     queryKey: ["availability", doctor?.id],
     queryFn: () => availabilityService.getForDoctor(doctor!.id),
     enabled: step >= 3 && !!doctor,
   });
 
-  // Step 3 — already-booked slots on selected date
   const bookedQuery = useQuery({
     queryKey: ["appointments-on", doctor?.id, date],
     queryFn: () => doctorService.appointmentsOn(doctor!.id, date!),
     enabled: step >= 3 && !!doctor && !!date,
   });
 
-  // Compute available time slots for the selected date
   const availableSlots = useMemo(() => {
     if (!date || !availQuery.data) return null;
-    const jsDay = getDay(parseISO(date)); // parseISO treats "yyyy-MM-dd" as local date, avoiding UTC midnight off-by-one
+    const jsDay = getDay(parseISO(date));
     const slot = availQuery.data.find((s) => s.dayOfWeek === jsToIso(jsDay) && s.active);
     if (!slot) return [];
     const all = generateSlots(slot.startTime, slot.endTime);
@@ -160,7 +160,7 @@ export function BookAppointmentWizard({ open, onClose, patientId, initialDoctor 
       });
     },
     onSuccess: () => {
-      toast.success("Прегледот е успешно закажан");
+      toast.success(wt.booked);
       qc.invalidateQueries({ queryKey: ["appointments"] });
       reset();
       onClose();
@@ -188,10 +188,13 @@ export function BookAppointmentWizard({ open, onClose, patientId, initialDoctor 
     (step === 3 && !!date && !!time) ||
     step === 4;
 
-  const filteredSpecs = SPECIALTIES.filter((s) =>
-    s.label.toLowerCase().includes(specSearch.toLowerCase()) ||
-    s.value.toLowerCase().includes(specSearch.toLowerCase()),
-  );
+  const filteredSpecs = SPECIALTY_VALUES.filter((v) => {
+    const label = t.specialties[v] ?? v;
+    return (
+      label.toLowerCase().includes(specSearch.toLowerCase()) ||
+      v.toLowerCase().includes(specSearch.toLowerCase())
+    );
+  });
 
   const filteredDocs = (doctorsQuery.data?.content ?? []).filter((d) => {
     const q = docSearch.toLowerCase();
@@ -206,15 +209,15 @@ export function BookAppointmentWizard({ open, onClose, patientId, initialDoctor 
     <Modal
       open={open}
       onClose={handleClose}
-      title={STEP_TITLES[step]}
-      description={`Чекор ${step} од 4`}
+      title={stepTitles[step]}
+      description={`${wt.stepLabel} ${step} ${wt.stepOf}`}
       size="lg"
       footer={
         <>
           {step > 1 && (
             <Button variant="secondary" onClick={() => setStep((s) => (s - 1) as 1 | 2 | 3 | 4)}>
               <ChevronLeft className="h-4 w-4" />
-              Назад
+              {t.common.back}
             </Button>
           )}
           {step < 4 ? (
@@ -222,13 +225,13 @@ export function BookAppointmentWizard({ open, onClose, patientId, initialDoctor 
               onClick={() => { setStep((s) => (s + 1) as 1 | 2 | 3 | 4); }}
               disabled={!canAdvance}
             >
-              Следно
+              {t.common.next}
               <ChevronRight className="h-4 w-4" />
             </Button>
           ) : (
             <Button onClick={() => bookMutation.mutate()} loading={bookMutation.isPending}>
               <Check className="h-4 w-4" />
-              Потврди закажување
+              {wt.confirmBtn}
             </Button>
           )}
         </>
@@ -259,20 +262,22 @@ export function BookAppointmentWizard({ open, onClose, patientId, initialDoctor 
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Барај специјалност…"
+                  placeholder={wt.searchSpecialty}
                   value={specSearch}
                   onChange={(e) => setSpecSearch(e.target.value)}
                   className="w-full rounded-xl border border-slate-200 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
                 />
               </div>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {filteredSpecs.map((s) => {
-                  const selected = specialty === s.value;
+                {filteredSpecs.map((value) => {
+                  const selected = specialty === value;
+                  const Icon = SPECIALTY_ICONS[value] ?? Stethoscope;
+                  const label = t.specialties[value] ?? value;
                   return (
                     <button
-                      key={s.value}
+                      key={value}
                       type="button"
-                      onClick={() => { setSpecialty(s.value); setDoctor(null); }}
+                      onClick={() => { setSpecialty(value); setDoctor(null); }}
                       className={cn(
                         "flex items-center gap-2.5 rounded-xl border px-3 py-3 text-left text-sm font-medium transition-all",
                         selected
@@ -280,13 +285,13 @@ export function BookAppointmentWizard({ open, onClose, patientId, initialDoctor 
                           : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:bg-brand-50/50",
                       )}
                     >
-                      <s.icon className={cn("h-4 w-4 shrink-0", selected ? "text-brand-600" : "text-slate-400")} />
-                      {s.label}
+                      <Icon className={cn("h-4 w-4 shrink-0", selected ? "text-brand-600" : "text-slate-400")} />
+                      {label}
                     </button>
                   );
                 })}
                 {filteredSpecs.length === 0 && (
-                  <p className="col-span-full py-6 text-center text-sm text-slate-400">Нема резултати</p>
+                  <p className="col-span-full py-6 text-center text-sm text-slate-400">{wt.noResults}</p>
                 )}
               </div>
             </div>
@@ -299,7 +304,7 @@ export function BookAppointmentWizard({ open, onClose, patientId, initialDoctor 
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Барај доктор по ime…"
+                  placeholder={wt.searchDoctor}
                   value={docSearch}
                   onChange={(e) => setDocSearch(e.target.value)}
                   className="w-full rounded-xl border border-slate-200 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
@@ -310,7 +315,9 @@ export function BookAppointmentWizard({ open, onClose, patientId, initialDoctor 
                 <div className="flex justify-center py-10"><Spinner /></div>
               ) : filteredDocs.length === 0 ? (
                 <p className="py-8 text-center text-sm text-slate-500">
-                  {docSearch ? "Нема доктори со тоа ime." : `Нема доктори за ${SPECIALTIES.find((s) => s.value === specialty)?.label ?? specialty}.`}
+                  {docSearch
+                    ? wt.noDoctorsSearch
+                    : `${wt.noDoctorsSpecialty} ${t.specialties[specialty ?? ""] ?? specialty}.`}
                 </p>
               ) : (
                 <div className="max-h-80 space-y-2 overflow-y-auto pr-1">
@@ -332,22 +339,16 @@ export function BookAppointmentWizard({ open, onClose, patientId, initialDoctor 
                       <div className="min-w-0 flex-1">
                         <p className="font-semibold text-slate-900">Dr. {d.firstName} {d.lastName}</p>
                         <p className="truncate text-xs text-slate-500">
-                          {d.specialization}{d.hospitalName ? ` · ${d.hospitalName}` : ""}
+                          {t.specialties[d.specialization] ?? d.specialization}
+                          {d.hospitalName ? ` · ${d.hospitalName}` : ""}
                         </p>
                       </div>
-                      <div className="flex shrink-0 flex-col items-end gap-0.5">
-                        {d.averageRating != null && (
-                          <div className="flex items-center gap-0.5">
-                            <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                            <span className="text-xs font-semibold text-amber-600">{d.averageRating.toFixed(1)}</span>
-                          </div>
-                        )}
-                        {d.experienceYears != null && (
-                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-500">
-                            {d.experienceYears} год.
-                          </span>
-                        )}
-                      </div>
+                      {d.averageRating != null && (
+                        <div className="flex shrink-0 items-center gap-0.5">
+                          <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                          <span className="text-xs font-semibold text-amber-600">{d.averageRating.toFixed(1)}</span>
+                        </div>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -358,9 +359,8 @@ export function BookAppointmentWizard({ open, onClose, patientId, initialDoctor 
           {/* ── Step 3: Date & Time ── */}
           {step === 3 && (
             <div className="space-y-5">
-              {/* Date picker */}
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Датум</p>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{wt.dateLabel}</p>
                 <div className="flex gap-2 overflow-x-auto pb-2">
                   {dateOptions.map((d) => {
                     const value = format(d, "yyyy-MM-dd");
@@ -388,17 +388,16 @@ export function BookAppointmentWizard({ open, onClose, patientId, initialDoctor 
                 </div>
               </div>
 
-              {/* Time slots */}
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Час</p>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{wt.timeLabel}</p>
                 {!date ? (
-                  <p className="text-sm text-slate-400">Прво изберете датум</p>
+                  <p className="text-sm text-slate-400">{wt.selectDateFirst}</p>
                 ) : availQuery.isLoading || bookedQuery.isLoading ? (
                   <div className="flex justify-center py-4"><Spinner /></div>
                 ) : !availableSlots || availableSlots.length === 0 ? (
                   <div className="rounded-xl border border-slate-200 bg-slate-50 py-6 text-center">
-                    <p className="text-sm text-slate-500">Докторот нема работно расписание за овој ден.</p>
-                    <p className="mt-1 text-xs text-slate-400">Изберете друг датум.</p>
+                    <p className="text-sm text-slate-500">{wt.noScheduleDay}</p>
+                    <p className="mt-1 text-xs text-slate-400">{wt.noScheduleHint}</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
@@ -435,50 +434,50 @@ export function BookAppointmentWizard({ open, onClose, patientId, initialDoctor 
               <div className="rounded-xl bg-brand-50 p-4 ring-1 ring-brand-100">
                 <div className="grid grid-cols-2 gap-y-4 text-sm">
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-brand-500">Доктор</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-brand-500">{wt.fieldDoctor}</p>
                     <p className="mt-0.5 font-semibold text-slate-900">Dr. {doctor.firstName} {doctor.lastName}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-brand-500">Специјалност</p>
-                    <p className="mt-0.5 font-semibold text-slate-900">{doctor.specialization}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-brand-500">{wt.fieldSpecialty}</p>
+                    <p className="mt-0.5 font-semibold text-slate-900">{t.specialties[doctor.specialization] ?? doctor.specialization}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-brand-500">Кога</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-brand-500">{wt.fieldWhen}</p>
                     <p className="mt-0.5 font-semibold text-slate-900">
-                      {format(new Date(date), "d MMMM yyyy", { locale: mkLocale })} во {time}
+                      {format(new Date(date), "d MMMM yyyy", { locale: mkLocale })} {wt.fieldWhen.toLowerCase() !== "when" ? "во" : "at"} {time}
                     </p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-brand-500">Болница</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-brand-500">{wt.fieldHospital}</p>
                     <p className="mt-0.5 font-semibold text-slate-900">{doctor.hospitalName ?? "—"}</p>
                   </div>
                 </div>
               </div>
 
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Тип на преглед</p>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{wt.fieldType}</p>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                  {APPOINTMENT_TYPES.map((t) => (
+                  {APPOINTMENT_TYPE_VALUES.map((typeVal) => (
                     <button
-                      key={t.value}
+                      key={typeVal}
                       type="button"
-                      onClick={() => setAppointmentType(t.value)}
+                      onClick={() => setAppointmentType(typeVal)}
                       className={cn(
                         "rounded-lg border px-2 py-2 text-sm font-medium transition-all",
-                        appointmentType === t.value
+                        appointmentType === typeVal
                           ? "border-brand-500 bg-brand-50 text-brand-700"
                           : "border-slate-200 text-slate-700 hover:border-brand-300",
                       )}
                     >
-                      {t.label}
+                      {wt.apptTypes[typeVal] ?? typeVal}
                     </button>
                   ))}
                 </div>
               </div>
 
               <Input
-                label="Причина (опционално)"
-                placeholder="пр. годишен преглед, главоболка…"
+                label={wt.fieldReason}
+                placeholder={wt.fieldReasonPlaceholder}
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 maxLength={500}

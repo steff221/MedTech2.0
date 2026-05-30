@@ -5,12 +5,23 @@ import { Bell, Calendar, ClipboardList, FileText, LayoutDashboard, Pill, Stethos
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { useT } from "@/hooks/useT";
+import { useAuth } from "@/hooks/useAuth";
+import { notificationService } from "@/services/notification.service";
 import { cn } from "@/utils/cn";
 
 export function PatientSidebar() {
   const pathname = usePathname();
   const t = useT();
+  const { user } = useAuth();
+
+  const { data: unreadCount = 0 } = useQuery({
+    queryKey: ["notifications-unread"],
+    queryFn: notificationService.unreadCount,
+    refetchInterval: 60_000,
+    enabled: !!user,
+  });
 
   const nav = [
     { href: "/dashboard",      label: t.nav.dashboard,     icon: LayoutDashboard },
@@ -49,7 +60,14 @@ export function PatientSidebar() {
                   transition={{ type: "spring", stiffness: 380, damping: 30 }}
                 />
               )}
-              <item.icon className="relative h-4 w-4" />
+              <span className="relative">
+                <item.icon className="h-4 w-4" />
+                {item.href === "/notifications" && unreadCount > 0 && (
+                  <span className="absolute -right-1.5 -top-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-rose-500 px-0.5 text-[8px] font-bold text-white leading-none">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </span>
               <span className="relative">{item.label}</span>
             </Link>
           );

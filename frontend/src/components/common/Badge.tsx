@@ -40,7 +40,7 @@ export function Badge({ tone = "neutral", children, className }: BadgeProps) {
 export function appointmentStatusTone(status: AppointmentStatus): Tone {
   switch (status) {
     case "SCHEDULED":
-      return "info";
+      return "warning";
     case "COMPLETED":
       return "success";
     case "RESCHEDULED":

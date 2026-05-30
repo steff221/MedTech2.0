@@ -347,7 +347,7 @@ export function LandingPage() {
         <section id="features" className="mt-28">
           <motion.div {...fadeUp(0)} className="mb-12 text-center">
             <p className={`mb-3 text-xs font-semibold uppercase tracking-widest ${T.secLabel}`}>Функционалности</p>
-            <h2 className={`text-3xl font-bold sm:text-4xl ${T.heading}`}>Сè на едно место</h2>
+            <h2 className={`text-3xl font-bold sm:text-4xl ${T.heading}`}>Се на едно место</h2>
             <p className={`mx-auto mt-4 max-w-xl text-sm leading-relaxed ${T.secSub}`}>
               Дизајнирано за секој дел на здравствениот систем — од прием до извештај.
             </p>
@@ -452,7 +452,7 @@ export function LandingPage() {
             <Link href="/login" className={`transition-colors ${T.footerLink}`}>Најава</Link>
             <Link href="/register" className={`transition-colors ${T.footerLink}`}>Регистрација</Link>
           </div>
-          <span>Сите права задржани</span>
+          <span>Сите права задржани Стефан Перовски</span>
         </footer>
 
       </div>

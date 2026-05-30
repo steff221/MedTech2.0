@@ -17,6 +17,7 @@ import { BookAppointmentWizard } from "@/components/patient/BookAppointmentWizar
 import { doctorService } from "@/services/doctor.service";
 import { hospitalService } from "@/services/hospital.service";
 import { usePatientProfile } from "@/hooks/usePatient";
+import { useT } from "@/hooks/useT";
 import { cn } from "@/utils/cn";
 import { initials } from "@/utils/format";
 import { PROCEDURES, parseDoctorProcedures } from "@/utils/procedures";
@@ -36,21 +37,11 @@ const SPECIALTIES = [
   "Neurology", "Pediatrics", "Orthopedics", "Gynecology", "Psychiatry",
 ];
 
-const SPECIALTY_MK: Record<string, string> = {
-  "Cardiology":        "Кардиологија",
-  "Dermatology":       "Дерматологија",
-  "Family Medicine":   "Општа медицина",
-  "Internal Medicine": "Интерна медицина",
-  "Neurology":         "Неурологија",
-  "Pediatrics":        "Педијатрија",
-  "Orthopedics":       "Ортопедија",
-  "Gynecology":        "Гинекологија",
-  "Psychiatry":        "Психијатрија",
-};
-
 type SortKey = "rating" | "experience" | "name";
 
 export default function DoctorsPage() {
+  const t = useT();
+  const dp = t.doctorsPage;
   const [specialty, setSpecialty]             = useState<string | null>(null);
   const [procedure, setProcedure]             = useState<string | null>(null);
   const [selectedHospitalId, setSelectedHospitalId] = useState<number | null>(null);
@@ -129,10 +120,8 @@ export default function DoctorsPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Најди доктор</h1>
-        <p className="text-sm text-slate-500">
-          Прегледај ги сите доктори — филтрирај по специјалност, процедура или болница.
-        </p>
+        <h1 className="text-2xl font-bold text-slate-900">{dp.title}</h1>
+        <p className="text-sm text-slate-500">{dp.subtitle}</p>
       </div>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[300px_1fr_340px]">
@@ -141,7 +130,7 @@ export default function DoctorsPage() {
         <Card className="lg:sticky lg:top-4 lg:max-h-[calc(100vh-100px)] lg:overflow-y-auto">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-              <Filter className="h-4 w-4" /> Филтри
+              <Filter className="h-4 w-4" /> {dp.filters}
             </div>
             {anyFilter && (
               <button
@@ -149,29 +138,29 @@ export default function DoctorsPage() {
                 onClick={() => { setSpecialty(null); setProcedure(null); setSelectedHospitalId(null); setSearch(""); }}
                 className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-900"
               >
-                <X className="h-3.5 w-3.5" /> Исчисти
+                <X className="h-3.5 w-3.5" /> {dp.clearFilters}
               </button>
             )}
           </div>
 
           <div className="mt-4">
             <Input
-              label="Пребарај"
-              placeholder="Ime на доктор или болница…"
+              label={t.common.search}
+              placeholder={dp.searchPlaceholder}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
 
-          <FilterGroup icon={Stethoscope} title="Специјалност">
+          <FilterGroup icon={Stethoscope} title={dp.specialtyFilter}>
             {SPECIALTIES.map((s) => (
               <Pill key={s} active={specialty === s} onClick={() => setSpecialty(specialty === s ? null : s)}>
-                {SPECIALTY_MK[s] ?? s}
+                {t.specialties[s] ?? s}
               </Pill>
             ))}
           </FilterGroup>
 
-          <FilterGroup icon={MapPin} title="Процедура">
+          <FilterGroup icon={MapPin} title={dp.procedureFilter}>
             {PROCEDURES.slice(0, 18).map((p) => (
               <Pill key={p} active={procedure === p} onClick={() => setProcedure(procedure === p ? null : p)}>
                 {p}
@@ -179,7 +168,7 @@ export default function DoctorsPage() {
             ))}
           </FilterGroup>
 
-          <FilterGroup icon={Building2} title="Болница">
+          <FilterGroup icon={Building2} title={dp.hospitalFilter}>
             {hospitalsQuery.isLoading ? (
               <Skeleton className="h-10" />
             ) : (
@@ -199,7 +188,7 @@ export default function DoctorsPage() {
 
         {/* Map */}
         <Card padded={false} className="overflow-hidden">
-          <div className="h-[calc(100vh-180px)] min-h-[500px] w-full">
+          <div className="isolate h-[calc(100vh-180px)] min-h-[500px] w-full">
             <HospitalsMap
               hospitals={hospitals}
               matchingHospitalIds={matchingHospitalIds}
@@ -215,12 +204,16 @@ export default function DoctorsPage() {
           {/* Header + sort */}
           <div className="mb-3 flex items-center justify-between gap-2">
             <h2 className="text-sm font-semibold text-slate-900">
-              {filteredDoctors.length} доктор{filteredDoctors.length === 1 ? "" : "и"}
+              {filteredDoctors.length} {filteredDoctors.length === 1 ? dp.doctorSingular : dp.doctorPlural}
             </h2>
             <div className="flex items-center gap-1">
               <ArrowUpDown className="h-3.5 w-3.5 text-slate-400" />
               {(["rating", "experience", "name"] as SortKey[]).map((key) => {
-                const labels: Record<SortKey, string> = { rating: "Оценка", experience: "Искуство", name: "Ime" };
+                const labels: Record<SortKey, string> = {
+                  rating: dp.sortRating,
+                  experience: dp.sortExperience,
+                  name: dp.sortName,
+                };
                 return (
                   <button
                     key={key}
@@ -245,8 +238,8 @@ export default function DoctorsPage() {
           ) : filteredDoctors.length === 0 ? (
             <EmptyState
               icon={Stethoscope}
-              title="Нема доктори"
-              description="Пробајте да исчистите некој филтер или изберете друга болница."
+              title={dp.noResults}
+              description={dp.noResultsDesc}
             />
           ) : (
             <motion.div
@@ -324,6 +317,7 @@ function DoctorCard({
   onBook: () => void;
   onLocate: () => void;
 }) {
+  const t = useT();
   const procedures = parseDoctorProcedures(doctor.subSpecialization);
   return (
     <Card hover>
@@ -334,7 +328,7 @@ function DoctorCard({
         <div className="min-w-0 flex-1">
           <p className="truncate font-semibold text-slate-900">Dr. {doctor.firstName} {doctor.lastName}</p>
           <p className="text-xs font-medium text-brand-600">
-            {SPECIALTY_MK[doctor.specialization] ?? doctor.specialization}
+            {t.specialties[doctor.specialization] ?? doctor.specialization}
           </p>
           {doctor.hospitalName && (
             <button type="button" onClick={onLocate} className="mt-0.5 flex items-center gap-1 truncate text-xs text-slate-500 hover:text-brand-600 transition-colors">
@@ -348,9 +342,6 @@ function DoctorCard({
                 <StarRating value={Math.round(doctor.averageRating ?? 0)} readonly size="sm" />
                 <span className="text-xs text-slate-500">{doctor.averageRating?.toFixed(1)} ({doctor.ratingCount})</span>
               </div>
-            )}
-            {doctor.experienceYears != null && (
-              <span className="text-xs text-slate-400">{doctor.experienceYears} год. искуство</span>
             )}
             {doctor.consultationFee != null && (
               <span className="text-xs text-slate-400">{doctor.consultationFee} ден.</span>
@@ -375,7 +366,7 @@ function DoctorCard({
           className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-brand-500 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-600"
         >
           <Calendar className="h-3.5 w-3.5" />
-          Закажи преглед
+          {t.doctorsPage.bookBtn}
         </button>
       )}
     </Card>

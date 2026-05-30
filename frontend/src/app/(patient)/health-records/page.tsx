@@ -27,23 +27,21 @@ import { Skeleton } from "@/components/common/Skeleton";
 import { patientService } from "@/services/patient.service";
 import { medicalRecordService } from "@/services/medicalRecord.service";
 import { usePatientProfile } from "@/hooks/usePatient";
+import { useT } from "@/hooks/useT";
 import { cn } from "@/utils/cn";
 import type { MedicalRecordResponse } from "@/types/api";
 
-// ── BMI helpers ───────────────────────────────────────────────────────────────
-const BMI_TIERS = [
-  { max: 18.5, label: "Потхранет",         color: "text-blue-600",    bg: "bg-blue-100"    },
-  { max: 25,   label: "Нормален",           color: "text-emerald-600", bg: "bg-emerald-100" },
-  { max: 30,   label: "Прекумерна тежина", color: "text-amber-600",   bg: "bg-amber-100"   },
-  { max: 999,  label: "Дебелина",           color: "text-rose-600",    bg: "bg-rose-100"    },
-];
-const bmiTier = (bmi: number) => BMI_TIERS.find((t) => bmi < t.max)!;
+// bmiTier resolved at runtime inside component using translation keys
+const BMI_THRESHOLDS = [18.5, 25, 30, 999];
+const bmiTierIndex = (bmi: number) => BMI_THRESHOLDS.findIndex((max) => bmi < max);
 
 const fmt     = (d: string) => format(parseISO(d), "d MMM yyyy");
 const fmtFull = (d: string) => format(parseISO(d), "d MMM yyyy • HH:mm");
 
 // ── Summary banner ────────────────────────────────────────────────────────────
 function SummaryBanner({ records }: { records: MedicalRecordResponse[] }) {
+  const t  = useT();
+  const hr = t.patientHealthRecords;
   const total         = records.length;
   const last          = records[0]?.createdAt ? fmt(records[0].createdAt) : "—";
   const uniqueDoctors = new Set(records.map((r) => r.doctorId)).size;
@@ -51,9 +49,9 @@ function SummaryBanner({ records }: { records: MedicalRecordResponse[] }) {
   return (
     <div className="mb-6 grid grid-cols-3 gap-3">
       {([
-        { icon: ClipboardList, label: "Вкупно прегледи", value: String(total)         },
-        { icon: CalendarDays,  label: "Последен преглед", value: last                  },
-        { icon: Stethoscope,   label: "Различни лекари",  value: String(uniqueDoctors) },
+        { icon: ClipboardList, label: hr.statTotal,     value: String(total)         },
+        { icon: CalendarDays,  label: hr.statLastVisit, value: last                  },
+        { icon: Stethoscope,   label: hr.statDoctors,   value: String(uniqueDoctors) },
       ] as const).map(({ icon: Icon, label, value }) => (
         <div key={label} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50">
@@ -71,6 +69,8 @@ function SummaryBanner({ records }: { records: MedicalRecordResponse[] }) {
 
 // ── Audit history ─────────────────────────────────────────────────────────────
 function AuditHistory({ recordId }: { recordId: number }) {
+  const t  = useT();
+  const hr = t.patientHealthRecords;
   const { data, isLoading } = useQuery({
     queryKey: ["medical-record-history", recordId],
     queryFn: () => medicalRecordService.getHistory(recordId),
@@ -80,15 +80,15 @@ function AuditHistory({ recordId }: { recordId: number }) {
   if (!data || data.length === 0) return null;
 
   const EVENT_LABELS: Record<string, string> = {
-    CREATED:  "Запис создаден",
-    ADDENDUM: "Додаток додаден",
-    VIEWED:   "Запис прегледан",
+    CREATED:  hr.eventCreated,
+    ADDENDUM: hr.eventAddendum,
+    VIEWED:   hr.eventViewed,
   };
 
   return (
     <div className="mt-4 rounded-lg border border-slate-100 bg-slate-50 p-3">
       <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
-        <History className="h-3.5 w-3.5" /> Историја на промени
+        <History className="h-3.5 w-3.5" /> {hr.historyTitle}
       </p>
       <ol className="space-y-1.5">
         {data.map((ev) => (
@@ -112,7 +112,17 @@ function AuditHistory({ recordId }: { recordId: number }) {
 
 // ── Record card ───────────────────────────────────────────────────────────────
 function RecordCard({ record }: { record: MedicalRecordResponse }) {
+  const t  = useT();
+  const hr = t.patientHealthRecords;
   const [expanded, setExpanded] = useState(false);
+
+  const BMI_TIER_LABELS = [hr.bmiUnder, hr.bmiNormal, hr.bmiOver, hr.bmiObese];
+  const BMI_TIER_COLORS = [
+    { color: "text-blue-600",    bg: "bg-blue-100"    },
+    { color: "text-emerald-600", bg: "bg-emerald-100" },
+    { color: "text-amber-600",   bg: "bg-amber-100"   },
+    { color: "text-rose-600",    bg: "bg-rose-100"    },
+  ];
 
   type VitalEntry = {
     icon: React.ComponentType<{ className?: string }>;
@@ -122,20 +132,22 @@ function RecordCard({ record }: { record: MedicalRecordResponse }) {
   };
 
   const vitals: VitalEntry[] = [];
-  if (record.bloodPressure) vitals.push({ icon: Heart,       label: "Крвен притисок", value: record.bloodPressure });
-  if (record.heartRate)     vitals.push({ icon: Activity,    label: "Пулс",            value: `${record.heartRate} bpm` });
-  if (record.temperature)   vitals.push({ icon: Thermometer, label: "Температура",     value: `${record.temperature}°C` });
-  if (record.weight)        vitals.push({ icon: Weight,      label: "Тежина",          value: `${record.weight} kg` });
-  if (record.height)        vitals.push({ icon: Ruler,       label: "Висина",          value: `${record.height} cm` });
+  if (record.bloodPressure) vitals.push({ icon: Heart,       label: hr.vitalBP,     value: record.bloodPressure });
+  if (record.heartRate)     vitals.push({ icon: Activity,    label: hr.vitalHR,     value: `${record.heartRate} bpm` });
+  if (record.temperature)   vitals.push({ icon: Thermometer, label: hr.vitalTemp,   value: `${record.temperature}°C` });
+  if (record.weight)        vitals.push({ icon: Weight,      label: hr.vitalWeight, value: `${record.weight} kg` });
+  if (record.height)        vitals.push({ icon: Ruler,       label: hr.vitalHeight, value: `${record.height} cm` });
   if (record.bmi) {
-    const tier = bmiTier(Number(record.bmi));
+    const idx = bmiTierIndex(Number(record.bmi));
+    const tierLabel = BMI_TIER_LABELS[idx] ?? "";
+    const tierStyle = BMI_TIER_COLORS[idx] ?? BMI_TIER_COLORS[1];
     vitals.push({
       icon: Activity,
-      label: "БМИ",
+      label: hr.vitalBMI,
       value: `${record.bmi}`,
       extra: (
-        <span className={cn("ml-1 rounded px-1 py-0.5 text-[10px] font-semibold", tier.bg, tier.color)}>
-          {tier.label}
+        <span className={cn("ml-1 rounded px-1 py-0.5 text-[10px] font-semibold", tierStyle.bg, tierStyle.color)}>
+          {tierLabel}
         </span>
       ),
     });
@@ -178,7 +190,7 @@ function RecordCard({ record }: { record: MedicalRecordResponse }) {
         <div className="min-w-0 flex-1">
           <p className="text-xs text-slate-400">{fmt(record.createdAt)}</p>
           <div className="mt-1 flex flex-wrap items-baseline gap-2">
-            <h3 className="text-lg font-bold text-slate-900">{record.diagnosis ?? "Преглед"}</h3>
+            <h3 className="text-lg font-bold text-slate-900">{record.diagnosis ?? hr.defaultDiag}</h3>
             {record.mkb10Code && (
               <span className="rounded-md bg-brand-50 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-brand-700">
                 {record.mkb10Code}
@@ -194,11 +206,11 @@ function RecordCard({ record }: { record: MedicalRecordResponse }) {
           )}
         </div>
         <div className="flex items-center gap-2">
-          {record.confidential && <Badge tone="warning">Доверливо</Badge>}
+          {record.confidential && <Badge tone="warning">{hr.confidential}</Badge>}
           <button
             type="button"
             onClick={handlePrint}
-            title="Печати запис"
+            title={hr.printRecord}
             className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
           >
             <Printer className="h-4 w-4" />
@@ -224,9 +236,8 @@ function RecordCard({ record }: { record: MedicalRecordResponse }) {
       )}
 
       {/* Always-visible notes */}
-      {record.clinicalNotes && <Section label="Клинички белешки" body={record.clinicalNotes} />}
+      {record.clinicalNotes && <Section label={hr.sectionNotes} body={record.clinicalNotes} />}
 
-      {/* Expandable: assessment + plan + audit history */}
       <AnimatePresence>
         {expanded && (
           <motion.div
@@ -236,8 +247,8 @@ function RecordCard({ record }: { record: MedicalRecordResponse }) {
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            {record.assessment && <Section label="Проценка" body={record.assessment} />}
-            {record.plan && <Section label="Третман / план" body={record.plan} />}
+            {record.assessment && <Section label={hr.sectionAssess} body={record.assessment} />}
+            {record.plan && <Section label={hr.sectionPlan} body={record.plan} />}
             <AuditHistory recordId={record.id} />
           </motion.div>
         )}
@@ -250,7 +261,7 @@ function RecordCard({ record }: { record: MedicalRecordResponse }) {
           className="mt-3 flex items-center gap-1 text-xs font-medium text-brand-600 transition-colors hover:text-brand-800"
         >
           <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", expanded && "rotate-180")} />
-          {expanded ? "Скриј детали" : "Прикажи детали"}
+          {expanded ? hr.hideDetails : hr.showDetails}
         </button>
       )}
     </Card>
@@ -268,6 +279,8 @@ function Section({ label, body }: { label: string; body: string }) {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function HealthRecordsPage() {
+  const t  = useT();
+  const hr = t.patientHealthRecords;
   const profile   = usePatientProfile();
   const [search,   setSearch]   = useState("");
   const [fromDate, setFromDate] = useState("");
@@ -304,10 +317,8 @@ export default function HealthRecordsPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
-        <h1 className="text-3xl font-bold text-slate-900">Здравствени записи</h1>
-        <p className="mt-1 text-slate-500">
-          Дијагнози, витални знаци и белешки од секој завршен преглед.
-        </p>
+        <h1 className="text-3xl font-bold text-slate-900">{hr.title}</h1>
+        <p className="mt-1 text-slate-500">{hr.subtitle}</p>
       </motion.div>
 
       {profile.isLoading || records.isLoading ? (
@@ -315,10 +326,7 @@ export default function HealthRecordsPage() {
           {[0, 1, 2].map((i) => <Skeleton key={i} className="h-40" />)}
         </div>
       ) : !profile.data ? (
-        <EmptyState
-          title="Профилот не е поставен"
-          description="Пополни го пациентскиот профил преку почетната страница."
-        />
+        <EmptyState title={hr.noProfile} description={hr.noProfileDesc} />
       ) : (
         <>
           {items.length > 0 && <SummaryBanner records={items} />}
@@ -330,7 +338,7 @@ export default function HealthRecordsPage() {
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Пребарај по дијагноза, лекар…"
+                placeholder={hr.searchPlaceholder}
                 className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
               />
             </div>
@@ -338,14 +346,14 @@ export default function HealthRecordsPage() {
               type="date"
               value={fromDate}
               onChange={(e) => setFromDate(e.target.value)}
-              title="Од датум"
+              title={hr.fromDate}
               className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
             />
             <input
               type="date"
               value={toDate}
               onChange={(e) => setToDate(e.target.value)}
-              title="До датум"
+              title={hr.toDate}
               className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
             />
             {hasFilter && (
@@ -354,7 +362,7 @@ export default function HealthRecordsPage() {
                 onClick={clearFilters}
                 className="flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50"
               >
-                <X className="h-3.5 w-3.5" /> Исчисти
+                <X className="h-3.5 w-3.5" /> {hr.clearFilters}
               </button>
             )}
           </div>
@@ -362,12 +370,8 @@ export default function HealthRecordsPage() {
           {filtered.length === 0 ? (
             <EmptyState
               icon={FileText}
-              title={hasFilter ? "Нема резултати" : "Нема здравствени записи"}
-              description={
-                hasFilter
-                  ? "Обиди се со различни параметри за пребарување."
-                  : "Записите се прикажуваат по завршен преглед кај лекар."
-              }
+              title={hasFilter ? hr.noResults : hr.noRecords}
+              description={hasFilter ? hr.noResultsDesc : hr.noRecordsDesc}
             />
           ) : (
             <ol className="relative space-y-5 border-l-2 border-slate-200 pl-6">
