@@ -270,6 +270,14 @@ const mk = {
     addressLabel:       "Адреса",
     insuranceLabel:     "Осигурување",
     emergencyLabel:     "Итен контакт",
+    videoLinkSaved:     "Линкот е зачуван.",
+    videoLinkEdit:      "Промени",
+    videoLinkSet:       "Постави линк",
+    save:               "Зачувај",
+    cancel:             "Откажи",
+    rxCancelled:        "Рецептот е откажан",
+    rxCancelFailed:     "Неуспешно откажување",
+    rxPrint:            "Печати рецепт",
   },
 
   // ── Prescription form ─────────────────────────────────────────────────────
@@ -932,6 +940,14 @@ const en: typeof mk = {
     addressLabel:       "Address",
     insuranceLabel:     "Insurance",
     emergencyLabel:     "Emergency contact",
+    videoLinkSaved:     "Link saved.",
+    videoLinkEdit:      "Edit",
+    videoLinkSet:       "Set link",
+    save:               "Save",
+    cancel:             "Cancel",
+    rxCancelled:        "Prescription cancelled",
+    rxCancelFailed:     "Failed to cancel prescription",
+    rxPrint:            "Print prescription",
   },
 
   prescriptionForm: {

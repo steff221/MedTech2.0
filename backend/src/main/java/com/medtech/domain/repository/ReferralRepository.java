@@ -5,6 +5,7 @@ import com.medtech.domain.vo.ReferralStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -19,4 +20,7 @@ public interface ReferralRepository extends JpaRepository<Referral, Long> {
     Page<Referral> findByPatientId(Long patientId, Pageable pageable);
 
     Optional<Referral> findByReferralNumber(String referralNumber);
+
+    @Query(value = "SELECT nextval('referral_number_seq')", nativeQuery = true)
+    long nextReferralSeq();
 }

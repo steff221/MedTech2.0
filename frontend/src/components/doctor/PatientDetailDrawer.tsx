@@ -40,15 +40,6 @@ import type {
 } from "@/types/api";
 import { cn } from "@/utils/cn";
 import { formatDate, formatTime, initials } from "@/utils/format";
-import {
-  MOCK_ACTIVE_MEDS,
-  MOCK_PATIENT_PROFILES,
-  MOCK_PRESCRIPTIONS,
-  MOCK_RECORDS,
-} from "@/__fixtures__/patientDrawer.fixtures";
-
-const USE_MOCKS = process.env.NEXT_PUBLIC_USE_MOCKS === "true";
-
 // ── BloodTypeBadge ────────────────────────────────────────────────────────────
 function formatBloodType(bt: string): string {
   return bt.replace("_POS", "+").replace("_NEG", "−");
@@ -130,20 +121,21 @@ export function PatientDetailDrawer({
   const recordsQuery = useQuery({
     queryKey: ["patient", patientId, "medical-records"],
     queryFn: () => patientService.medicalRecords(patientId!),
-    enabled: !!patientId && open && tab === "records",
+    enabled: !!patientId && open,
   });
 
   const prescriptionsQuery = useQuery({
     queryKey: ["patient", patientId, "prescriptions"],
     queryFn: () => patientService.prescriptions(patientId!),
-    enabled: !!patientId && open && tab === "prescriptions",
+    enabled: !!patientId && open,
   });
 
-  const patient = patientQuery.data
-    ?? (USE_MOCKS && patientId ? MOCK_PATIENT_PROFILES[patientId] ?? null : null);
-  const mockRecords = USE_MOCKS && patientId ? MOCK_RECORDS[patientId] ?? [] : [];
-  const mockPrescriptions = USE_MOCKS && patientId ? MOCK_PRESCRIPTIONS[patientId] ?? [] : [];
-  const activeMedications = USE_MOCKS && patientId ? MOCK_ACTIVE_MEDS[patientId] ?? [] : [];
+  const patient = patientQuery.data ?? null;
+  const records = recordsQuery.data?.content ?? [];
+  const prescriptions = prescriptionsQuery.data?.content ?? [];
+  const activeMedications = prescriptions
+    .filter((p) => p.status === "ACTIVE")
+    .map((p) => p.medicationName);
 
   const ageYears = useMemo(() => {
     if (!patient?.dateOfBirth) return null;
@@ -263,7 +255,7 @@ export function PatientDetailDrawer({
                   <OverviewPanel
                     patient={patient}
                     loading={patientQuery.isLoading && !patient}
-                    records={mockRecords}
+                    records={records}
                     activeMeds={activeMedications}
                   />
                 )}
@@ -275,13 +267,13 @@ export function PatientDetailDrawer({
                 )}
                 {tab === "records" && (
                   <RecordsPanel
-                    items={recordsQuery.data?.content?.length ? recordsQuery.data.content : mockRecords}
+                    items={records}
                     loading={recordsQuery.isLoading}
                   />
                 )}
                 {tab === "prescriptions" && (
                   <PrescriptionsPanel
-                    items={prescriptionsQuery.data?.content?.length ? prescriptionsQuery.data.content : mockPrescriptions}
+                    items={prescriptions}
                     loading={prescriptionsQuery.isLoading}
                     patientId={patientId}
                   />
@@ -445,6 +437,7 @@ function OverviewPanel({
 }
 
 function AppointmentItem({ a }: { a: AppointmentResponse }) {
+  const t = useT();
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [url, setUrl] = useState(a.videoCallUrl ?? "");
@@ -452,7 +445,7 @@ function AppointmentItem({ a }: { a: AppointmentResponse }) {
   const saveMutation = useMutation({
     mutationFn: () => appointmentService.setVideoUrl(a.id, url),
     onSuccess: () => {
-      toast.success("Линкот е зачуван.");
+      toast.success(t.doctorDrawer.videoLinkSaved);
       setEditing(false);
       qc.invalidateQueries({ queryKey: ["patient", a.patientId, "appointments"] });
     },
@@ -478,7 +471,7 @@ function AppointmentItem({ a }: { a: AppointmentResponse }) {
               className="flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100"
             >
               <Video className="h-3 w-3" />
-              {a.videoCallUrl ? "Промени" : "Постави линк"}
+              {a.videoCallUrl ? t.doctorDrawer.videoLinkEdit : t.doctorDrawer.videoLinkSet}
             </button>
           )}
           <Badge tone={appointmentStatusTone(a.status)}>{a.status}</Badge>
@@ -509,13 +502,13 @@ function AppointmentItem({ a }: { a: AppointmentResponse }) {
             disabled={saveMutation.isPending || !url}
             className="rounded-md bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-600 disabled:opacity-50"
           >
-            {saveMutation.isPending ? "…" : "Зачувај"}
+            {saveMutation.isPending ? "…" : t.doctorDrawer.save}
           </button>
           <button
             onClick={() => setEditing(false)}
             className="rounded-md px-2 py-1.5 text-xs text-slate-500 hover:bg-slate-100"
           >
-            Откажи
+            {t.doctorDrawer.cancel}
           </button>
         </div>
       )}
@@ -574,19 +567,70 @@ function RecordsPanel({ items, loading }: { items: MedicalRecordResponse[]; load
   );
 }
 
-function PrescriptionsPanel({ items, loading, patientId }: { items: PrescriptionResponse[]; loading: boolean; patientId: number | null }) {
+function PrescriptionItem({
+  p,
+  patientId,
+  onPrint,
+}: {
+  p: PrescriptionResponse;
+  patientId: number | null;
+  onPrint: (p: PrescriptionResponse) => void;
+}) {
   const t = useT();
   const qc = useQueryClient();
-  const { data: doctor } = useDoctorProfile();
 
   const cancelMutation = useMutation({
-    mutationFn: (id: number) => prescriptionService.cancel(id),
+    mutationFn: () => prescriptionService.cancel(p.id),
     onSuccess: () => {
-      toast.success("Рецептот е откажан");
+      toast.success(t.doctorDrawer.rxCancelled);
       qc.invalidateQueries({ queryKey: ["patient", patientId, "prescriptions"] });
     },
-    onError: () => toast.error("Неуспешно откажување"),
+    onError: () => toast.error(t.doctorDrawer.rxCancelFailed),
   });
+
+  return (
+    <li key={p.id} className="rounded-lg border border-slate-200 px-3 py-2.5">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-slate-900">{p.medicationName}</p>
+          <p className="text-xs text-slate-500">
+            {p.dosage} · {p.frequency}
+            {p.route ? ` · ${p.route}` : ""}
+          </p>
+          {p.instructions && (
+            <p className="mt-0.5 text-[11px] italic text-slate-400">{p.instructions}</p>
+          )}
+        </div>
+        <Badge tone={p.status === "ACTIVE" ? "success" : "neutral"}>
+          {p.status === "ACTIVE" ? t.doctorDrawer.prescriptionActive : p.status}
+        </Badge>
+      </div>
+      {p.status === "ACTIVE" && (
+        <div className="mt-2 flex gap-2 border-t border-slate-100 pt-2">
+          <button
+            type="button"
+            onClick={() => onPrint(p)}
+            className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50"
+          >
+            <Printer className="h-3.5 w-3.5" /> {t.doctorDrawer.rxPrint}
+          </button>
+          <button
+            type="button"
+            disabled={cancelMutation.isPending}
+            onClick={() => cancelMutation.mutate()}
+            className="flex items-center gap-1.5 rounded-lg border border-red-200 px-2.5 py-1 text-xs font-medium text-red-500 transition-colors hover:bg-red-50 disabled:opacity-50"
+          >
+            <X className="h-3.5 w-3.5" /> {t.doctorDrawer.cancel}
+          </button>
+        </div>
+      )}
+    </li>
+  );
+}
+
+function PrescriptionsPanel({ items, loading, patientId }: { items: PrescriptionResponse[]; loading: boolean; patientId: number | null }) {
+  const t = useT();
+  const { data: doctor } = useDoctorProfile();
 
   function handlePrint(p: PrescriptionResponse) {
     const win = window.open("", "_blank", "width=800,height=600");
@@ -634,42 +678,7 @@ function PrescriptionsPanel({ items, loading, patientId }: { items: Prescription
   return (
     <ul className="space-y-2">
       {items.map((p) => (
-        <li key={p.id} className="rounded-lg border border-slate-200 px-3 py-2.5">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-slate-900">{p.medicationName}</p>
-              <p className="text-xs text-slate-500">
-                {p.dosage} · {p.frequency}
-                {p.route ? ` · ${p.route}` : ""}
-              </p>
-              {p.instructions && (
-                <p className="mt-0.5 text-[11px] italic text-slate-400">{p.instructions}</p>
-              )}
-            </div>
-            <Badge tone={p.status === "ACTIVE" ? "success" : "neutral"}>
-              {p.status === "ACTIVE" ? t.doctorDrawer.prescriptionActive : p.status}
-            </Badge>
-          </div>
-          {p.status === "ACTIVE" && (
-            <div className="mt-2 flex gap-2 border-t border-slate-100 pt-2">
-              <button
-                type="button"
-                onClick={() => handlePrint(p)}
-                className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50"
-              >
-                <Printer className="h-3.5 w-3.5" /> Печати рецепт
-              </button>
-              <button
-                type="button"
-                disabled={cancelMutation.isPending}
-                onClick={() => cancelMutation.mutate(p.id)}
-                className="flex items-center gap-1.5 rounded-lg border border-red-200 px-2.5 py-1 text-xs font-medium text-red-500 transition-colors hover:bg-red-50 disabled:opacity-50"
-              >
-                <X className="h-3.5 w-3.5" /> Откажи
-              </button>
-            </div>
-          )}
-        </li>
+        <PrescriptionItem key={p.id} p={p} patientId={patientId} onPrint={handlePrint} />
       ))}
     </ul>
   );

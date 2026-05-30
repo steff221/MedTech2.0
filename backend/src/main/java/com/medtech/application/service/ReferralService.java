@@ -52,13 +52,15 @@ public class ReferralService {
         referral.setScheduledDate(req.scheduledDate());
         referral.setStatus(ReferralStatus.ACTIVE);
         referral.setCreatedBy(doctor.getUser().getEmail());
-        referral.setReferralNumber(buildNumber(referralRepository.count() + 1));
+        referral.setReferralNumber(buildNumber(referralRepository.nextReferralSeq()));
 
         Referral saved = referralRepository.save(referral);
         log.info("Issued referral {} for patient={} by doctor={}", saved.getReferralNumber(),
                 patient.getId(), doctor.getId());
         return saved;
     }
+
+    
 
     @Transactional
     public Referral complete(Long referralId, Long doctorUserId, CompleteReferralRequest req) {
