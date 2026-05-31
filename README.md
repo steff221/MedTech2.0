@@ -35,16 +35,16 @@ Think of it as the digital backbone of a hospital network: patients can book wit
     <td align="center"><b>Patient Dashboard</b></td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/landing.png" alt="Landing page" /></td>
-    <td><img src="docs/screenshots/patient.png" alt="Patient portal" /></td>
+    <td><img src="docs/screenshots/landing.png" alt="Landing page" width="440" /></td>
+    <td><img src="docs/screenshots/patient.png" alt="Patient portal" width="440" /></td>
   </tr>
   <tr>
     <td align="center"><b>Doctor Portal</b></td>
     <td align="center"><b>Admin Panel</b></td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/doctor.png" alt="Doctor portal" /></td>
-    <td><img src="docs/screenshots/admin.png" alt="Admin panel" /></td>
+    <td><img src="docs/screenshots/doctor.png" alt="Doctor portal" width="440" /></td>
+    <td><img src="docs/screenshots/admin.png" alt="Admin panel" width="440" /></td>
   </tr>
 </table>
 
