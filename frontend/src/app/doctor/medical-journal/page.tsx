@@ -1,9 +1,10 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, FileSpreadsheet, FileText, Plus, Search, X } from "lucide-react";
+import { Download, FileSpreadsheet, FileText, Loader2, Plus, Search, X } from "lucide-react";
 import { format } from "date-fns";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { Badge } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
@@ -11,26 +12,24 @@ import { Card } from "@/components/common/Card";
 import { Input } from "@/components/common/Input";
 import { PageBanner } from "@/components/layout/PageBanner";
 import { useAuth } from "@/hooks/useAuth";
+import { reportService, type GenerateReportRequest } from "@/services/report.service";
+import type { DoctorReportResponse, ReportPeriodType } from "@/types/api";
 import { cn } from "@/utils/cn";
 
-// ── Mock report data ──────────────────────────────────────────────────────────
-const REPORT_TYPES = ["Сите", "Месечна пријава", "Тримесечна", "Годишна"];
+// ── Display helpers ───────────────────────────────────────────────────────────
 
-const MOCK_REPORTS = [
-  { id: "IP-2026-005", period: "Мај 2026",      type: "Месечна пријава", patients: 38,  diagnoses: 52,  submitted: "01.06.2026", status: "submitted" },
-  { id: "IP-2026-004", period: "Април 2026",    type: "Месечна пријава", patients: 41,  diagnoses: 58,  submitted: "02.05.2026", status: "submitted" },
-  { id: "IP-2026-Q1",  period: "Q1 2026",       type: "Тримесечна",      patients: 112, diagnoses: 147, submitted: "05.04.2026", status: "submitted" },
-  { id: "IP-2026-003", period: "Март 2026",     type: "Месечна пријава", patients: 35,  diagnoses: 44,  submitted: "31.03.2026", status: "submitted" },
-  { id: "IP-2026-002", period: "Февруари 2026", type: "Месечна пријава", patients: 29,  diagnoses: 37,  submitted: "28.02.2026", status: "submitted" },
-  { id: "IP-2026-001", period: "Јануари 2026",  type: "Месечна пријава", patients: 33,  diagnoses: 41,  submitted: "30.01.2026", status: "submitted" },
-  { id: "IP-2025-12",  period: "Декември 2025", type: "Месечна пријава", patients: 27,  diagnoses: 34,  submitted: "—",          status: "draft"     },
-];
+const PERIOD_TYPE_LABEL: Record<ReportPeriodType, string> = {
+  MONTHLY:   "Месечна пријава",
+  QUARTERLY: "Тримесечна",
+  ANNUAL:    "Годишна",
+};
 
 const STATUS_META: Record<string, { label: string; tone: "success" | "warning" | "info" }> = {
-  submitted: { label: "Поднесена", tone: "success" },
-  draft:     { label: "Нацрт",     tone: "warning"  },
-  pending:   { label: "На чекање", tone: "info"     },
+  SUBMITTED: { label: "Поднесена", tone: "success" },
+  DRAFT:     { label: "Нацрт",     tone: "warning"  },
 };
+
+const REPORT_TYPES = ["Сите", "Месечна пријава", "Тримесечна", "Годишна"];
 
 const RESOURCES = [
   "Ординација 1",
@@ -42,7 +41,11 @@ const RESOURCES = [
 
 // ── New report modal ──────────────────────────────────────────────────────────
 
-const REPORT_TYPE_OPTIONS = ["Месечна пријава", "Тримесечна", "Годишна"];
+const REPORT_TYPE_OPTIONS: Array<{ label: string; value: ReportPeriodType }> = [
+  { label: "Месечна пријава", value: "MONTHLY"   },
+  { label: "Тримесечна",      value: "QUARTERLY" },
+  { label: "Годишна",         value: "ANNUAL"    },
+];
 
 const MONTHS_MK = [
   "Јануари","Февруари","Март","Април","Мај","Јуни",
@@ -51,45 +54,42 @@ const MONTHS_MK = [
 
 interface NewReportModalProps {
   onClose: () => void;
-  onCreated: (report: typeof MOCK_REPORTS[0]) => void;
+  onCreated: (report: DoctorReportResponse) => void;
 }
 
 function NewReportModal({ onClose, onCreated }: NewReportModalProps) {
   const currentYear = new Date().getFullYear();
-  const [type, setType] = useState("Месечна пријава");
-  const [month, setMonth] = useState(MONTHS_MK[new Date().getMonth()]);
-  const [quarter, setQuarter] = useState("Q1");
-  const [year, setYear] = useState(String(currentYear));
-  const [patients, setPatients] = useState("");
-  const [diagnoses, setDiagnoses] = useState("");
+  const [periodType, setPeriodType] = useState<ReportPeriodType>("MONTHLY");
+  const [month, setMonth] = useState(new Date().getMonth()); // 0-indexed
+  const [quarter, setQuarter] = useState(1);
+  const [year, setYear] = useState(currentYear);
   const [submitting, setSubmitting] = useState(false);
 
-  const period = type === "Месечна пријава"
-    ? `${month} ${year}`
-    : type === "Тримесечна"
-    ? `${quarter} ${year}`
+  const periodLabel = periodType === "MONTHLY"
+    ? `${MONTHS_MK[month]} ${year}`
+    : periodType === "QUARTERLY"
+    ? `Q${quarter} ${year}`
     : `Годишна ${year}`;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!patients || !diagnoses) return;
     setSubmitting(true);
-    // Simulate async save
-    setTimeout(() => {
-      const now = new Date();
-      const id = `IP-${year}-${String(Math.floor(Math.random() * 900) + 100)}`;
-      onCreated({
-        id,
-        period,
-        type,
-        patients: Number(patients),
-        diagnoses: Number(diagnoses),
-        submitted: format(now, "dd.MM.yyyy"),
-        status: "draft",
-      });
+    try {
+      const req: GenerateReportRequest = {
+        periodType,
+        year,
+        periodUnit: periodType === "MONTHLY" ? month + 1
+                  : periodType === "QUARTERLY" ? quarter
+                  : undefined,
+      };
+      const created = await reportService.generate(req);
       toast.success("Пријавата е зачувана.");
-      onClose();
-    }, 400);
+      onCreated(created);
+    } catch {
+      toast.error("Грешка при зачувување на пријавата.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -106,7 +106,6 @@ function NewReportModal({ onClose, onCreated }: NewReportModalProps) {
         transition={{ duration: 0.2 }}
         className="relative z-10 w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-2xl"
       >
-        {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
           <h2 className="text-lg font-semibold text-slate-900">Нова пријава</h2>
           <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100">
@@ -115,51 +114,49 @@ function NewReportModal({ onClose, onCreated }: NewReportModalProps) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 px-6 py-5">
-          {/* Type */}
           <div>
             <p className="mb-1.5 text-sm font-medium text-slate-700">Тип на пријава</p>
             <div className="flex flex-wrap gap-1.5">
-              {REPORT_TYPE_OPTIONS.map((t) => (
-                <button key={t} type="button" onClick={() => setType(t)}
+              {REPORT_TYPE_OPTIONS.map((opt) => (
+                <button key={opt.value} type="button" onClick={() => setPeriodType(opt.value)}
                   className={cn(
                     "rounded-full border px-3 py-1 text-xs font-medium transition-all",
-                    type === t
+                    periodType === opt.value
                       ? "border-emerald-500 bg-emerald-500 text-white"
                       : "border-slate-200 bg-white text-slate-700 hover:border-emerald-300",
                   )}
                 >
-                  {t}
+                  {opt.label}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Period */}
           <div className="grid grid-cols-2 gap-3">
-            {type === "Месечна пријава" && (
+            {periodType === "MONTHLY" && (
               <div>
                 <p className="mb-1.5 text-sm font-medium text-slate-700">Месец</p>
-                <select value={month} onChange={(e) => setMonth(e.target.value)}
+                <select value={month} onChange={(e) => setMonth(Number(e.target.value))}
                   className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200">
-                  {MONTHS_MK.map((m) => <option key={m}>{m}</option>)}
+                  {MONTHS_MK.map((m, i) => <option key={m} value={i}>{m}</option>)}
                 </select>
               </div>
             )}
-            {type === "Тримесечна" && (
+            {periodType === "QUARTERLY" && (
               <div>
                 <p className="mb-1.5 text-sm font-medium text-slate-700">Квартал</p>
-                <select value={quarter} onChange={(e) => setQuarter(e.target.value)}
+                <select value={quarter} onChange={(e) => setQuarter(Number(e.target.value))}
                   className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200">
-                  {["Q1","Q2","Q3","Q4"].map((q) => <option key={q}>{q}</option>)}
+                  {[1, 2, 3, 4].map((q) => <option key={q} value={q}>Q{q}</option>)}
                 </select>
               </div>
             )}
             <div>
               <p className="mb-1.5 text-sm font-medium text-slate-700">Година</p>
-              <select value={year} onChange={(e) => setYear(e.target.value)}
+              <select value={year} onChange={(e) => setYear(Number(e.target.value))}
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200">
                 {[currentYear, currentYear - 1, currentYear - 2].map((y) => (
-                  <option key={y}>{y}</option>
+                  <option key={y} value={y}>{y}</option>
                 ))}
               </select>
             </div>
@@ -167,35 +164,13 @@ function NewReportModal({ onClose, onCreated }: NewReportModalProps) {
 
           <div className="rounded-lg bg-slate-50 px-4 py-2.5 text-sm">
             <span className="text-slate-500">Период: </span>
-            <span className="font-semibold text-slate-800">{period}</span>
-          </div>
-
-          {/* Counts */}
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              label="Број на пациенти *"
-              type="number"
-              min={0}
-              required
-              value={patients}
-              onChange={(e) => setPatients(e.target.value)}
-              placeholder="0"
-            />
-            <Input
-              label="Број на дијагнози *"
-              type="number"
-              min={0}
-              required
-              value={diagnoses}
-              onChange={(e) => setDiagnoses(e.target.value)}
-              placeholder="0"
-            />
+            <span className="font-semibold text-slate-800">{periodLabel}</span>
           </div>
 
           <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">
             <Button type="button" variant="secondary" onClick={onClose}>Откажи</Button>
             <Button type="submit" disabled={submitting}>
-              {submitting ? "…" : "Зачувај нацрт"}
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Зачувај нацрт"}
             </Button>
           </div>
         </form>
@@ -208,31 +183,42 @@ function NewReportModal({ onClose, onCreated }: NewReportModalProps) {
 
 export default function MedicalJournalPage() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const [showNewReport, setShowNewReport] = useState(false);
-  const [reports, setReports] = useState(MOCK_REPORTS);
-
-  // Journal generator state
   const [resource, setResource] = useState<string | null>(null);
   const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [journalSearch, setJournalSearch] = useState("");
-
-  // Reports state
   const [reportType, setReportType] = useState("Сите");
-  const [reportYear, setReportYear] = useState("2026");
+  const [reportYear, setReportYear] = useState(String(new Date().getFullYear()));
   const [reportSearch, setReportSearch] = useState("");
 
-  const filteredReports = reports.filter((r) => {
-    if (reportType !== "Сите" && r.type !== reportType) return false;
-    if (!r.period.includes(reportYear)) return false;
-    if (
-      reportSearch &&
-      !r.period.toLowerCase().includes(reportSearch.toLowerCase()) &&
-      !r.id.toLowerCase().includes(reportSearch.toLowerCase())
-    )
-      return false;
-    return true;
+  const { data, isLoading } = useQuery({
+    queryKey: ["doctor-reports"],
+    queryFn: () => reportService.myReports(0, 200),
+    staleTime: 2 * 60 * 1000,
   });
+
+  const allReports: DoctorReportResponse[] = data?.content ?? [];
+
+  const filteredReports = useMemo(() => {
+    return allReports.filter((r) => {
+      const typeLabel = PERIOD_TYPE_LABEL[r.periodType];
+      if (reportType !== "Сите" && typeLabel !== reportType) return false;
+      if (!r.periodLabel.includes(reportYear) && !r.periodStart.startsWith(reportYear)) return false;
+      if (reportSearch) {
+        const q = reportSearch.toLowerCase();
+        if (!r.periodLabel.toLowerCase().includes(q) && !r.reportNumber.toLowerCase().includes(q)) return false;
+      }
+      return true;
+    });
+  }, [allReports, reportType, reportYear, reportSearch]);
+
+  // Stats computed from real data for the current year
+  const yearReports = allReports.filter((r) => r.periodStart.startsWith(reportYear));
+  const totalPatients   = yearReports.reduce((s, r) => s + r.patientCount, 0);
+  const totalDiagnoses  = yearReports.reduce((s, r) => s + r.diagnosisCount, 0);
+  const lastReport      = yearReports[0]?.periodLabel ?? "—";
 
   return (
     <>
@@ -315,7 +301,6 @@ export default function MedicalJournalPage() {
             Индивидуални пријави
           </h2>
 
-          {/* Summary stats */}
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -323,10 +308,10 @@ export default function MedicalJournalPage() {
             className="mb-4 grid grid-cols-2 gap-4 md:grid-cols-4"
           >
             {[
-              { label: "Пријави оваа година", value: "6"        },
-              { label: "Вкупно пациенти",     value: "288"      },
-              { label: "Вкупно дијагнози",    value: "379"      },
-              { label: "Последна пријава",    value: "Мај 2026" },
+              { label: "Пријави оваа година", value: String(yearReports.length) },
+              { label: "Вкупно пациенти",     value: String(totalPatients)       },
+              { label: "Вкупно дијагнози",    value: String(totalDiagnoses)      },
+              { label: "Последна пријава",    value: lastReport                  },
             ].map((s) => (
               <div key={s.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
                 <p className="text-xs text-slate-500">{s.label}</p>
@@ -335,7 +320,6 @@ export default function MedicalJournalPage() {
             ))}
           </motion.div>
 
-          {/* Filters */}
           <Card className="mb-4">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div>
@@ -385,70 +369,78 @@ export default function MedicalJournalPage() {
             </div>
           </Card>
 
-          {/* Table */}
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.1 }}
             className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card"
           >
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-xs text-slate-500">
-                  <tr>
-                    {["Број", "Период", "Тип", "Пациенти", "Дијагнози", "Поднесено", "Статус", ""].map((c) => (
-                      <th key={c} className="border-b border-slate-200 px-4 py-2.5 text-left font-semibold">
-                        {c}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredReports.map((r, i) => {
-                    const s = STATUS_META[r.status];
-                    return (
-                      <motion.tr
-                        key={r.id}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: i * 0.04 }}
-                        className="border-b border-slate-100 hover:bg-emerald-50/40"
-                      >
-                        <td className="px-4 py-3 font-mono text-xs text-slate-500">{r.id}</td>
-                        <td className="px-4 py-3 font-medium text-slate-900">{r.period}</td>
-                        <td className="px-4 py-3">
-                          <span className="inline-flex items-center gap-1.5 text-slate-700">
-                            <FileSpreadsheet className="h-3.5 w-3.5 text-slate-400" />
-                            {r.type}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 tabular-nums text-slate-700">{r.patients}</td>
-                        <td className="px-4 py-3 tabular-nums text-slate-700">{r.diagnoses}</td>
-                        <td className="px-4 py-3 text-slate-500">{r.submitted}</td>
-                        <td className="px-4 py-3">
-                          <Badge tone={s.tone}>{s.label}</Badge>
-                        </td>
-                        <td className="px-4 py-3">
-                          <button
-                            type="button"
-                            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-                          >
-                            <Download className="h-3.5 w-3.5" /> PDF
-                          </button>
-                        </td>
-                      </motion.tr>
-                    );
-                  })}
-                  {filteredReports.length === 0 && (
+            {isLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 className="h-6 w-6 animate-spin text-emerald-500" />
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50 text-xs text-slate-500">
                     <tr>
-                      <td colSpan={8} className="px-4 py-8 text-center text-sm text-slate-400">
-                        Нема пријави за избраните филтри.
-                      </td>
+                      {["Број", "Период", "Тип", "Пациенти", "Дијагнози", "Поднесено", "Статус", ""].map((c) => (
+                        <th key={c} className="border-b border-slate-200 px-4 py-2.5 text-left font-semibold">
+                          {c}
+                        </th>
+                      ))}
                     </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {filteredReports.map((r, i) => {
+                      const s = STATUS_META[r.status] ?? { label: r.status, tone: "info" as const };
+                      return (
+                        <motion.tr
+                          key={r.id}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: i * 0.04 }}
+                          className="border-b border-slate-100 hover:bg-emerald-50/40"
+                        >
+                          <td className="px-4 py-3 font-mono text-xs text-slate-500">{r.reportNumber}</td>
+                          <td className="px-4 py-3 font-medium text-slate-900">{r.periodLabel}</td>
+                          <td className="px-4 py-3">
+                            <span className="inline-flex items-center gap-1.5 text-slate-700">
+                              <FileSpreadsheet className="h-3.5 w-3.5 text-slate-400" />
+                              {PERIOD_TYPE_LABEL[r.periodType]}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 tabular-nums text-slate-700">{r.patientCount}</td>
+                          <td className="px-4 py-3 tabular-nums text-slate-700">{r.diagnosisCount}</td>
+                          <td className="px-4 py-3 text-slate-500">
+                            {r.submittedAt ? format(new Date(r.submittedAt), "dd.MM.yyyy") : "—"}
+                          </td>
+                          <td className="px-4 py-3">
+                            <Badge tone={s.tone}>{s.label}</Badge>
+                          </td>
+                          <td className="px-4 py-3">
+                            <button
+                              type="button"
+                              onClick={() => toast("PDF генерирање наскоро.")}
+                              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                            >
+                              <Download className="h-3.5 w-3.5" /> PDF
+                            </button>
+                          </td>
+                        </motion.tr>
+                      );
+                    })}
+                    {filteredReports.length === 0 && (
+                      <tr>
+                        <td colSpan={8} className="px-4 py-8 text-center text-sm text-slate-400">
+                          Нема пријави за избраните филтри.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </motion.div>
         </section>
       </div>
@@ -458,7 +450,7 @@ export default function MedicalJournalPage() {
           <NewReportModal
             onClose={() => setShowNewReport(false)}
             onCreated={(r) => {
-              setReports((prev) => [r, ...prev]);
+              queryClient.invalidateQueries({ queryKey: ["doctor-reports"] });
               setShowNewReport(false);
             }}
           />

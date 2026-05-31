@@ -13,101 +13,6 @@ import { useT } from "@/hooks/useT";
 import { cn } from "@/utils/cn";
 import { formatDate, initials } from "@/utils/format";
 
-const MOCK_PATIENTS: DoctorPatientSummary[] = [
-  {
-    patientId: 1001,
-    patientName: "Марија Петровска",
-    appointments: [
-      { id: 1, patientId: 1001, patientName: "Марија Петровска", doctorId: 1, doctorName: "Dr. Stefan Perovski", doctorSpecialization: "Internal Medicine", hospitalId: 1, hospitalName: "ЈЗУ Универзитетска клиника", appointmentDate: "2026-05-28", appointmentTime: "09:00", durationMinutes: 30, status: "SCHEDULED", appointmentType: "CONSULTATION", reason: "Редовна контрола", cancellationReason: null, videoCallUrl: null, ratingId: null, ratingValue: null, createdAt: "2026-05-10T08:00:00" },
-      { id: 2, patientId: 1001, patientName: "Марија Петровска", doctorId: 1, doctorName: "Dr. Stefan Perovski", doctorSpecialization: "Internal Medicine", hospitalId: 1, hospitalName: "ЈЗУ Универзитетска клиника", appointmentDate: "2026-03-15", appointmentTime: "10:30", durationMinutes: 30, status: "COMPLETED", appointmentType: "CONSULTATION", reason: null, cancellationReason: null, videoCallUrl: null, ratingId: null, ratingValue: null, createdAt: "2026-03-01T09:00:00" },
-    ],
-    lastSeen: "2026-03-15",
-    nextAppointment: { id: 1, patientId: 1001, patientName: "Марија Петровска", doctorId: 1, doctorName: "Dr. Stefan Perovski", doctorSpecialization: "Internal Medicine", hospitalId: 1, hospitalName: "ЈЗУ Универзитетска клиника", appointmentDate: "2026-05-28", appointmentTime: "09:00", durationMinutes: 30, status: "SCHEDULED", appointmentType: "CONSULTATION", reason: "Редовна контрола", cancellationReason: null, videoCallUrl: null, ratingId: null, ratingValue: null, createdAt: "2026-05-10T08:00:00" },
-    hasUrgent: false,
-  },
-  {
-    patientId: 1002,
-    patientName: "Александар Стојановски",
-    appointments: [
-      { id: 3, patientId: 1002, patientName: "Александар Стојановски", doctorId: 1, doctorName: "Dr. Stefan Perovski", doctorSpecialization: "Internal Medicine", hospitalId: 1, hospitalName: "ЈЗУ Универзитетска клиника", appointmentDate: "2026-05-21", appointmentTime: "11:00", durationMinutes: 45, status: "SCHEDULED", appointmentType: "PROCEDURE", reason: "ЕКГ и крвна слика", cancellationReason: null, videoCallUrl: null, ratingId: null, ratingValue: null, createdAt: "2026-05-12T10:00:00" },
-    ],
-    lastSeen: null,
-    nextAppointment: { id: 3, patientId: 1002, patientName: "Александар Стојановски", doctorId: 1, doctorName: "Dr. Stefan Perovski", doctorSpecialization: "Internal Medicine", hospitalId: 1, hospitalName: "ЈЗУ Универзитетска клиника", appointmentDate: "2026-05-21", appointmentTime: "11:00", durationMinutes: 45, status: "SCHEDULED", appointmentType: "PROCEDURE", reason: "ЕКГ и крвна слика", cancellationReason: null, videoCallUrl: null, ratingId: null, ratingValue: null, createdAt: "2026-05-12T10:00:00" },
-    hasUrgent: true,
-  },
-  {
-    patientId: 1003,
-    patientName: "Елена Николовска",
-    appointments: [
-      { id: 4, patientId: 1003, patientName: "Елена Николовска", doctorId: 1, doctorName: "Dr. Stefan Perovski", doctorSpecialization: "Internal Medicine", hospitalId: 1, hospitalName: "ЈЗУ Универзитетска клиника", appointmentDate: "2026-04-10", appointmentTime: "08:30", durationMinutes: 30, status: "COMPLETED", appointmentType: "CONSULTATION", reason: "Притисок", cancellationReason: null, videoCallUrl: null, ratingId: null, ratingValue: null, createdAt: "2026-04-01T07:00:00" },
-      { id: 5, patientId: 1003, patientName: "Елена Николовска", doctorId: 1, doctorName: "Dr. Stefan Perovski", doctorSpecialization: "Internal Medicine", hospitalId: 1, hospitalName: "ЈЗУ Универзитетска клиника", appointmentDate: "2026-02-20", appointmentTime: "09:00", durationMinutes: 30, status: "COMPLETED", appointmentType: "CONSULTATION", reason: null, cancellationReason: null, videoCallUrl: null, ratingId: null, ratingValue: null, createdAt: "2026-02-10T08:00:00" },
-    ],
-    lastSeen: "2026-04-10",
-    nextAppointment: null,
-    hasUrgent: false,
-  },
-  {
-    patientId: 1004,
-    patientName: "Борче Димовски",
-    appointments: [
-      { id: 6, patientId: 1004, patientName: "Борче Димовски", doctorId: 1, doctorName: "Dr. Stefan Perovski", doctorSpecialization: "Internal Medicine", hospitalId: 1, hospitalName: "ЈЗУ Универзитетска клиника", appointmentDate: "2026-05-30", appointmentTime: "14:00", durationMinutes: 30, status: "SCHEDULED", appointmentType: "CONSULTATION", reason: "Контрола на шеќер", cancellationReason: null, videoCallUrl: null, ratingId: null, ratingValue: null, createdAt: "2026-05-14T13:00:00" },
-      { id: 7, patientId: 1004, patientName: "Борче Димовски", doctorId: 1, doctorName: "Dr. Stefan Perovski", doctorSpecialization: "Internal Medicine", hospitalId: 1, hospitalName: "ЈЗУ Универзитетска клиника", appointmentDate: "2026-03-05", appointmentTime: "14:00", durationMinutes: 30, status: "CANCELLED", appointmentType: "CONSULTATION", reason: null, cancellationReason: "Пациентот откажа", videoCallUrl: null, ratingId: null, ratingValue: null, createdAt: "2026-02-25T12:00:00" },
-    ],
-    lastSeen: null,
-    nextAppointment: { id: 6, patientId: 1004, patientName: "Борче Димовски", doctorId: 1, doctorName: "Dr. Stefan Perovski", doctorSpecialization: "Internal Medicine", hospitalId: 1, hospitalName: "ЈЗУ Универзитетска клиника", appointmentDate: "2026-05-30", appointmentTime: "14:00", durationMinutes: 30, status: "SCHEDULED", appointmentType: "CONSULTATION", reason: "Контрола на шеќер", cancellationReason: null, videoCallUrl: null, ratingId: null, ratingValue: null, createdAt: "2026-05-14T13:00:00" },
-    hasUrgent: false,
-  },
-  {
-    patientId: 1005,
-    patientName: "Сања Велкоска",
-    appointments: [
-      { id: 8, patientId: 1005, patientName: "Сања Велкоска", doctorId: 1, doctorName: "Dr. Stefan Perovski", doctorSpecialization: "Internal Medicine", hospitalId: 1, hospitalName: "ЈЗУ Универзитетска клиника", appointmentDate: "2026-05-05", appointmentTime: "10:00", durationMinutes: 30, status: "COMPLETED", appointmentType: "CONSULTATION", reason: "Болки во градите", cancellationReason: null, videoCallUrl: null, ratingId: null, ratingValue: null, createdAt: "2026-04-28T09:00:00" },
-    ],
-    lastSeen: "2026-05-05",
-    nextAppointment: null,
-    hasUrgent: false,
-  },
-  {
-    patientId: 1006,
-    patientName: "Горан Трајковски",
-    appointments: [
-      { id: 9, patientId: 1006, patientName: "Горан Трајковски", doctorId: 1, doctorName: "Dr. Stefan Perovski", doctorSpecialization: "Internal Medicine", hospitalId: 1, hospitalName: "ЈЗУ Универзитетска клиника", appointmentDate: "2026-06-03", appointmentTime: "09:30", durationMinutes: 30, status: "SCHEDULED", appointmentType: "CONSULTATION", reason: "Лабораториски наоди", cancellationReason: null, videoCallUrl: null, ratingId: null, ratingValue: null, createdAt: "2026-05-18T08:00:00" },
-    ],
-    lastSeen: null,
-    nextAppointment: { id: 9, patientId: 1006, patientName: "Горан Трајковски", doctorId: 1, doctorName: "Dr. Stefan Perovski", doctorSpecialization: "Internal Medicine", hospitalId: 1, hospitalName: "ЈЗУ Универзитетска клиника", appointmentDate: "2026-06-03", appointmentTime: "09:30", durationMinutes: 30, status: "SCHEDULED", appointmentType: "CONSULTATION", reason: "Лабораториски наоди", cancellationReason: null, videoCallUrl: null, ratingId: null, ratingValue: null, createdAt: "2026-05-18T08:00:00" },
-    hasUrgent: false,
-  },
-  {
-    patientId: 1007,
-    patientName: "Ана Коцевска",
-    appointments: [
-      { id: 10, patientId: 1007, patientName: "Ана Коцевска", doctorId: 1, doctorName: "Dr. Stefan Perovski", doctorSpecialization: "Internal Medicine", hospitalId: 1, hospitalName: "ЈЗУ Универзитетска клиника", appointmentDate: "2026-04-22", appointmentTime: "15:30", durationMinutes: 30, status: "COMPLETED", appointmentType: "CONSULTATION", reason: null, cancellationReason: null, videoCallUrl: null, ratingId: null, ratingValue: null, createdAt: "2026-04-15T14:00:00" },
-      { id: 11, patientId: 1007, patientName: "Ана Коцевска", doctorId: 1, doctorName: "Dr. Stefan Perovski", doctorSpecialization: "Internal Medicine", hospitalId: 1, hospitalName: "ЈЗУ Универзитетска клиника", appointmentDate: "2026-01-18", appointmentTime: "11:00", durationMinutes: 30, status: "COMPLETED", appointmentType: "CONSULTATION", reason: null, cancellationReason: null, videoCallUrl: null, ratingId: null, ratingValue: null, createdAt: "2026-01-10T10:00:00" },
-    ],
-    lastSeen: "2026-04-22",
-    nextAppointment: null,
-    hasUrgent: false,
-  },
-  {
-    patientId: 1008,
-    patientName: "Методи Стефановски",
-    appointments: [
-      { id: 12, patientId: 1008, patientName: "Методи Стефановски", doctorId: 1, doctorName: "Dr. Stefan Perovski", doctorSpecialization: "Internal Medicine", hospitalId: 1, hospitalName: "ЈЗУ Универзитетска клиника", appointmentDate: "2026-05-21", appointmentTime: "08:00", durationMinutes: 60, status: "SCHEDULED", appointmentType: "PROCEDURE", reason: "Ултразвук на абдомен", cancellationReason: null, videoCallUrl: null, ratingId: null, ratingValue: null, createdAt: "2026-05-15T07:00:00" },
-    ],
-    lastSeen: null,
-    nextAppointment: { id: 12, patientId: 1008, patientName: "Методи Стефановски", doctorId: 1, doctorName: "Dr. Stefan Perovski", doctorSpecialization: "Internal Medicine", hospitalId: 1, hospitalName: "ЈЗУ Универзитетска клиника", appointmentDate: "2026-05-21", appointmentTime: "08:00", durationMinutes: 60, status: "SCHEDULED", appointmentType: "PROCEDURE", reason: "Ултразвук на абдомен", cancellationReason: null, videoCallUrl: null, ratingId: null, ratingValue: null, createdAt: "2026-05-15T07:00:00" },
-    hasUrgent: true,
-  },
-];
-
-// ── Critical value flags derived from mock medical records ──────────────────
-const CRITICAL_FLAGS: Record<number, { level: "critical" | "warning"; reason: string }> = {
-  1002: { level: "critical", reason: "HbA1c 9.2% — лоша гликемиска контрола" },
-  1004: { level: "warning",  reason: "Гладен шеќер 8.4 mmol/L, BMI 35.7" },
-  1005: { level: "critical", reason: "СТ депресија V4-V6 — суспектна нестабилна ангина" },
-  1006: { level: "warning",  reason: "Протеинурија 0.4 g/24h, ХББ ст.2" },
-  1008: { level: "warning",  reason: "SpO2 94%, ХОББ GOLD ст.2" },
-};
 
 interface PatientsListPanelProps {
   doctorId: number;
@@ -129,8 +34,7 @@ export function PatientsListPanel({ doctorId }: PatientsListPanelProps) {
     { key: "UPCOMING", label: t.doctorPatients.tabUpcoming },
     { key: "PAST",     label: t.doctorPatients.tabPast     },
   ];
-  const { summaries: realSummaries, isLoading } = useDoctorPatients(doctorId);
-  const summaries = realSummaries.length > 0 ? realSummaries : MOCK_PATIENTS;
+  const { summaries, isLoading } = useDoctorPatients(doctorId);
   const [tab, setTab] = useState<Tab>("ALL");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<{ id: number; name: string } | null>(null);
@@ -228,7 +132,7 @@ export function PatientsListPanel({ doctorId }: PatientsListPanelProps) {
               >
                 <PatientRow
                   summary={p}
-                  criticalFlag={CRITICAL_FLAGS[p.patientId] ?? null}
+                  criticalFlag={null}
                   onSelect={() => setSelected({ id: p.patientId, name: p.patientName })}
                 />
               </motion.li>
