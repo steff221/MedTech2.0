@@ -292,7 +292,7 @@ export default function HealthRecordsPage() {
     enabled: !!profile.data?.id,
   });
 
-  const items = records.data?.content ?? [];
+  const items = useMemo(() => records.data?.content ?? [], [records.data?.content]);
 
   const filtered = useMemo(() => {
     let result = items;
