@@ -55,8 +55,9 @@ jobs:
       # Tests are pure unit + @WebMvcTest slices (JpaConfig excluded), so no
       # Postgres service is needed. If we add integration tests later, add a
       # `services.postgres` block and SPRING_DATASOURCE_* env vars here.
-      - name: Run tests
-        run: mvn -B test --no-transfer-progress
+      # `verify` (not `test`) so the JaCoCo coverage gate in pom.xml runs.
+      - name: Run tests + coverage gate
+        run: mvn -B verify --no-transfer-progress
         env:
           MEDTECH_SECURITY_JWT_SECRET: ${{ secrets.JWT_SECRET || 'ci-test-only-secret-not-for-production-use' }}
 
@@ -66,6 +67,13 @@ jobs:
         with:
           name: surefire-reports
           path: backend/target/surefire-reports/
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-coverage
+          path: backend/target/site/jacoco/
 
   frontend:
     name: Frontend · type-check + build
@@ -97,13 +105,44 @@ jobs:
           NEXT_PUBLIC_API_URL: http://localhost:8080/api
 
   # ============================================================================
+  # SECURITY — dependency (SCA) + filesystem vulnerability scanning.
+  #   Complements Dependabot (.github/dependabot.yml): Dependabot opens PRs to
+  #   fix vulns over time; this job *blocks* a build that introduces HIGH/CRITICAL
+  #   ones. Important for a health app handling PII.
+  # ============================================================================
+  security-scan:
+    name: Security · dependency + vuln scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      # Fails on HIGH/CRITICAL frontend advisories. Clear findings with
+      # `npm audit fix`, a dependency bump, or a documented exception.
+      - name: Frontend npm audit
+        working-directory: frontend
+        run: npm audit --audit-level=high
+
+      # Trivy filesystem scan covers Maven + npm lockfiles, Dockerfiles, and
+      # IaC. ignore-unfixed avoids noise from vulns with no upstream patch yet.
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@v0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+          format: table
+
+  # ============================================================================
   # CD — staging auto-deploy on merge to main, production requires manual approval.
   #   Builds + pushes both Docker images to GitHub Container Registry.
   # ============================================================================
   publish:
     name: Publish · ${{ matrix.service }} image to GHCR
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [backend, frontend]
+    needs: [backend, frontend, security-scan]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:

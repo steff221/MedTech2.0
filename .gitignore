@@ -54,3 +54,6 @@ tmp/
 *.tmp
 *.bak
 *.tsbuildinfo
+
+# macOS / cloud-sync duplicate artifacts
+*\ 2.*
