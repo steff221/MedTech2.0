@@ -9,6 +9,7 @@ import { PageBanner } from "@/components/layout/PageBanner";
 import { CompleteDoctorProfilePrompt } from "@/components/doctor/CompleteDoctorProfilePrompt";
 import { WeeklyCalendar } from "@/components/doctor/WeeklyCalendar";
 import { appointmentService } from "@/services/appointment.service";
+import { doctorService } from "@/services/doctor.service";
 import { extractErrorMessage } from "@/services/api";
 import { useDoctorProfile } from "@/hooks/useDoctor";
 import { useT } from "@/hooks/useT";
@@ -99,7 +100,7 @@ type WaitingStatus = "waiting" | "in_room" | "completed" | "no_show";
 
 const STATUS_ORDER: WaitingStatus[] = ["waiting", "in_room", "completed", "no_show"];
 
-function WaitingRoom() {
+function WaitingRoom({ doctorId }: { doctorId: number }) {
   const t = useT();
   const STATUS_META = useMemo<Record<WaitingStatus, { label: string; bg: string; text: string }>>(() => ({
     waiting:   { label: t.doctorSchedule.statusWaiting,   bg: "bg-amber-100",   text: "text-amber-700"  },
@@ -109,22 +110,33 @@ function WaitingRoom() {
   }), [t]);
 
   const { data: todayAppts, isLoading } = useQuery({
-    queryKey: ["appointments-today-waiting"],
-    queryFn:  () => appointmentService.today(),
+    queryKey: ["appointments-today-waiting", doctorId],
+    queryFn:  () => doctorService.appointmentsOn(doctorId, TODAY),
     refetchInterval: 60_000,
   });
 
-  const realPatients: AppointmentResponse[] = (todayAppts ?? []).filter(
+  const realPatients: AppointmentResponse[] = (todayAppts?.content ?? []).filter(
     (a) => a.status === "SCHEDULED" || a.status === "RESCHEDULED",
   );
 
   const basePatients = realPatients;
 
-  // Walk-in state
-  const [walkIns, setWalkIns]         = useState<AppointmentResponse[]>([]);
-  const [walkInOpen, setWalkInOpen]   = useState(false);
-  const [walkInName, setWalkInName]   = useState("");
+  // Walk-in state — persisted in localStorage, keyed by doctor+date so they
+  // survive a page refresh but automatically vanish the next calendar day.
+  const WALKIN_KEY = `walkins-${doctorId}-${TODAY}`;
+  const [walkIns, setWalkIns] = useState<AppointmentResponse[]>(() => {
+    if (typeof window === "undefined") return [];
+    try { return JSON.parse(localStorage.getItem(WALKIN_KEY) ?? "[]"); }
+    catch { return []; }
+  });
+  const [walkInOpen, setWalkInOpen]     = useState(false);
+  const [walkInName, setWalkInName]     = useState("");
   const [walkInReason, setWalkInReason] = useState("");
+
+  const saveWalkIns = (list: AppointmentResponse[]) => {
+    setWalkIns(list);
+    try { localStorage.setItem(WALKIN_KEY, JSON.stringify(list)); } catch {}
+  };
 
   const addWalkIn = () => {
     if (!walkInName.trim()) return;
@@ -134,7 +146,7 @@ function WaitingRoom() {
       id: Date.now() * -1,
       patientId: 0,
       patientName: walkInName.trim(),
-      doctorId: 0,
+      doctorId: doctorId,
       doctorName: "",
       doctorSpecialization: null,
       hospitalId: null,
@@ -151,7 +163,7 @@ function WaitingRoom() {
       ratingId: null,
       ratingValue: null,
     };
-    setWalkIns((prev) => [...prev, entry]);
+    saveWalkIns([...walkIns, entry]);
     setWalkInName("");
     setWalkInReason("");
     setWalkInOpen(false);
@@ -159,7 +171,12 @@ function WaitingRoom() {
 
   const patients = [...basePatients, ...walkIns];
 
-  const [statuses, setStatuses] = useState<Record<number, WaitingStatus>>({});
+  const STATUS_KEY = `waitroom-statuses-${doctorId}-${TODAY}`;
+  const [statuses, setStatuses] = useState<Record<number, WaitingStatus>>(() => {
+    if (typeof window === "undefined") return {};
+    try { return JSON.parse(localStorage.getItem(STATUS_KEY) ?? "{}"); }
+    catch { return {}; }
+  });
   const [videoModalAppt, setVideoModalAppt] = useState<AppointmentResponse | null>(null);
 
   const getStatus = (id: number): WaitingStatus => statuses[id] ?? "waiting";
@@ -168,7 +185,9 @@ function WaitingRoom() {
     setStatuses((prev) => {
       const current = prev[id] ?? "waiting";
       const nextIdx = (STATUS_ORDER.indexOf(current) + 1) % STATUS_ORDER.length;
-      return { ...prev, [id]: STATUS_ORDER[nextIdx] };
+      const next = { ...prev, [id]: STATUS_ORDER[nextIdx] };
+      try { localStorage.setItem(STATUS_KEY, JSON.stringify(next)); } catch {}
+      return next;
     });
   };
 
@@ -399,7 +418,7 @@ export default function DoctorSchedulePage() {
           ) : null}
         </motion.div>
 
-        <WaitingRoom />
+        {profile.data && <WaitingRoom doctorId={profile.data.id} />}
       </div>
 
       <BookAppointmentModal open={bookingOpen} onClose={() => setBookingOpen(false)} />

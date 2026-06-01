@@ -113,7 +113,8 @@ public class AnomalyDetectionJob {
         }
     }
 
-    private void notifyAdmins(String type, String title, String body) {
+    @org.springframework.transaction.annotation.Transactional
+    public void notifyAdmins(String type, String title, String body) {
         userRepository.findAllByRoleIn(List.of(UserRole.ADMIN), PageRequest.of(0, 50))
                 .forEach(admin -> notificationService.create(admin.getId(), type, title, body, null));
     }

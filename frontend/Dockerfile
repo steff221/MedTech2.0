@@ -11,7 +11,7 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci --no-fund --no-audit
+RUN npm install --no-fund --no-audit --prefer-offline
 
 # ---- 2. build stage: compile Next.js production output ---------------------
 FROM node:20-alpine AS build

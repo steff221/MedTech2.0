@@ -9,6 +9,7 @@ import com.medtech.domain.vo.ReferralStatus;
 import com.medtech.infrastructure.exception.AuthorizationException;
 import com.medtech.infrastructure.security.PatientAccessGuard;
 import com.medtech.infrastructure.security.SecurityUtils;
+import com.medtech.infrastructure.security.Roles;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -31,7 +32,7 @@ public class ReferralController {
     private final PatientAccessGuard accessGuard;
 
     @PostMapping
-    @PreAuthorize("hasRole('DOCTOR')")
+    @PreAuthorize(Roles.CLINICIAN)
     @Operation(summary = "Doctor issues a new referral")
     public ResponseEntity<ReferralResponse> create(@Valid @RequestBody CreateReferralRequest request) {
         Long doctorUserId = currentUserId();
@@ -49,7 +50,7 @@ public class ReferralController {
     }
 
     @PutMapping("/{id}/complete")
-    @PreAuthorize("hasRole('DOCTOR')")
+    @PreAuthorize(Roles.CLINICIAN)
     @Operation(summary = "Mark referral as completed with outcome note")
     public ResponseEntity<ReferralResponse> complete(
             @PathVariable Long id,
@@ -59,7 +60,7 @@ public class ReferralController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('DOCTOR')")
+    @PreAuthorize(Roles.CLINICIAN)
     @Operation(summary = "Cancel a referral (soft delete via status change)")
     public ResponseEntity<ReferralResponse> cancel(@PathVariable Long id) {
         return ResponseEntity.ok(
@@ -67,7 +68,7 @@ public class ReferralController {
     }
 
     @GetMapping("/my")
-    @PreAuthorize("hasRole('DOCTOR')")
+    @PreAuthorize(Roles.CLINICIAN)
     @Operation(summary = "List all referrals issued by the authenticated doctor")
     public ResponseEntity<Page<ReferralResponse>> myReferrals(
             @RequestParam(required = false) ReferralStatus status,

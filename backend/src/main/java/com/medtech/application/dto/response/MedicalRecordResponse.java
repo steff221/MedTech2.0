@@ -9,6 +9,7 @@ import java.time.Instant;
 public record MedicalRecordResponse(
         Long id,
         Long patientId,
+        String patientName,
         Long doctorId,
         String doctorName,
         String doctorSpecialization,

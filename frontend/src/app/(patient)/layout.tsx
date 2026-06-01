@@ -22,11 +22,12 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
       return;
     }
     if (user?.role === "DOCTOR") router.replace("/doctor");
+    if (user?.role === "GENERAL_PRACTITIONER") router.replace("/gp");
     if (user?.role === "NURSE") router.replace("/nurse");
     if (user?.role === "ADMIN") router.replace("/admin");
   }, [isHydrated, isAuthenticated, user, router]);
 
-  if (!isHydrated || !isAuthenticated || user?.role === "DOCTOR" || user?.role === "NURSE" || user?.role === "ADMIN") {
+  if (!isHydrated || !isAuthenticated || user?.role === "DOCTOR" || user?.role === "GENERAL_PRACTITIONER" || user?.role === "NURSE" || user?.role === "ADMIN") {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Spinner className="h-8 w-8" />

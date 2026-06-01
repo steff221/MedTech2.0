@@ -34,4 +34,12 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
     Page<Patient> searchByNameOrEmailAtHospital(@Param("q") String q,
                                                 @Param("hospitalId") Long hospitalId,
                                                 Pageable pageable);
+
+    @Query("""
+           SELECT DISTINCT p FROM Patient p
+           JOIN Appointment a ON a.patient = p
+           WHERE a.doctor.user.id = :doctorUserId
+           ORDER BY p.id
+           """)
+    Page<Patient> findByDoctorUserId(@Param("doctorUserId") Long doctorUserId, Pageable pageable);
 }

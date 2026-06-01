@@ -74,10 +74,11 @@ public class AdminService {
         if (userRepository.existsByEmailIgnoreCase(req.email())) {
             throw new ConflictException(ErrorCode.AUTH_EMAIL_TAKEN, "Email already registered");
         }
-        if (req.role() == UserRole.DOCTOR) {
+        boolean isDoctorRole = req.role() == UserRole.DOCTOR || req.role() == UserRole.GENERAL_PRACTITIONER;
+        if (isDoctorRole) {
             if (req.hospitalId() == null || req.licenseNumber() == null || req.specialization() == null) {
                 throw new AppException(ErrorCode.VALIDATION_FAILED, HttpStatus.BAD_REQUEST,
-                        "hospitalId, licenseNumber and specialization are required for DOCTOR invites") {};
+                        "hospitalId, licenseNumber and specialization are required for DOCTOR/GP invites") {};
             }
         }
 
@@ -93,8 +94,8 @@ public class AdminService {
         user.setCreatedBy("ADMIN_INVITE");
         user = userRepository.save(user);
 
-        // Auto-create Doctor profile if role is DOCTOR
-        if (req.role() == UserRole.DOCTOR) {
+        // Auto-create Doctor profile for DOCTOR and GENERAL_PRACTITIONER roles
+        if (isDoctorRole) {
             var hospital = hospitalRepository.findById(req.hospitalId())
                     .orElseThrow(() -> ResourceNotFoundException.of("Hospital", req.hospitalId()));
             Doctor doctor = new Doctor();
@@ -115,7 +116,9 @@ public class AdminService {
         passwordResetTokenRepository.save(prt);
 
         String setupLink = frontendUrl + "/reset-password?token=" + plainToken;
-        String roleLabel = req.role() == UserRole.DOCTOR ? "Доктор" : "Медицинска сестра";
+        String roleLabel = req.role() == UserRole.DOCTOR ? "Доктор"
+                         : req.role() == UserRole.GENERAL_PRACTITIONER ? "Општ лекар"
+                         : "Медицинска сестра";
         emailService.sendInviteEmail(user.getEmail(), user.fullName(), roleLabel, setupLink);
 
         log.info("Admin invited user id={} email={} role={}", user.getId(), user.getEmail(), user.getRole());
@@ -151,7 +154,9 @@ public class AdminService {
         passwordResetTokenRepository.save(prt);
 
         String setupLink = frontendUrl + "/reset-password?token=" + plainToken;
-        String roleLabel = user.getRole() == UserRole.DOCTOR ? "Доктор" : "Медицинска сестра";
+        String roleLabel = user.getRole() == UserRole.DOCTOR ? "Доктор"
+                         : user.getRole() == UserRole.GENERAL_PRACTITIONER ? "Општ лекар"
+                         : "Медицинска сестра";
         emailService.sendInviteEmail(user.getEmail(), user.fullName(), roleLabel, setupLink);
 
         log.info("Admin resent invite to user id={}", userId);

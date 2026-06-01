@@ -26,9 +26,10 @@ function StatusBadge({ status }: { status: string }) {
 // ─── Role badge ───────────────────────────────────────────────────────────────
 function RoleBadge({ role }: { role: string }) {
   const map: Record<string, string> = {
-    DOCTOR: "bg-sky-100 text-sky-700",
-    NURSE:  "bg-teal-100 text-teal-700",
-    ADMIN:  "bg-violet-100 text-violet-700",
+    DOCTOR:                "bg-sky-100 text-sky-700",
+    GENERAL_PRACTITIONER:  "bg-teal-100 text-teal-700",
+    NURSE:                 "bg-emerald-100 text-emerald-700",
+    ADMIN:                 "bg-violet-100 text-violet-700",
   };
   return (
     <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${map[role] ?? "bg-slate-100 text-slate-500"}`}>
@@ -104,13 +105,14 @@ function InviteModal({ onClose }: { onClose: () => void }) {
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-600">Улога</label>
             <select className={input} value={form.role}
-              onChange={(e) => set("role", e.target.value as "DOCTOR" | "NURSE")}>
-              <option value="DOCTOR">Доктор</option>
+              onChange={(e) => set("role", e.target.value as "DOCTOR" | "GENERAL_PRACTITIONER" | "NURSE")}>
+              <option value="DOCTOR">Специјалист / Хирург</option>
+              <option value="GENERAL_PRACTITIONER">Општ лекар (ГП)</option>
               <option value="NURSE">Медицинска сестра</option>
             </select>
           </div>
 
-          {form.role === "DOCTOR" && (
+          {(form.role === "DOCTOR" || form.role === "GENERAL_PRACTITIONER") && (
             <>
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-600">Болница</label>

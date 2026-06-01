@@ -142,6 +142,12 @@ public class MedicalRecordService {
         return medicalRecordRepository.findByPatientIdOrderByCreatedAtDesc(patientId, pageable);
     }
 
+    public Page<MedicalRecord> listByDoctorUserId(Long doctorUserId, Pageable pageable) {
+        Doctor doctor = doctorRepository.findByUserId(doctorUserId)
+                .orElseThrow(() -> ResourceNotFoundException.of("Doctor profile", doctorUserId));
+        return medicalRecordRepository.findByDoctorId(doctor.getId(), pageable);
+    }
+
     public void assertMutable(MedicalRecord record) {
         if (Instant.now(clock).isAfter(record.getCreatedAt().plus(MUTABILITY_WINDOW))) {
             throw new ConflictException(ErrorCode.MEDICAL_RECORD_IMMUTABLE,

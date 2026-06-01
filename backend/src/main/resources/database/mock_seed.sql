@@ -239,12 +239,56 @@ INSERT INTO doctors (user_id, hospital_id, license_number, specialization, sub_s
 SELECT u.id,
        (SELECT id FROM hospitals WHERE name = 'Универзитетска клиника' LIMIT 1),
        'DR-STEFAN', 'Internal Medicine',
-       'Annual Physical, Wellness Check, Diabetes Management, Hypertension Care',
+       'Hypertension, Diabetes Management, Preventive Care, Chronic Disease',
        10, 1500,
        'Board-certified Internal Medicine specialist.',
        'ACTIVE'::user_status_enum
 FROM u
 WHERE NOT EXISTS (SELECT 1 FROM doctors d WHERE d.user_id = u.id);
+
+-- zoran@medtech.mk / stefan123 (GENERAL_PRACTITIONER at Клиничка болница, Скопје)
+WITH u AS (
+  INSERT INTO users (email, password_hash, first_name, last_name, phone_number, role, status, email_verified, created_by)
+  VALUES ('zoran@medtech.mk',
+          '$2b$12$Rfaxemszh2XQCzk7E5ZXruJ91aVInaSF37EfSGadsuFUEOVxtXlHi',
+          'Зоран', 'Николовски', '+389 70 123 456',
+          'GENERAL_PRACTITIONER'::user_role_enum, 'ACTIVE'::user_status_enum, TRUE, 'MOCK_SEED')
+  ON CONFLICT (email) DO UPDATE
+    SET password_hash      = EXCLUDED.password_hash,
+        failed_login_count = 0,
+        locked_until       = NULL
+  RETURNING id
+)
+INSERT INTO doctors (user_id, hospital_id, license_number, specialization, sub_specialization,
+                     experience_years, consultation_fee, bio, status)
+SELECT u.id,
+       (SELECT id FROM hospitals ORDER BY id LIMIT 1),
+       'DR-ZORAN', 'General Practice',
+       'Preventive Care, Chronic Disease Management, Family Medicine',
+       8, 800,
+       'General practitioner with 8 years of family medicine experience.',
+       'ACTIVE'::user_status_enum
+FROM u
+WHERE NOT EXISTS (SELECT 1 FROM doctors d WHERE d.user_id = u.id);
+
+-- Zoran's calendar — a week of GP appointments so the schedule is never empty.
+INSERT INTO appointments (patient_id, doctor_id, hospital_id, appointment_date, appointment_time,
+                          duration_minutes, status, appointment_type, reason, created_by)
+SELECT pid, z.did, z.hid, d, t::time, dur,
+       st::appointment_status_enum, ty::appointment_type_enum, r, 'ZORAN_SEED'
+FROM (SELECT id AS did, hospital_id AS hid FROM doctors WHERE license_number = 'DR-ZORAN') z,
+     (VALUES
+       (1,  CURRENT_DATE,     '08:30', 20, 'SCHEDULED', 'CHECKUP',      'Annual check-up'),
+       (2,  CURRENT_DATE,     '09:00', 20, 'SCHEDULED', 'CONSULTATION', 'Flu symptoms'),
+       (3,  CURRENT_DATE,     '09:30', 20, 'SCHEDULED', 'FOLLOW_UP',    'Blood pressure recheck'),
+       (4,  CURRENT_DATE + 1, '08:30', 20, 'SCHEDULED', 'CHECKUP',      'Diabetes monitoring'),
+       (5,  CURRENT_DATE + 1, '09:00', 20, 'SCHEDULED', 'CONSULTATION', 'Back pain'),
+       (6,  CURRENT_DATE + 2, '10:00', 20, 'SCHEDULED', 'FOLLOW_UP',    'Cholesterol review'),
+       (7,  CURRENT_DATE + 3, '08:30', 20, 'SCHEDULED', 'CHECKUP',      'Routine physical'),
+       (2,  CURRENT_DATE - 1, '09:00', 20, 'COMPLETED', 'FOLLOW_UP',    'Post-illness check'),
+       (3,  CURRENT_DATE - 2, '08:30', 20, 'COMPLETED', 'CHECKUP',      'Child vaccination')
+     ) AS t(pid, d, t, dur, st, ty, r)
+ON CONFLICT DO NOTHING;
 
 -- -----------------------------------------------------------------------------
 -- 8. Stefan's calendar — populates the doctor schedule so the demo never
@@ -282,12 +326,100 @@ FROM (SELECT id AS did, hospital_id AS hid FROM doctors WHERE license_number = '
      ) AS t(pid, d, t, dur, st, ty, r)
 ON CONFLICT DO NOTHING;
 
+-- =============================================================================
+-- 9. Medical records for Stefan (DR-STEFAN, doctor_id resolved at runtime)
+-- =============================================================================
+ALTER TABLE appointments DISABLE TRIGGER trg_appointments_future_date;
+INSERT INTO medical_records (patient_id, doctor_id, hospital_id, appointment_id, diagnosis,
+  mkb10_code, clinical_notes, blood_pressure, heart_rate, temperature, weight, height,
+  assessment, plan, created_by)
+SELECT a.patient_id, a.doctor_id, a.hospital_id, a.id,
+  v.diagnosis, v.mkb10, v.notes, v.bp, v.hr, v.temp, v.wt, v.ht, v.assessment, v.plan, 'MOCK_SEED'
+FROM (SELECT id, patient_id, doctor_id, hospital_id, appointment_date FROM appointments WHERE doctor_id = (SELECT id FROM doctors WHERE license_number='DR-STEFAN') AND status='COMPLETED' ORDER BY appointment_date LIMIT 5) a
+JOIN (VALUES
+  (1, 'Essential Hypertension','I10','BP elevated at 145/92. Patient reports stress.','145/92',88,36.7,78,176,'Hypertension stage 1.','Start Amlodipine 5mg daily. Follow-up in 4 weeks.'),
+  (2, 'Type 2 Diabetes Mellitus','E11','HbA1c 7.8%. Fasting glucose 9.2 mmol/L.','130/85',78,36.5,92,174,'Diabetes poorly controlled on diet alone.','Initiate Metformin 500mg twice daily.'),
+  (3, 'Upper Respiratory Tract Infection','J06.9','Sore throat, mild fever 37.8°C, 3 days.','118/75',82,37.8,65,168,'Viral URTI, self-limiting.','Paracetamol 500mg as needed. Rest and fluids.'),
+  (4, 'Hypercholesterolaemia','E78.0','Total cholesterol 6.8 mmol/L, LDL 4.2.','125/80',72,36.6,83,181,'Primary hypercholesterolaemia.','Start Rosuvastatin 10mg at night.'),
+  (5, 'Gastroesophageal Reflux','K21.0','Heartburn 3x/week, worse after meals.','128/82',74,36.4,78,176,'GERD, mild-moderate.','Omeprazole 20mg before breakfast for 8 weeks.')
+) AS v(rn, diagnosis, mkb10, notes, bp, hr, temp, wt, ht, assessment, plan)
+ON ROW_NUMBER() OVER (ORDER BY a.appointment_date) = v.rn
+WHERE NOT EXISTS (SELECT 1 FROM medical_records mr WHERE mr.appointment_id = a.id);
+ALTER TABLE appointments ENABLE TRIGGER trg_appointments_future_date;
+
+-- =============================================================================
+-- 10. Medical records for Zoran (DR-ZORAN, doctor_id resolved at runtime)
+-- =============================================================================
+ALTER TABLE appointments DISABLE TRIGGER trg_appointments_future_date;
+INSERT INTO medical_records (patient_id, doctor_id, hospital_id, appointment_id, diagnosis,
+  mkb10_code, clinical_notes, blood_pressure, heart_rate, temperature, weight, height,
+  assessment, plan, created_by)
+SELECT a.patient_id, a.doctor_id, a.hospital_id, a.id,
+  v.diagnosis, v.mkb10, v.notes, v.bp, v.hr, v.temp, v.wt, v.ht, v.assessment, v.plan, 'MOCK_SEED'
+FROM (SELECT id, patient_id, doctor_id, hospital_id, appointment_date FROM appointments WHERE doctor_id = (SELECT id FROM doctors WHERE license_number='DR-ZORAN') AND status='COMPLETED' ORDER BY appointment_date LIMIT 5) a
+JOIN (VALUES
+  (1, 'Nephrolithiasis','N20.0','Recurrent stones, 6mm stone right ureter.','138/88',92,37.1,81,183,'Ureteral stone 6mm, medical expulsion therapy.','Tamsulosin 0.4mg nightly. Fluid intake >2.5L/day.'),
+  (2, 'Benign Prostatic Hyperplasia','N40','IPSS score 18. PSA 2.1 ng/mL.','140/90',76,36.5,88,177,'Moderate BPH.','Finasteride 5mg daily. Review in 3 months.'),
+  (3, 'Recurrent UTI','N39.0','Third UTI this year. E.coli resistant.','122/78',80,37.4,62,165,'Recurrent UTI, resistant organism.','Nitrofurantoin 100mg x5 days. Prophylaxis review.'),
+  (4, 'Stress Urinary Incontinence','N39.3','Leakage on coughing/sneezing. Post-partum.','118/76',70,36.6,67,163,'Stress urinary incontinence.','Pelvic floor physiotherapy referral.'),
+  (5, 'Bladder Stone','N21.0','Haematuria and dysuria. 8mm bladder stone.','132/84',84,36.8,90,179,'Bladder stone, symptomatic.','Cystolitholapaxy scheduled.')
+) AS v(rn, diagnosis, mkb10, notes, bp, hr, temp, wt, ht, assessment, plan)
+ON ROW_NUMBER() OVER (ORDER BY a.appointment_date) = v.rn
+WHERE NOT EXISTS (SELECT 1 FROM medical_records mr WHERE mr.appointment_id = a.id);
+ALTER TABLE appointments ENABLE TRIGGER trg_appointments_future_date;
+
+-- =============================================================================
+-- 11. Prescriptions for Stefan and Zoran
+-- =============================================================================
+INSERT INTO prescriptions (patient_id, doctor_id, medical_record_id, medication_name, dosage,
+  frequency, duration_days, quantity, route, instructions, start_date, end_date, status, created_by)
+SELECT mr.patient_id, mr.doctor_id, mr.id,
+  v.name, v.dosage, v.freq, v.days, v.qty, 'ORAL'::prescription_route_enum, v.instructions,
+  CURRENT_DATE - v.ago, CURRENT_DATE - v.ago + v.days,
+  CASE WHEN CURRENT_DATE > CURRENT_DATE - v.ago + v.days THEN 'COMPLETED' ELSE 'ACTIVE' END::prescription_status_enum,
+  'MOCK_SEED'
+FROM medical_records mr
+JOIN (VALUES
+  ((SELECT id FROM doctors WHERE license_number='DR-STEFAN'), 1, 'Amlodipine','5mg','Once daily',90,90,'Take in the morning.',10),
+  ((SELECT id FROM doctors WHERE license_number='DR-STEFAN'), 2, 'Metformin','500mg','Twice daily',90,180,'Take with meals.',12),
+  ((SELECT id FROM doctors WHERE license_number='DR-STEFAN'), 3, 'Paracetamol','500mg','Every 6h as needed',7,14,'Max 4 doses/day.',15),
+  ((SELECT id FROM doctors WHERE license_number='DR-STEFAN'), 4, 'Rosuvastatin','10mg','Once at night',90,90,'Take at bedtime.',20),
+  ((SELECT id FROM doctors WHERE license_number='DR-STEFAN'), 5, 'Omeprazole','20mg','Once before breakfast',56,56,'Take 30 min before first meal.',25),
+  ((SELECT id FROM doctors WHERE license_number='DR-ZORAN'),  1, 'Tamsulosin','0.4mg','Once nightly',30,30,'Take at bedtime.',5),
+  ((SELECT id FROM doctors WHERE license_number='DR-ZORAN'),  2, 'Finasteride','5mg','Once daily',90,90,'Full effect in 3-6 months.',8),
+  ((SELECT id FROM doctors WHERE license_number='DR-ZORAN'),  3, 'Nitrofurantoin','100mg','Twice daily',5,10,'Take with food. Complete course.',7),
+  ((SELECT id FROM doctors WHERE license_number='DR-ZORAN'),  4, 'Duloxetine','20mg','Twice daily',42,84,'Do not stop abruptly.',3),
+  ((SELECT id FROM doctors WHERE license_number='DR-ZORAN'),  5, 'Tamsulosin','0.4mg','Once nightly',30,30,'Continue until procedure.',4)
+) AS v(doc_id, rn, name, dosage, freq, days, qty, instructions, ago)
+ON mr.doctor_id = v.doc_id
+  AND ROW_NUMBER() OVER (PARTITION BY mr.doctor_id ORDER BY mr.id) = v.rn
+WHERE NOT EXISTS (SELECT 1 FROM prescriptions p WHERE p.medical_record_id = mr.id AND p.medication_name = v.name);
+
+-- =============================================================================
+-- 12. Referrals for Stefan and Zoran
+-- =============================================================================
+INSERT INTO referrals (doctor_id, patient_id, referral_type, referred_to, referral_number,
+  description, scheduled_date, status, created_by)
+SELECT v.doc_id, v.pat_id, v.rtype::referral_type_enum, v.referred_to,
+  'UP-2026-' || LPAD(nextval('referral_number_seq')::text, 3, '0'),
+  v.description, CURRENT_DATE + v.days_offset, v.status::referral_status_enum, 'MOCK_SEED'
+FROM (VALUES
+  ((SELECT id FROM doctors WHERE license_number='DR-STEFAN'), 4, 'SPECIALIST','Ендокринологија','Неконтролиран Diabetes tip 2 — HbA1c 7.8%, ендокринолошка консултација.',14,'ACTIVE'),
+  ((SELECT id FROM doctors WHERE license_number='DR-STEFAN'), 3, 'SPECIALIST','Гастроентерологија','ГЕРБ со несоодветен одговор на PPI — гастроскопија.',21,'ACTIVE'),
+  ((SELECT id FROM doctors WHERE license_number='DR-STEFAN'), 2, 'LABORATORY','Кардиологија','Хиперхолестеролемија со умерен КВ ризик — стрес ЕКГ.',-7,'COMPLETED'),
+  ((SELECT id FROM doctors WHERE license_number='DR-ZORAN'),  3, 'SPECIALIST','Нефрологија','Рекурентна УТИ — 3та епизода, резистентен организам.',10,'ACTIVE'),
+  ((SELECT id FROM doctors WHERE license_number='DR-ZORAN'),  5, 'HOSPITAL','Физикална терапија','Стресна уринарна инконтиненција — програма за карличниот под.',7,'ACTIVE'),
+  ((SELECT id FROM doctors WHERE license_number='DR-ZORAN'),  1, 'SPECIALIST','Нефрологија','Рекурентна нефролитијаза — метаболна обработка.',5,'CANCELLED')
+) AS v(doc_id, pat_id, rtype, referred_to, description, days_offset, status)
+WHERE NOT EXISTS (SELECT 1 FROM referrals r WHERE r.doctor_id = v.doc_id AND r.referred_to = v.referred_to AND r.patient_id = v.pat_id);
+
 COMMIT;
 
 -- Quick summary
-SELECT 'hospitals'        AS table, COUNT(*) FROM hospitals
+SELECT 'hospitals'        AS tbl, COUNT(*) FROM hospitals
 UNION ALL SELECT 'doctors',         COUNT(*) FROM doctors
 UNION ALL SELECT 'patients',        COUNT(*) FROM patients
 UNION ALL SELECT 'appointments',    COUNT(*) FROM appointments
 UNION ALL SELECT 'medical_records', COUNT(*) FROM medical_records
-UNION ALL SELECT 'prescriptions',   COUNT(*) FROM prescriptions;
+UNION ALL SELECT 'prescriptions',   COUNT(*) FROM prescriptions
+UNION ALL SELECT 'referrals',       COUNT(*) FROM referrals;

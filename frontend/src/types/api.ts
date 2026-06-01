@@ -1,7 +1,7 @@
 // Type definitions mirroring the Spring Boot backend DTOs.
 // Any drift here means runtime errors — keep in sync with backend/src/main/java/com/medtech/application/dto.
 
-export type UserRole = "PATIENT" | "DOCTOR" | "NURSE" | "ADMIN";
+export type UserRole = "PATIENT" | "DOCTOR" | "GENERAL_PRACTITIONER" | "NURSE" | "ADMIN";
 export type UserStatus = "ACTIVE" | "INACTIVE" | "SUSPENDED" | "DELETED";
 export type AppointmentStatus =
   | "SCHEDULED"
@@ -198,6 +198,7 @@ export type PrescriptionStatus = "ACTIVE" | "COMPLETED" | "CANCELLED" | "SUSPEND
 export interface MedicalRecordResponse {
   id: number;
   patientId: number;
+  patientName: string | null;
   doctorId: number;
   doctorName: string;
   doctorSpecialization: string | null;

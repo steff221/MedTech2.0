@@ -96,4 +96,17 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
                                       @Param("date") LocalDate date,
                                       @Param("time") java.time.LocalTime time,
                                       @Param("statuses") java.util.Collection<AppointmentStatus> statuses);
+
+    @Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+           SELECT a FROM Appointment a
+           WHERE a.patient.id = :patientId
+             AND a.appointmentDate = :date
+             AND a.appointmentTime = :time
+             AND a.status IN :statuses
+           """)
+    List<Appointment> lockPatientConflicting(@Param("patientId") Long patientId,
+                                             @Param("date") LocalDate date,
+                                             @Param("time") java.time.LocalTime time,
+                                             @Param("statuses") java.util.Collection<AppointmentStatus> statuses);
 }

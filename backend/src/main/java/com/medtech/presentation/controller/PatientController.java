@@ -22,6 +22,7 @@ import com.medtech.domain.vo.AuditStatus;
 import com.medtech.infrastructure.exception.AuthorizationException;
 import com.medtech.infrastructure.security.PatientAccessGuard;
 import com.medtech.infrastructure.security.SecurityUtils;
+import com.medtech.infrastructure.security.Roles;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -60,8 +61,22 @@ public class PatientController {
     private final PatientAccessGuard accessGuard;
     private final AuditLogService auditLogService;
 
+    @GetMapping("/my-patients")
+    @PreAuthorize(Roles.CLINICIAN)
+    @Operation(summary = "List only patients who have had at least one appointment with the authenticated doctor")
+    public ResponseEntity<org.springframework.data.domain.Page<PatientResponse>> myPatients(
+            @org.springframework.data.web.PageableDefault(size = 20) Pageable pageable) {
+        Long doctorUserId = SecurityUtils.currentUserId()
+                .orElseThrow(() -> new com.medtech.infrastructure.exception.AuthorizationException("Authentication required"));
+        Pageable capped = org.springframework.data.domain.PageRequest.of(
+                pageable.getPageNumber(),
+                Math.min(pageable.getPageSize(), 100),
+                pageable.getSort());
+        return ResponseEntity.ok(patientService.findByDoctorUserId(doctorUserId, capped).map(patientMapper::toResponse));
+    }
+
     @GetMapping
-    @PreAuthorize("hasAnyRole('DOCTOR', 'NURSE', 'ADMIN')")
+    @PreAuthorize(Roles.CARE_TEAM_OR_ADMIN)
     @Operation(summary = "Search patients by name or email, optionally scoped to a hospital")
     public ResponseEntity<org.springframework.data.domain.Page<PatientResponse>> search(
             @org.springframework.web.bind.annotation.RequestParam(defaultValue = "") String q,
@@ -90,7 +105,7 @@ public class PatientController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('DOCTOR', 'NURSE', 'ADMIN')")
+    @PreAuthorize(Roles.CARE_TEAM_OR_ADMIN)
     @Operation(summary = "Get a patient profile (doctors must have a care relationship)")
     public ResponseEntity<PatientResponse> getById(@PathVariable Long id, HttpServletRequest request) {
         accessGuard.assertCanAccessPatient(id);

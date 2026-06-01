@@ -11,6 +11,7 @@ import com.medtech.domain.entity.Appointment;
 import com.medtech.infrastructure.exception.AuthorizationException;
 import com.medtech.infrastructure.security.PatientAccessGuard;
 import com.medtech.infrastructure.security.SecurityUtils;
+import com.medtech.infrastructure.security.Roles;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -75,7 +76,7 @@ public class AppointmentController {
     }
 
     @GetMapping("/doctor/{doctorId}")
-    @PreAuthorize("hasAnyRole('DOCTOR', 'NURSE')")
+    @PreAuthorize(Roles.CARE_TEAM)
     @Operation(summary = "List a doctor's appointments on a given date")
     public ResponseEntity<Page<AppointmentResponse>> byDoctorAndDate(
             @PathVariable Long doctorId,
@@ -86,7 +87,7 @@ public class AppointmentController {
     }
 
     @GetMapping("/doctor/{doctorId}/range")
-    @PreAuthorize("hasAnyRole('DOCTOR', 'NURSE')")
+    @PreAuthorize(Roles.CARE_TEAM)
     @Operation(summary = "List a doctor's appointments within a date range")
     public ResponseEntity<Page<AppointmentResponse>> byDoctorInRange(
             @PathVariable Long doctorId,
@@ -98,7 +99,7 @@ public class AppointmentController {
     }
 
     @PutMapping("/{id}/reschedule")
-    @PreAuthorize("hasAnyRole('PATIENT', 'DOCTOR', 'NURSE')")
+    @PreAuthorize(Roles.PATIENT_OR_CARE_TEAM)
     @Operation(summary = "Move an appointment to a new date / time")
     public ResponseEntity<AppointmentResponse> reschedule(@PathVariable Long id,
                                                           @Valid @RequestBody RescheduleAppointmentRequest request) {
@@ -108,7 +109,7 @@ public class AppointmentController {
     }
 
     @PutMapping("/{id}/complete")
-    @PreAuthorize("hasRole('DOCTOR')")
+    @PreAuthorize(Roles.CLINICIAN)
     @Operation(summary = "Doctor marks an appointment COMPLETED")
     public ResponseEntity<AppointmentResponse> complete(@PathVariable Long id) {
         Appointment appt = appointmentService.getById(id);
@@ -120,8 +121,23 @@ public class AppointmentController {
         return ResponseEntity.ok(mapper.toResponse(appointmentService.complete(id)));
     }
 
+    @PutMapping("/{id}/no-show")
+    @PreAuthorize(Roles.CARE_TEAM)
+    @Operation(summary = "Doctor or nurse marks an appointment as NO_SHOW")
+    public ResponseEntity<AppointmentResponse> markNoShow(@PathVariable Long id) {
+        Appointment appt = appointmentService.getById(id);
+        Long currentUserId = SecurityUtils.currentUserId()
+                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+        boolean isDoctor = appt.getDoctor().getUser().getId().equals(currentUserId);
+        boolean isNurse  = SecurityUtils.hasRole("NURSE");
+        if (!isDoctor && !isNurse) {
+            throw new AuthorizationException("You are not the assigned doctor for this appointment");
+        }
+        return ResponseEntity.ok(mapper.toResponse(appointmentService.markNoShow(id)));
+    }
+
     @PutMapping("/{id}/video-url")
-    @PreAuthorize("hasRole('DOCTOR')")
+    @PreAuthorize(Roles.CLINICIAN)
     @Operation(summary = "Doctor sets or updates the video call URL for a virtual appointment")
     public ResponseEntity<AppointmentResponse> setVideoUrl(@PathVariable Long id,
                                                            @Valid @RequestBody SetVideoUrlRequest request) {

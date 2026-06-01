@@ -15,6 +15,7 @@ let silentRefreshPromise: Promise<void> | null = null;
 
 function homeFor(role: UserRole): string {
   if (role === "DOCTOR") return "/doctor";
+  if (role === "GENERAL_PRACTITIONER") return "/gp";
   if (role === "PATIENT") return "/dashboard";
   if (role === "NURSE") return "/nurse";
   if (role === "ADMIN") return "/admin";

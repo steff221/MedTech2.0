@@ -8,6 +8,8 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  ClipboardList,
+  Droplets,
   Eye,
   Heart,
   Search,
@@ -47,6 +49,7 @@ const SPECIALTY_ICONS: Record<string, React.ComponentType<{ className?: string }
   "Cardiology":        Heart,
   "Dermatology":       Activity,
   "Family Medicine":   Stethoscope,
+  "General Practice":  ClipboardList,
   "Internal Medicine": Syringe,
   "Neurology":         Brain,
   "Pediatrics":        Baby,
@@ -54,11 +57,13 @@ const SPECIALTY_ICONS: Record<string, React.ComponentType<{ className?: string }
   "Psychiatry":        Smile,
   "Ophthalmology":     Eye,
   "Pulmonology":       Wind,
+  "Urology":           Droplets,
 };
 
 const SPECIALTY_VALUES = [
-  "Cardiology", "Dermatology", "Family Medicine", "Internal Medicine",
-  "Neurology", "Pediatrics", "Orthopedics", "Psychiatry", "Ophthalmology", "Pulmonology",
+  "Cardiology", "Dermatology", "Family Medicine", "General Practice",
+  "Internal Medicine", "Neurology", "Pediatrics", "Orthopedics",
+  "Psychiatry", "Ophthalmology", "Pulmonology", "Urology",
 ];
 
 const APPOINTMENT_TYPE_VALUES: AppointmentType[] = [
@@ -113,6 +118,12 @@ export function BookAppointmentWizard({ open, onClose, patientId, initialDoctor 
     () => Array.from({ length: 14 }, (_, i) => addDays(startOfDay(new Date()), i + 1)),
     [],
   );
+
+  const allDoctorsQuery = useQuery({
+    queryKey: ["doctors", "all-wizard"],
+    queryFn: () => doctorService.search({ size: 100 }),
+    staleTime: 5 * 60 * 1000,
+  });
 
   const doctorsQuery = useQuery({
     queryKey: ["doctors", { specialization: specialty }],
@@ -195,6 +206,15 @@ export function BookAppointmentWizard({ open, onClose, patientId, initialDoctor 
       v.toLowerCase().includes(specSearch.toLowerCase())
     );
   });
+
+  const doctorNameMatches = useMemo(() => {
+    if (!specSearch.trim()) return [];
+    const q = specSearch.toLowerCase();
+    return (allDoctorsQuery.data?.content ?? []).filter((d) =>
+      `${d.firstName} ${d.lastName}`.toLowerCase().includes(q) ||
+      d.specialization.toLowerCase().includes(q)
+    );
+  }, [specSearch, allDoctorsQuery.data]);
 
   const filteredDocs = (doctorsQuery.data?.content ?? []).filter((d) => {
     const q = docSearch.toLowerCase();
@@ -290,10 +310,40 @@ export function BookAppointmentWizard({ open, onClose, patientId, initialDoctor 
                     </button>
                   );
                 })}
-                {filteredSpecs.length === 0 && (
+                {filteredSpecs.length === 0 && doctorNameMatches.length === 0 && !allDoctorsQuery.isPending && (
                   <p className="col-span-full py-6 text-center text-sm text-slate-400">{wt.noResults}</p>
                 )}
               </div>
+
+              {doctorNameMatches.length > 0 && (
+                <div className="mt-2">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{wt.step2Title}</p>
+                  <div className="space-y-2">
+                    {doctorNameMatches.map((d) => (
+                      <button
+                        key={d.id}
+                        type="button"
+                        onClick={() => {
+                          setSpecialty(d.specialization);
+                          setDoctor(d);
+                          setStep(3);
+                        }}
+                        className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left transition-all hover:border-brand-300 hover:bg-brand-50/50"
+                      >
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700">
+                          {initials(d.firstName, d.lastName)}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-slate-900">Dr. {d.firstName} {d.lastName}</p>
+                          <p className="text-xs text-brand-600">{t.specialties[d.specialization] ?? d.specialization}</p>
+                          {d.hospitalName && <p className="truncate text-xs text-slate-400">{d.hospitalName}</p>}
+                        </div>
+                        <ChevronRight className="ml-auto h-4 w-4 shrink-0 text-slate-300" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -392,7 +442,7 @@ export function BookAppointmentWizard({ open, onClose, patientId, initialDoctor 
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{wt.timeLabel}</p>
                 {!date ? (
                   <p className="text-sm text-slate-400">{wt.selectDateFirst}</p>
-                ) : availQuery.isLoading || bookedQuery.isLoading ? (
+                ) : !availQuery.data || availQuery.isFetching || bookedQuery.isLoading ? (
                   <div className="flex justify-center py-4"><Spinner /></div>
                 ) : !availableSlots || availableSlots.length === 0 ? (
                   <div className="rounded-xl border border-slate-200 bg-slate-50 py-6 text-center">

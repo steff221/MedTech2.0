@@ -11,6 +11,7 @@ import com.medtech.infrastructure.sse.SseEmitterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -125,7 +126,12 @@ class NotificationServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(notificationRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        service.create(1L, "APPOINTMENT", "Термин потврден", "Вашиот термин е потврден.", 42L);
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            service.create(1L, "APPOINTMENT", "Термин потврден", "Вашиот термин е потврден.", 42L);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
 
         verify(notificationRepository).save(any(Notification.class));
     }

@@ -82,6 +82,10 @@ public class PatientService {
                 .orElseThrow(() -> ResourceNotFoundException.of("Patient (by userId)", userId));
     }
 
+    public Page<Patient> findByDoctorUserId(Long doctorUserId, Pageable pageable) {
+        return patientRepository.findByDoctorUserId(doctorUserId, pageable);
+    }
+
     @Transactional
     public Patient update(Long id, UpdatePatientRequest req) {
         Patient patient = getById(id);

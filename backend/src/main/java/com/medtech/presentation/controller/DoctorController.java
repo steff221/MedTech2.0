@@ -8,6 +8,7 @@ import com.medtech.application.service.DoctorRatingService;
 import com.medtech.application.service.DoctorService;
 import com.medtech.infrastructure.exception.AuthorizationException;
 import com.medtech.infrastructure.security.SecurityUtils;
+import com.medtech.infrastructure.security.Roles;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -83,7 +84,7 @@ public class DoctorController {
     }
 
     @PostMapping("/me")
-    @PreAuthorize("hasRole('DOCTOR')")
+    @PreAuthorize(Roles.CLINICIAN)
     @Operation(summary = "Create the doctor profile for the currently authenticated DOCTOR user")
     public ResponseEntity<DoctorResponse> createSelfProfile(@Valid @RequestBody CreateDoctorRequest request) {
         Long userId = SecurityUtils.currentUserId()
@@ -93,7 +94,7 @@ public class DoctorController {
     }
 
     @GetMapping("/me")
-    @PreAuthorize("hasRole('DOCTOR')")
+    @PreAuthorize(Roles.CLINICIAN)
     @Operation(summary = "Return the doctor profile of the currently authenticated DOCTOR user")
     public ResponseEntity<DoctorResponse> me() {
         Long userId = SecurityUtils.currentUserId()
@@ -102,7 +103,7 @@ public class DoctorController {
     }
 
     @PutMapping("/me")
-    @PreAuthorize("hasRole('DOCTOR')")
+    @PreAuthorize(Roles.CLINICIAN)
     @Operation(summary = "Update mutable fields of the authenticated doctor's profile")
     public ResponseEntity<DoctorResponse> updateSelfProfile(@Valid @RequestBody UpdateDoctorRequest request) {
         Long userId = SecurityUtils.currentUserId()

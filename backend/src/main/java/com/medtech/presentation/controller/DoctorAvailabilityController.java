@@ -6,6 +6,7 @@ import com.medtech.application.service.DoctorAvailabilityService;
 import com.medtech.domain.repository.DoctorRepository;
 import com.medtech.infrastructure.exception.AuthorizationException;
 import com.medtech.infrastructure.exception.ResourceNotFoundException;
+import com.medtech.infrastructure.security.Roles;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -32,7 +33,7 @@ public class DoctorAvailabilityController {
     }
 
     @PutMapping("/api/doctors/me/availability")
-    @PreAuthorize("hasRole('DOCTOR')")
+    @PreAuthorize(Roles.CLINICIAN)
     @Operation(summary = "Save the authenticated doctor's weekly availability")
     public ResponseEntity<List<AvailabilitySlotResponse>> save(
             @Valid @RequestBody List<@Valid AvailabilitySlotRequest> slots,

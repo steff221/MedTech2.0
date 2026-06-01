@@ -59,6 +59,19 @@ const mk = {
     availability:    "Работно расписание",
   },
 
+  // ── GP nav ────────────────────────────────────────────────────────────────
+  gpNav: {
+    portal:         "Општа пракса",
+    overview:       "Преглед",
+    patients:       "Пациенти",
+    schedule:       "Календар",
+    prescriptions:  "Рецепти",
+    referrals:      "Упати",
+    medicalJournal: "Медицински дневник",
+    notifications:  "Известувања",
+    settings:       "Поставки",
+  },
+
   // ── Doctor availability ───────────────────────────────────────────────────
   doctorAvailability: {
     title:        "Работно расписание",
@@ -591,6 +604,7 @@ const mk = {
     "Cardiology":        "Кардиологија",
     "Dermatology":       "Дерматологија",
     "Family Medicine":   "Општа медицина",
+    "General Practice":  "Општа пракса",
     "Internal Medicine": "Интерна медицина",
     "Neurology":         "Неурологија",
     "Pediatrics":        "Педијатрија",
@@ -599,6 +613,7 @@ const mk = {
     "Ophthalmology":     "Офталмологија",
     "Pulmonology":       "Пулмологија",
     "Gynecology":        "Гинекологија",
+    "Urology":           "Урологија",
   } as Record<string, string>,
 
   // ── Booking wizard ────────────────────────────────────────────────────────
@@ -737,6 +752,18 @@ const en: typeof mk = {
     overview:        "Overview",
     notifications:   "Notifications",
     availability:    "Working hours",
+  },
+
+  gpNav: {
+    portal:         "General Practice",
+    overview:       "Overview",
+    patients:       "Patients",
+    schedule:       "Schedule",
+    prescriptions:  "Prescriptions",
+    referrals:      "Referrals",
+    medicalJournal: "Medical journal",
+    notifications:  "Notifications",
+    settings:       "Settings",
   },
 
   doctorAvailability: {
@@ -1241,6 +1268,7 @@ const en: typeof mk = {
     "Cardiology":        "Cardiology",
     "Dermatology":       "Dermatology",
     "Family Medicine":   "Family Medicine",
+    "General Practice":  "General Practice",
     "Internal Medicine": "Internal Medicine",
     "Neurology":         "Neurology",
     "Pediatrics":        "Pediatrics",
@@ -1249,6 +1277,7 @@ const en: typeof mk = {
     "Ophthalmology":     "Ophthalmology",
     "Pulmonology":       "Pulmonology",
     "Gynecology":        "Gynecology",
+    "Urology":           "Urology",
   } as Record<string, string>,
 
   bookingWizard: {

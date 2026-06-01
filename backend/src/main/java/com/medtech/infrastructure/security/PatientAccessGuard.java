@@ -36,7 +36,7 @@ public class PatientAccessGuard {
             return;
         }
 
-        if (SecurityUtils.hasRole("DOCTOR")) {
+        if (SecurityUtils.hasRole("DOCTOR") || SecurityUtils.hasRole("GENERAL_PRACTITIONER")) {
             if (!appointmentRepository.hasCareRelationship(currentUserId, patientId)) {
                 throw new AuthorizationException(
                         "PATIENT_ACCESS_DENIED",

@@ -6,6 +6,7 @@ import com.medtech.application.service.DoctorReportService;
 import com.medtech.domain.repository.DoctorRepository;
 import com.medtech.infrastructure.exception.ResourceNotFoundException;
 import com.medtech.infrastructure.security.SecurityUtils;
+import com.medtech.infrastructure.security.Roles;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -20,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/reports")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('DOCTOR')")
+@PreAuthorize(Roles.CLINICIAN)
 @Tag(name = "Doctor Reports", description = "Individual periodic reports for doctors")
 public class DoctorReportController {
 

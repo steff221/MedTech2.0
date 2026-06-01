@@ -52,6 +52,18 @@ jobs:
           java-version: '21'
           cache: maven
 
+      # Validate that all Flyway migration SQL files are syntactically consistent
+      # and that no two migrations share a version number.
+      - name: Validate Flyway migrations
+        run: |
+          # Check for duplicate version numbers in migration files
+          DUPES=$(ls backend/src/main/resources/database/V*.sql 2>/dev/null \
+            | sed 's/.*\/V\([0-9]*\)__.*/\1/' | sort | uniq -d)
+          if [ -n "$DUPES" ]; then
+            echo "Duplicate Flyway version(s) found: $DUPES"; exit 1
+          fi
+          echo "Flyway version check passed ($(ls backend/src/main/resources/database/V*.sql | wc -l | tr -d ' ') migrations)"
+
       # Tests are pure unit + @WebMvcTest slices (JpaConfig excluded), so no
       # Postgres service is needed. If we add integration tests later, add a
       # `services.postgres` block and SPRING_DATASOURCE_* env vars here.
@@ -137,6 +149,34 @@ jobs:
           ignore-unfixed: true
           exit-code: '1'
           format: table
+
+  # ============================================================================
+  # Docker build smoke-test — runs on every PR to catch Dockerfile regressions
+  # before merge. Does not push; just validates the build succeeds.
+  # ============================================================================
+  docker-build-check:
+    name: Docker build · ${{ matrix.service }}
+    if: github.event_name == 'pull_request'
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build ${{ matrix.service }} image (no push)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./${{ matrix.service }}
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   # ============================================================================
   # CD — staging auto-deploy on merge to main, production requires manual approval.

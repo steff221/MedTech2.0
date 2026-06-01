@@ -10,10 +10,13 @@ import com.medtech.domain.entity.MedicalRecord;
 import com.medtech.infrastructure.exception.AuthorizationException;
 import com.medtech.infrastructure.security.PatientAccessGuard;
 import com.medtech.infrastructure.security.SecurityUtils;
+import com.medtech.infrastructure.security.Roles;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -36,8 +39,18 @@ public class MedicalRecordController {
     private final MedicalRecordMapper mapper;
     private final PatientAccessGuard accessGuard;
 
+    @GetMapping("/my")
+    @PreAuthorize(Roles.CLINICIAN)
+    @Operation(summary = "List all medical records written by the authenticated doctor")
+    public ResponseEntity<Page<MedicalRecordResponse>> myRecords(Pageable pageable) {
+        Long doctorUserId = SecurityUtils.currentUserId()
+                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+        return ResponseEntity.ok(medicalRecordService.listByDoctorUserId(doctorUserId, pageable)
+                .map(mapper::toResponse));
+    }
+
     @PostMapping
-    @PreAuthorize("hasRole('DOCTOR')")
+    @PreAuthorize(Roles.CLINICIAN)
     @Operation(summary = "Doctor creates a medical record (optionally tied to an appointment)")
     public ResponseEntity<MedicalRecordResponse> create(@Valid @RequestBody CreateMedicalRecordRequest request) {
         Long doctorUserId = SecurityUtils.currentUserId()
@@ -56,7 +69,7 @@ public class MedicalRecordController {
     }
 
     @PostMapping("/{id}/addendum")
-    @PreAuthorize("hasRole('DOCTOR')")
+    @PreAuthorize(Roles.CLINICIAN)
     @Operation(summary = "Add an addendum to a medical record (authoring doctor only, within 7 days)")
     public ResponseEntity<MedicalRecordResponse> addAddendum(@PathVariable Long id,
                                                              @Valid @RequestBody AddAddendumRequest request) {

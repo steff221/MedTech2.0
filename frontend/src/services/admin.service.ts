@@ -6,7 +6,7 @@ export interface InviteStaffRequest {
   firstName: string;
   lastName: string;
   phoneNumber?: string;
-  role: "DOCTOR" | "NURSE";
+  role: "DOCTOR" | "GENERAL_PRACTITIONER" | "NURSE";
   hospitalId?: number;
   licenseNumber?: string;
   specialization?: string;

@@ -122,7 +122,7 @@ class PatientServiceTest {
         // Only city is updated — allergies must remain unchanged
         UpdatePatientRequest req = new UpdatePatientRequest(
                 null, null, null, null, null, null, null,
-                null, null, "Bitola", null, null, null);
+                null, null, null, "Bitola", null, null);
         service.update(10L, req);
 
         assertThat(existing.getCity()).isEqualTo("Bitola");

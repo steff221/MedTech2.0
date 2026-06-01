@@ -104,6 +104,15 @@ public class AppointmentService {
                             + " " + req.appointmentTime());
         }
 
+        var patientConflicts = appointmentRepository.lockPatientConflicting(
+                patient.getId(), req.appointmentDate(), req.appointmentTime(),
+                List.of(AppointmentStatus.SCHEDULED, AppointmentStatus.RESCHEDULED));
+        if (!patientConflicts.isEmpty()) {
+            throw new ConflictException(ErrorCode.APPOINTMENT_CONFLICT,
+                    "You already have an appointment at " + req.appointmentDate()
+                            + " " + req.appointmentTime());
+        }
+
         Appointment appt = new Appointment();
         appt.setPatient(patient);
         appt.setDoctor(doctor);
@@ -125,8 +134,24 @@ public class AppointmentService {
         String patientEmail = patient.getUser().getEmail();
         String patientName  = patient.getUser().getFirstName() + " " + patient.getUser().getLastName();
         String doctorName   = "д-р " + doctor.getUser().getFirstName() + " " + doctor.getUser().getLastName();
-        emailService.sendAppointmentConfirmation(patientEmail, patientName, doctorName,
-                saved.getAppointmentDate(), saved.getAppointmentTime());
+
+        // Email and in-app notification are best-effort — a transient failure must not roll back the booking.
+        try {
+            emailService.sendAppointmentConfirmation(patientEmail, patientName, doctorName,
+                    saved.getAppointmentDate(), saved.getAppointmentTime());
+        } catch (Exception ex) {
+            log.warn("Appointment confirmation email failed for appointment id={}: {}", saved.getId(), ex.getMessage());
+        }
+
+        try {
+            Long doctorUserId = doctor.getUser().getId();
+            notificationService.create(doctorUserId, "APPOINTMENT_REMINDER",
+                    "Нов термин закажан",
+                    patientName + " — " + saved.getAppointmentDate() + " во " + saved.getAppointmentTime(),
+                    saved.getId());
+        } catch (Exception ex) {
+            log.warn("Doctor booking notification failed for appointment id={}: {}", saved.getId(), ex.getMessage());
+        }
 
         return saved;
     }
@@ -136,14 +161,23 @@ public class AppointmentService {
         Appointment appt = getById(appointmentId);
         rejectIfTerminal(appt);
 
+        // Lock doctor slot first, then patient slot — same order as book() to prevent deadlock
         var conflicts = appointmentRepository.lockConflicting(
                 appt.getDoctor().getId(), req.newDate(), req.newTime(),
                 List.of(AppointmentStatus.SCHEDULED, AppointmentStatus.RESCHEDULED));
-        // Exclude self from conflict detection (e.g. moving inside same slot is a no-op but allowed)
         conflicts.removeIf(c -> c.getId().equals(appt.getId()));
         if (!conflicts.isEmpty()) {
             throw new ConflictException(ErrorCode.APPOINTMENT_CONFLICT,
                     "Doctor already booked at the requested slot");
+        }
+
+        var patientConflicts = appointmentRepository.lockPatientConflicting(
+                appt.getPatient().getId(), req.newDate(), req.newTime(),
+                List.of(AppointmentStatus.SCHEDULED, AppointmentStatus.RESCHEDULED));
+        patientConflicts.removeIf(c -> c.getId().equals(appt.getId()));
+        if (!patientConflicts.isEmpty()) {
+            throw new ConflictException(ErrorCode.APPOINTMENT_CONFLICT,
+                    "You already have an appointment at the requested slot");
         }
 
         appt.setAppointmentDate(req.newDate());
@@ -201,6 +235,15 @@ public class AppointmentService {
                 doctorName + " — " + appt.getAppointmentDate() + " во " + appt.getAppointmentTime(),
                 appt.getId());
 
+        return appt;
+    }
+
+    @Transactional
+    public Appointment markNoShow(Long appointmentId) {
+        Appointment appt = getById(appointmentId);
+        rejectIfTerminal(appt);
+        appt.setStatus(AppointmentStatus.NO_SHOW);
+        log.info("Appointment id={} marked NO_SHOW", appointmentId);
         return appt;
     }
 

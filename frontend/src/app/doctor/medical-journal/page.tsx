@@ -199,7 +199,10 @@ export default function MedicalJournalPage() {
     staleTime: 2 * 60 * 1000,
   });
 
-  const allReports: DoctorReportResponse[] = data?.content ?? [];
+  const allReports = useMemo<DoctorReportResponse[]>(
+    () => data?.content ?? [],
+    [data],
+  );
 
   const filteredReports = useMemo(() => {
     return allReports.filter((r) => {

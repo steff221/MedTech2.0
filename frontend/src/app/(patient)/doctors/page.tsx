@@ -33,8 +33,9 @@ const HospitalsMap = dynamic(() => import("@/components/patient/HospitalsMap"), 
 });
 
 const SPECIALTIES = [
-  "Cardiology", "Dermatology", "Family Medicine", "Internal Medicine",
-  "Neurology", "Pediatrics", "Orthopedics", "Gynecology", "Psychiatry",
+  "Cardiology", "Dermatology", "Family Medicine", "General Practice",
+  "Internal Medicine", "Neurology", "Pediatrics", "Orthopedics",
+  "Gynecology", "Psychiatry", "Urology",
 ];
 
 type SortKey = "rating" | "experience" | "name";

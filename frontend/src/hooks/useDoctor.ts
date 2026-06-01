@@ -12,7 +12,7 @@ import { useAuth } from "./useAuth";
  */
 export function useDoctorProfile() {
   const { isAuthenticated, user } = useAuth();
-  const enabled = isAuthenticated && user?.role === "DOCTOR";
+  const enabled = isAuthenticated && (user?.role === "DOCTOR" || user?.role === "GENERAL_PRACTITIONER");
 
   return useQuery({
     queryKey: ["doctor", "me"],

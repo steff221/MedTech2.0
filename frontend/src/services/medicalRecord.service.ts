@@ -3,6 +3,7 @@ import type {
   CreateMedicalRecordRequest,
   MedicalRecordEventResponse,
   MedicalRecordResponse,
+  Page,
 } from "@/types/api";
 
 export const medicalRecordService = {
@@ -14,4 +15,9 @@ export const medicalRecordService = {
 
   getHistory: (id: number) =>
     api.get<MedicalRecordEventResponse[]>(`/medical-records/${id}/history`).then((r) => r.data),
+
+  myRecords: (page = 0, size = 200) =>
+    api
+      .get<Page<MedicalRecordResponse>>("/medical-records/my", { params: { page, size, sort: "createdAt,desc" } })
+      .then((r) => r.data),
 };

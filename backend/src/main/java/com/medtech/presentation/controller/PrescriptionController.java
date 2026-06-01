@@ -8,6 +8,7 @@ import com.medtech.domain.entity.Prescription;
 import com.medtech.infrastructure.exception.AuthorizationException;
 import com.medtech.infrastructure.security.PatientAccessGuard;
 import com.medtech.infrastructure.security.SecurityUtils;
+import com.medtech.infrastructure.security.Roles;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -37,7 +38,7 @@ public class PrescriptionController {
     private final PatientAccessGuard accessGuard;
 
     @PostMapping
-    @PreAuthorize("hasRole('DOCTOR')")
+    @PreAuthorize(Roles.CLINICIAN)
     @Operation(summary = "Doctor issues a new prescription")
     public ResponseEntity<PrescriptionResponse> issue(@Valid @RequestBody IssuePrescriptionRequest request) {
         Long doctorUserId = SecurityUtils.currentUserId()
@@ -55,7 +56,7 @@ public class PrescriptionController {
     }
 
     @PutMapping("/{id}/refill")
-    @PreAuthorize("hasAnyRole('PATIENT', 'DOCTOR')")
+    @PreAuthorize(Roles.PATIENT_OR_CLINICIAN)
     @Operation(summary = "Increment refills_used (rejected when allowance exhausted or expired)")
     public ResponseEntity<PrescriptionResponse> refill(@PathVariable Long id) {
         Long callerUserId = SecurityUtils.currentUserId()
@@ -64,7 +65,7 @@ public class PrescriptionController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('DOCTOR')")
+    @PreAuthorize(Roles.CLINICIAN)
     @Operation(summary = "Cancel a prescription (soft delete via status change)")
     public ResponseEntity<PrescriptionResponse> cancel(@PathVariable Long id) {
         Long callerUserId = SecurityUtils.currentUserId()

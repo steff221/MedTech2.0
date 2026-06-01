@@ -28,10 +28,10 @@ public class StatsService {
         LocalDate weekAgo = today.minusDays(6);
 
         long prescriptionsToday = scalar(
-                "SELECT COUNT(*) FROM prescriptions WHERE start_date = CURRENT_DATE");
+                "SELECT COUNT(*) FROM prescriptions WHERE created_at::date = CURRENT_DATE");
 
         long referralsToday = scalar(
-                "SELECT COUNT(*) FROM appointments WHERE appointment_date = CURRENT_DATE");
+                "SELECT COUNT(*) FROM referrals WHERE created_at::date = CURRENT_DATE");
 
         long activePatients = scalar("SELECT COUNT(*) FROM patients");
         long activeDoctors = scalar(
@@ -60,11 +60,11 @@ public class StatsService {
                 SELECT d::date, COALESCE(c.count, 0)
                 FROM generate_series(CAST(:from AS date), CAST(:to AS date), '1 day') AS d
                 LEFT JOIN (
-                    SELECT start_date, COUNT(*) AS count
+                    SELECT created_at::date AS day, COUNT(*) AS count
                     FROM prescriptions
-                    WHERE start_date >= CAST(:from AS date)
-                    GROUP BY start_date
-                ) c ON c.start_date = d
+                    WHERE created_at::date >= CAST(:from AS date)
+                    GROUP BY created_at::date
+                ) c ON c.day = d
                 ORDER BY d
                 """)
                 .setParameter("from", Date.valueOf(weekAgo))

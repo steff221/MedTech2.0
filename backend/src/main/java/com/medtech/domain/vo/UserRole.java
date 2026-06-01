@@ -7,6 +7,7 @@ package com.medtech.domain.vo;
 public enum UserRole {
     PATIENT,
     DOCTOR,
+    GENERAL_PRACTITIONER,
     NURSE,
     ADMIN
 }

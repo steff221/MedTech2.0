@@ -15,6 +15,7 @@ export default function HomePage() {
     if (!isHydrated) return;
     if (!isAuthenticated || !user) return;
     if (user.role === "DOCTOR") router.replace("/doctor");
+    else if (user.role === "GENERAL_PRACTITIONER") router.replace("/gp");
     else router.replace("/dashboard");
   }, [isHydrated, isAuthenticated, user, router]);
 

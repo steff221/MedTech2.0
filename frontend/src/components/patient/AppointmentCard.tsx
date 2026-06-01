@@ -66,7 +66,7 @@ export function AppointmentCard({ appointment }: AppointmentCardProps) {
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="flex w-full items-start justify-between gap-4 pl-5 pr-5 pt-5 pb-5 text-left"
+        className="flex w-full items-start justify-between gap-4 pl-5 pr-5 pt-5 pb-4 text-left"
       >
         <div className="flex flex-1 items-start gap-4">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700">
@@ -90,6 +90,22 @@ export function AppointmentCard({ appointment }: AppointmentCardProps) {
                 {formatTime(appointment.appointmentTime)} · {appointment.durationMinutes} min
               </span>
             </div>
+            {/* Inline rate prompt — visible without expanding */}
+            {canRate && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setRatingModalOpen(true); }}
+                className="mt-2 flex items-center gap-1.5 rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 hover:bg-amber-100 transition-colors"
+              >
+                <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                {t.appointments.rateVisit}
+              </button>
+            )}
+            {isCompleted && !canRate && appointment.ratingValue != null && (
+              <div className="mt-2 flex items-center gap-1.5">
+                <StarRating value={appointment.ratingValue} readonly size="sm" />
+              </div>
+            )}
           </div>
         </div>
         <ChevronDown
