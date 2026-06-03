@@ -156,18 +156,24 @@ jobs:
         working-directory: frontend
         run: npm audit --audit-level=critical
 
-      # Informational filesystem scan (npm/Maven/Docker/IaC). Never blocks the
-      # build — see the note above re: Maven Central 429s.
+      # Informational filesystem scan run via the official Trivy Docker image
+      # directly (NOT the aquasecurity/trivy-action), because that action
+      # transitively pins aquasecurity/setup-trivy@v0.2.1, which was yanked from
+      # the registry and fails the whole job at "Set up job" before any step
+      # runs. A plain `run:` step has no action to pre-resolve. Belt-and-braces
+      # non-blocking: continue-on-error AND `|| true`, and we skip the backend
+      # Maven scan to avoid Maven Central 429s. npm audit above is the hard gate.
       - name: Trivy scan (informational)
         continue-on-error: true
-        uses: aquasecurity/trivy-action@v0.28.0
-        with:
-          scan-type: fs
-          scan-ref: .
-          severity: HIGH,CRITICAL
-          ignore-unfixed: true
-          exit-code: '1'
-          format: table
+        run: |
+          docker run --rm -v "${{ github.workspace }}":/repo aquasec/trivy:latest \
+            fs /repo \
+            --scanners vuln \
+            --severity HIGH,CRITICAL \
+            --ignore-unfixed \
+            --skip-dirs backend \
+            --no-progress \
+            --timeout 5m || true
 
   # ============================================================================
   # Docker build smoke-test — runs on every PR to catch Dockerfile regressions
