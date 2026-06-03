@@ -11,12 +11,15 @@ import { EmptyState } from "@/components/common/EmptyState";
 import { PageBanner } from "@/components/layout/PageBanner";
 import { Skeleton } from "@/components/common/Skeleton";
 import { medicalRecordService } from "@/services/medicalRecord.service";
+import { useT } from "@/hooks/useT";
 import { cn } from "@/utils/cn";
 import type { MedicalRecordResponse } from "@/types/api";
 
 const fmt = (d: string) => format(parseISO(d), "d MMM yyyy");
 
 function RecordCard({ record }: { record: MedicalRecordResponse }) {
+  const t = useT();
+  const mj = t.medicalJournal;
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -53,27 +56,29 @@ function RecordCard({ record }: { record: MedicalRecordResponse }) {
         <div className="border-t border-slate-100 px-4 pb-4 pt-3 space-y-3">
           {record.clinicalNotes && (
             <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-400 mb-1">Клинички белешки</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-400 mb-1">{mj.clinicalNotes}</p>
               <p className="text-sm text-slate-700 whitespace-pre-wrap">{record.clinicalNotes}</p>
             </div>
           )}
           {record.assessment && (
             <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-400 mb-1">Проценка</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-400 mb-1">{mj.assessment}</p>
               <p className="text-sm text-slate-700 whitespace-pre-wrap">{record.assessment}</p>
             </div>
           )}
           {record.plan && (
             <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-400 mb-1">План</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-400 mb-1">{mj.plan}</p>
               <p className="text-sm text-slate-700 whitespace-pre-wrap">{record.plan}</p>
             </div>
           )}
-          <div className="grid grid-cols-3 gap-2 rounded-xl bg-slate-50 p-3 text-xs">
-            {record.bloodPressure && <div><span className="text-slate-400">КП</span><br /><span className="font-semibold">{record.bloodPressure}</span></div>}
-            {record.heartRate && <div><span className="text-slate-400">Пулс</span><br /><span className="font-semibold">{record.heartRate} bpm</span></div>}
-            {record.temperature && <div><span className="text-slate-400">Температура</span><br /><span className="font-semibold">{record.temperature}°C</span></div>}
-          </div>
+          {(record.bloodPressure || record.heartRate || record.temperature) && (
+            <div className="grid grid-cols-3 gap-2 rounded-xl bg-slate-50 p-3 text-xs">
+              {record.bloodPressure && <div><span className="text-slate-400">{t.doctorDrawer.bpLabel}</span><br /><span className="font-semibold">{record.bloodPressure}</span></div>}
+              {record.heartRate && <div><span className="text-slate-400">{mj.pulse}</span><br /><span className="font-semibold">{record.heartRate} bpm</span></div>}
+              {record.temperature && <div><span className="text-slate-400">{mj.temperature}</span><br /><span className="font-semibold">{record.temperature}°C</span></div>}
+            </div>
+          )}
         </div>
       )}
     </Card>
@@ -81,11 +86,14 @@ function RecordCard({ record }: { record: MedicalRecordResponse }) {
 }
 
 export default function GPMedicalJournalPage() {
+  const t = useT();
+  const mj = t.medicalJournal;
   const [search, setSearch] = useState("");
 
   const records = useQuery({
     queryKey: ["medical-records", "my"],
     queryFn: () => medicalRecordService.myRecords(0, 200),
+    staleTime: 5 * 60_000,
   });
 
   const items: MedicalRecordResponse[] = useMemo(
@@ -105,7 +113,6 @@ export default function GPMedicalJournalPage() {
     );
   }, [items, search]);
 
-  // Group by patientId (not patientName — two patients can share a name)
   const grouped = useMemo(() => {
     const map = new Map<number, { name: string; records: MedicalRecordResponse[] }>();
     filtered.forEach((r) => {
@@ -113,26 +120,25 @@ export default function GPMedicalJournalPage() {
       if (existing) {
         existing.records.push(r);
       } else {
-        map.set(r.patientId, { name: r.patientName ?? "Непознат пациент", records: [r] });
+        map.set(r.patientId, { name: r.patientName ?? mj.unknownPatient, records: [r] });
       }
     });
     return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [filtered]);
+  }, [filtered, mj.unknownPatient]);
 
   return (
     <>
       <PageBanner
-        title="Медицински дневник"
-        breadcrumb={[{ label: "Медицински дневник" }]}
+        title={t.gpNav.medicalJournal}
+        breadcrumb={[{ label: t.gpNav.medicalJournal }]}
       />
 
       <div className="mx-auto max-w-4xl px-6 py-6 space-y-5">
-        {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Барај по пациент, дијагноза или МКБ10 код…"
+            placeholder={mj.searchPlaceholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full rounded-xl border border-slate-200 py-2.5 pl-9 pr-4 text-sm outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
@@ -146,8 +152,8 @@ export default function GPMedicalJournalPage() {
         ) : grouped.length === 0 ? (
           <EmptyState
             icon={BookOpen}
-            title="Нема записи"
-            description={search ? "Нема резултати за вашата пребарување." : "Запишете го вашиот прв медицински запис преку панелот со пациенти."}
+            title={mj.noRecords}
+            description={search ? mj.noResultsSearch : mj.noRecordsDesc}
           />
         ) : (
           <div className="space-y-6">
@@ -163,7 +169,9 @@ export default function GPMedicalJournalPage() {
                     {name[0]}
                   </div>
                   <h3 className="text-sm font-semibold text-slate-800">{name}</h3>
-                  <span className="text-xs text-slate-400">{patientRecords.length} запис{patientRecords.length !== 1 ? "и" : ""}</span>
+                  <span className="text-xs text-slate-400">
+                    {patientRecords.length} {patientRecords.length !== 1 ? mj.recordSuffixPlural : mj.recordSuffix}
+                  </span>
                 </div>
                 <div className="space-y-2">
                   {patientRecords.map((r) => <RecordCard key={r.id} record={r} />)}

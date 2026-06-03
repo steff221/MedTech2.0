@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/store/auth.store";
@@ -24,6 +25,7 @@ function homeFor(role: UserRole): string {
 
 export function useAuth() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user, accessToken, isHydrated, setAuth, logout: clearAuth } = useAuthStore();
 
   // Silent refresh on hard reload: user is in localStorage but accessToken is
@@ -48,6 +50,9 @@ export function useAuth() {
     async (body: LoginRequest, redirectTo?: string) => {
       try {
         const res = await authService.login(body);
+        // Drop any cached queries from a previous account so the new user
+        // never sees the prior user's profile/data (e.g. ["doctor","me"]).
+        queryClient.clear();
         setAuth(res.user, res.accessToken);
         toast.success(`Welcome back, ${res.user.firstName}`);
         const dest = redirectTo && redirectTo.startsWith("/") ? redirectTo : homeFor(res.user.role);
@@ -58,7 +63,7 @@ export function useAuth() {
         throw err;
       }
     },
-    [router, setAuth],
+    [router, setAuth, queryClient],
   );
 
   const register = useCallback(
@@ -84,8 +89,9 @@ export function useAuth() {
       // best-effort — always clear locally even if the server call fails
     }
     clearAuth();
+    queryClient.clear();
     router.push("/login");
-  }, [router, clearAuth]);
+  }, [router, clearAuth, queryClient]);
 
   return {
     user,

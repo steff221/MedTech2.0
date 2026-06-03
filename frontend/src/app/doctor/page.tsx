@@ -40,27 +40,16 @@ const fadeUp = (delay = 0) => ({
   transition: { duration: 0.35, delay },
 });
 
-function greet(): string {
-  const h = new Date().getHours();
-  if (h < 12) return "Добро утро";
-  if (h < 18) return "Добар ден";
-  return "Добра вечер";
-}
+type ApptStatus = "completed" | "inProgress" | "upcoming";
 
-function apptStatusMeta(a: AppointmentResponse): { label: string; dot: string; row: string; badge: string } {
+function getApptStatus(a: AppointmentResponse): ApptStatus {
+  if (a.status === "COMPLETED" || a.status === "CANCELLED" || a.status === "NO_SHOW") return "completed";
   const now = new Date();
   const [hh, mm] = a.appointmentTime.split(":").map(Number);
-  const start = new Date();
-  start.setHours(hh, mm, 0, 0);
+  const start = new Date(); start.setHours(hh, mm, 0, 0);
   const end = new Date(start.getTime() + a.durationMinutes * 60_000);
-
-  if (a.status === "COMPLETED" || a.status === "CANCELLED" || a.status === "NO_SHOW") {
-    return { label: "Завршен", dot: "bg-emerald-500", row: "", badge: "bg-emerald-100 text-emerald-700" };
-  }
-  if (now >= start && now <= end) {
-    return { label: "Во тек", dot: "bg-blue-500 animate-pulse", row: "bg-blue-50/50", badge: "bg-blue-100 text-blue-700" };
-  }
-  return { label: "Претстои", dot: "bg-slate-300", row: "", badge: "bg-slate-100 text-slate-500" };
+  if (now >= start && now <= end) return "inProgress";
+  return "upcoming";
 }
 
 // ── Stat card ─────────────────────────────────────────────────────────────────
@@ -111,6 +100,7 @@ function TileLink({ tile }: { tile: { label: string; href: string; icon: React.C
 export default function DoctorHomePage() {
   const { data: doctor } = useDoctorProfile();
   const t = useT();
+  const dh = t.doctorHome;
 
   const todayAppts = useQuery({
     queryKey: ["appointments-today"],
@@ -130,18 +120,39 @@ export default function DoctorHomePage() {
     enabled: !!doctor,
   });
 
-  const appts = todayAppts.data ?? [];
-  const scheduled = appts.filter((a) => a.status === "SCHEDULED" || a.status === "RESCHEDULED");
-  const completed = appts.filter((a) => a.status === "COMPLETED");
-  const remaining = scheduled.length;
+  const appts           = todayAppts.data ?? [];
+  const scheduled       = appts.filter((a) => a.status === "SCHEDULED" || a.status === "RESCHEDULED");
+  const completed       = appts.filter((a) => a.status === "COMPLETED");
+  const remaining       = scheduled.length;
   const activeReferrals = referrals.data?.totalElements ?? 0;
-  const avgRating = rating.data?.averageRating;
+  const avgRating       = rating.data?.averageRating;
+
+  const STATUS_META: Record<ApptStatus, { label: string; dot: string; row: string; badge: string }> = {
+    completed:  { label: dh.apptStatusCompleted,  dot: "bg-emerald-500",           row: "",            badge: "bg-emerald-100 text-emerald-700" },
+    inProgress: { label: dh.apptStatusInProgress, dot: "bg-blue-500 animate-pulse", row: "bg-blue-50/50", badge: "bg-blue-100 text-blue-700"     },
+    upcoming:   { label: dh.apptStatusUpcoming,   dot: "bg-slate-300",              row: "",            badge: "bg-slate-100 text-slate-500"     },
+  };
+
+  function greet(): string {
+    const h = new Date().getHours();
+    if (h < 12) return dh.greetMorning;
+    if (h < 18) return dh.greetAfternoon;
+    return dh.greetEvening;
+  }
+
+  const QUICK_LINKS = [
+    { href: "/doctor/referrals",        label: t.doctorNav.referrals,      icon: ClipboardList, color: "text-sky-600 bg-sky-50"        },
+    { href: "/doctor/operations",       label: t.doctorNav.operations,     icon: FileText,      color: "text-amber-600 bg-amber-50"    },
+    { href: "/doctor/medical-journal",  label: t.doctorNav.medicalJournal, icon: FileText,      color: "text-emerald-600 bg-emerald-50" },
+    { href: "/doctor/availability",     label: t.doctorNav.availability,   icon: Clock,         color: "text-violet-600 bg-violet-50"  },
+    { href: "/doctor/notifications",    label: t.doctorNav.notifications,  icon: HeartPulse,    color: "text-rose-600 bg-rose-50"      },
+  ];
 
   const PRIMARY = [
-    { label: t.doctorHome.calendarLabel,  href: "/doctor/schedule",       icon: Calendar,      iconBg: "bg-emerald-500", description: t.doctorHome.calendarDesc  },
-    { label: t.doctorHome.patientsLabel,  href: "/doctor/patients",        icon: Users,         iconBg: "bg-violet-500",  description: t.doctorHome.patientsDesc  },
-    { label: t.doctorHome.referralsLabel, href: "/doctor/referrals",       icon: ClipboardList, iconBg: "bg-sky-500",     description: t.doctorHome.referralsDesc },
-    { label: t.doctorHome.documentsLabel, href: "/doctor/medical-journal", icon: FileText,      iconBg: "bg-amber-500",   description: t.doctorHome.documentsDesc },
+    { label: dh.calendarLabel,  href: "/doctor/schedule",       icon: Calendar,      iconBg: "bg-emerald-500", description: dh.calendarDesc  },
+    { label: dh.patientsLabel,  href: "/doctor/patients",       icon: Users,         iconBg: "bg-violet-500",  description: dh.patientsDesc  },
+    { label: dh.referralsLabel, href: "/doctor/referrals",      icon: ClipboardList, iconBg: "bg-sky-500",     description: dh.referralsDesc },
+    { label: dh.documentsLabel, href: "/doctor/medical-journal",icon: FileText,      iconBg: "bg-amber-500",   description: dh.documentsDesc },
   ];
 
   return (
@@ -175,7 +186,7 @@ export default function DoctorHomePage() {
             <motion.div {...fadeUp(0.1)} className="hidden items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 sm:flex">
               <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
               <span className="text-lg font-bold text-amber-700">{avgRating.toFixed(1)}</span>
-              <span className="text-xs text-amber-500">/ 5 · {rating.data?.totalRatings} оценки</span>
+              <span className="text-xs text-amber-500">{dh.ratingsOf} {rating.data?.totalRatings} {dh.ratingsLabel}</span>
             </motion.div>
           )}
         </motion.section>
@@ -183,36 +194,36 @@ export default function DoctorHomePage() {
         {/* Stats row */}
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <StatCard
-            label="Термини денес"
+            label={dh.statsAppointmentsToday}
             value={todayAppts.isLoading ? "—" : appts.length}
-            sub={`${completed.length} завршени`}
+            sub={`${completed.length} ${dh.statsCompleted}`}
             icon={Calendar}
             color="text-emerald-600"
             bg="bg-emerald-50"
             delay={0.05}
           />
           <StatCard
-            label="Преостануваат"
+            label={dh.statsRemaining}
             value={todayAppts.isLoading ? "—" : remaining}
-            sub="До крај на ден"
+            sub={dh.statsEndOfDay}
             icon={Clock}
             color="text-blue-600"
             bg="bg-blue-50"
             delay={0.09}
           />
           <StatCard
-            label="Активни упати"
+            label={dh.statsActiveReferrals}
             value={referrals.isLoading ? "—" : activeReferrals}
-            sub="На чекање"
+            sub={dh.statsAwaiting}
             icon={ClipboardList}
             color="text-sky-600"
             bg="bg-sky-50"
             delay={0.13}
           />
           <StatCard
-            label="Просечна оценка"
+            label={dh.statsAvgRating}
             value={avgRating != null ? avgRating.toFixed(1) : "—"}
-            sub={`${rating.data?.totalRatings ?? 0} оценки вкупно`}
+            sub={`${rating.data?.totalRatings ?? 0} ${dh.ratingsTotal}`}
             icon={Star}
             color="text-amber-600"
             bg="bg-amber-50"
@@ -231,10 +242,10 @@ export default function DoctorHomePage() {
               ))}
             </div>
 
-            {/* Today's schedule — real data */}
+            {/* Today's schedule */}
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
               <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5">
-                <p className="text-sm font-semibold text-slate-900">{t.doctorHome.scheduleSection}</p>
+                <p className="text-sm font-semibold text-slate-900">{dh.scheduleSection}</p>
                 <Link href="/doctor/schedule" className="flex items-center gap-1 text-xs font-medium text-emerald-600 hover:text-emerald-700">
                   {t.common.all} <ArrowRight className="h-3 w-3" />
                 </Link>
@@ -247,13 +258,13 @@ export default function DoctorHomePage() {
               ) : appts.length === 0 ? (
                 <div className="flex flex-col items-center gap-2 py-10 text-center">
                   <Calendar className="h-8 w-8 text-slate-200" />
-                  <p className="text-sm text-slate-400">Нема закажани термини денес</p>
+                  <p className="text-sm text-slate-400">{dh.noAppointmentsToday}</p>
                 </div>
               ) : (
                 <>
                   <ul className="divide-y divide-slate-100">
                     {appts.slice(0, 6).map((a) => {
-                      const s = apptStatusMeta(a);
+                      const s = STATUS_META[getApptStatus(a)];
                       return (
                         <li key={a.id} className={cn("flex items-center gap-4 px-5 py-3 transition-colors", s.row)}>
                           <span className="w-12 shrink-0 font-mono text-sm font-semibold text-slate-700">
@@ -266,7 +277,7 @@ export default function DoctorHomePage() {
                               {a.reason ?? "—"}
                               {a.appointmentType === "VIRTUAL" && (
                                 <span className="ml-1.5 inline-flex items-center gap-0.5 text-violet-500">
-                                  <Video className="h-3 w-3" /> Виртуелен
+                                  <Video className="h-3 w-3" /> {dh.virtualLabel}
                                 </span>
                               )}
                             </p>
@@ -281,7 +292,7 @@ export default function DoctorHomePage() {
                   <div className="border-t border-slate-100 bg-slate-50 px-5 py-2.5">
                     <div className="flex items-center gap-2 text-xs text-slate-500">
                       <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                      {completed.length} {t.doctorHome.appointmentsOf} {appts.length} {t.doctorHome.appointmentsDone}
+                      {completed.length} {dh.appointmentsOf} {appts.length} {dh.appointmentsDone}
                     </div>
                   </div>
                 </>
@@ -294,9 +305,9 @@ export default function DoctorHomePage() {
             {/* Flagged patients */}
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
               <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5">
-                <p className="text-sm font-semibold text-slate-900">Пациенти на внимание</p>
+                <p className="text-sm font-semibold text-slate-900">{dh.flaggedSection}</p>
                 <Link href="/doctor/patients" className="flex items-center gap-1 text-xs font-medium text-emerald-600 hover:text-emerald-700">
-                  Сите <ArrowRight className="h-3 w-3" />
+                  {t.common.all} <ArrowRight className="h-3 w-3" />
                 </Link>
               </div>
               <ul className="divide-y divide-slate-100">
@@ -314,7 +325,7 @@ export default function DoctorHomePage() {
                         <p className={cn("text-xs leading-snug mt-0.5", p.level === "critical" ? "text-rose-600" : "text-amber-600")}>
                           {p.reason}
                         </p>
-                        <p className="mt-1 text-[11px] text-slate-400">Последно виден: {p.lastSeen}</p>
+                        <p className="mt-1 text-[11px] text-slate-400">{dh.lastSeen} {p.lastSeen}</p>
                       </div>
                     </div>
                   </li>
@@ -322,8 +333,8 @@ export default function DoctorHomePage() {
               </ul>
               <div className="border-t border-slate-100 bg-slate-50 px-5 py-2.5">
                 <p className="text-xs text-slate-400">
-                  {FLAGGED_PATIENTS.filter((p) => p.level === "critical").length} критични ·{" "}
-                  {FLAGGED_PATIENTS.filter((p) => p.level === "warning").length} предупредувања
+                  {FLAGGED_PATIENTS.filter((p) => p.level === "critical").length} {dh.criticalCount} ·{" "}
+                  {FLAGGED_PATIENTS.filter((p) => p.level === "warning").length} {dh.warningCount}
                 </p>
               </div>
             </div>
@@ -331,16 +342,10 @@ export default function DoctorHomePage() {
             {/* Quick links */}
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
               <div className="border-b border-slate-100 px-5 py-3.5">
-                <p className="text-sm font-semibold text-slate-900">Брзи врски</p>
+                <p className="text-sm font-semibold text-slate-900">{dh.quickLinksSection}</p>
               </div>
               <div className="divide-y divide-slate-50">
-                {[
-                  { href: "/doctor/referrals",       label: "Упати",              icon: ClipboardList, color: "text-sky-600 bg-sky-50"     },
-                  { href: "/doctor/operations",       label: "Операции",           icon: FileText,      color: "text-amber-600 bg-amber-50"  },
-                  { href: "/doctor/medical-journal",  label: "Медицински дневник", icon: FileText,      color: "text-emerald-600 bg-emerald-50" },
-                  { href: "/doctor/availability",     label: "Работно расписание", icon: Clock,         color: "text-violet-600 bg-violet-50" },
-                  { href: "/doctor/notifications",    label: "Известувања",        icon: HeartPulse,    color: "text-rose-600 bg-rose-50"    },
-                ].map(({ href, label, icon: Icon, color }) => (
+                {QUICK_LINKS.map(({ href, label, icon: Icon, color }) => (
                   <Link
                     key={href}
                     href={href}
@@ -360,7 +365,7 @@ export default function DoctorHomePage() {
             {rating.data && rating.data.recentReviews.content.length > 0 && (
               <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div className="border-b border-slate-100 px-5 py-3.5">
-                  <p className="text-sm font-semibold text-slate-900">Последни оценки</p>
+                  <p className="text-sm font-semibold text-slate-900">{dh.recentReviewsSection}</p>
                 </div>
                 <ul className="divide-y divide-slate-50">
                   {rating.data.recentReviews.content.slice(0, 3).map((r) => (

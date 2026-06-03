@@ -4,33 +4,44 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Activity,
+  AlertCircle,
+  Calendar,
+  ChevronRight,
+  Clock,
+  Heart,
+  MapPin,
+  Phone,
   Printer,
   Search,
-  User,
-  Calendar,
-  Clock,
-  ChevronRight,
-  X,
-  Phone,
-  MapPin,
-  Heart,
-  AlertCircle,
   Thermometer,
+  User,
   Weight,
+  X,
 } from "lucide-react";
 import { Skeleton } from "@/components/common/Skeleton";
 import { doctorService } from "@/services/doctor.service";
 import { patientService } from "@/services/patient.service";
 import { appointmentService } from "@/services/appointment.service";
 import { hospitalService } from "@/services/hospital.service";
+import { useT } from "@/hooks/useT";
 import type { PatientResponse, AppointmentResponse } from "@/types/api";
 import { format, parseISO } from "date-fns";
 
 type Tab = "patients" | "today" | "doctors" | "vitals";
 
+const STATUS_STYLES: Record<string, string> = {
+  SCHEDULED:   "bg-blue-50 text-blue-700",
+  COMPLETED:   "bg-emerald-50 text-emerald-700",
+  CANCELLED:   "bg-red-50 text-red-700",
+  NO_SHOW:     "bg-amber-50 text-amber-700",
+  RESCHEDULED: "bg-purple-50 text-purple-700",
+};
+
 // ── Vitals entry panel ────────────────────────────────────────────────────────
 function VitalsTab() {
-  const [search, setSearch] = useState("");
+  const t = useT();
+  const n = t.nurse;
+  const [search, setSearch]           = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedPatient, setSelectedPatient] = useState<PatientResponse | null>(null);
   const [form, setForm] = useState({ bloodPressure: "", heartRate: "", temperature: "", weight: "", height: "", notes: "" });
@@ -44,7 +55,6 @@ function VitalsTab() {
   const patients = useQuery({
     queryKey: ["nurse-vitals-patients", debouncedSearch],
     queryFn: () => patientService.search(debouncedSearch, 0, 10),
-    enabled: debouncedSearch.length >= 2,
   });
 
   function printVitals() {
@@ -71,12 +81,12 @@ function VitalsTab() {
       <table>
         <thead><tr><th>Параметар</th><th>Вредност</th><th>Референтни вредности</th></tr></thead>
         <tbody>
-          ${form.bloodPressure ? `<tr><td class="label">Крвен притисок</td><td>${form.bloodPressure} mmHg</td><td>90/60 – 120/80 mmHg</td></tr>` : ""}
-          ${form.heartRate ? `<tr><td class="label">Пулс</td><td>${form.heartRate} bpm</td><td>60 – 100 bpm</td></tr>` : ""}
-          ${form.temperature ? `<tr><td class="label">Температура</td><td>${form.temperature} °C</td><td>36.1 – 37.2 °C</td></tr>` : ""}
-          ${form.weight ? `<tr><td class="label">Тежина</td><td>${form.weight} kg</td><td>—</td></tr>` : ""}
-          ${form.height ? `<tr><td class="label">Висина</td><td>${form.height} cm</td><td>—</td></tr>` : ""}
-          ${form.notes ? `<tr><td class="label">Забелешки</td><td colspan="2">${form.notes}</td></tr>` : ""}
+          ${form.bloodPressure ? `<tr><td class="label">${n.bloodPressure}</td><td>${form.bloodPressure} mmHg</td><td>90/60 – 120/80 mmHg</td></tr>` : ""}
+          ${form.heartRate ? `<tr><td class="label">${n.pulse}</td><td>${form.heartRate} bpm</td><td>60 – 100 bpm</td></tr>` : ""}
+          ${form.temperature ? `<tr><td class="label">${n.temperature}</td><td>${form.temperature} °C</td><td>36.1 – 37.2 °C</td></tr>` : ""}
+          ${form.weight ? `<tr><td class="label">${n.weight}</td><td>${form.weight} kg</td><td>—</td></tr>` : ""}
+          ${form.height ? `<tr><td class="label">${n.height}</td><td>${form.height} cm</td><td>—</td></tr>` : ""}
+          ${form.notes ? `<tr><td class="label">${n.notes}</td><td colspan="2">${form.notes}</td></tr>` : ""}
         </tbody>
       </table>
       <div class="footer">
@@ -117,7 +127,7 @@ function VitalsTab() {
       {/* Patient picker */}
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-slate-800">
-          <User className="h-4 w-4 text-emerald-500" /> Избери пациент
+          <User className="h-4 w-4 text-emerald-500" /> {n.selectPatient}
         </h2>
         {selectedPatient ? (
           <div className="flex items-center justify-between rounded-lg bg-emerald-50 px-4 py-3">
@@ -135,17 +145,17 @@ function VitalsTab() {
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
-                placeholder="Пребарај пациент…"
+                placeholder={n.searchPlaceholder}
                 value={search}
                 onChange={(e) => handleSearch(e.target.value)}
                 className="w-full rounded-lg border border-slate-200 py-2.5 pl-9 pr-4 text-sm placeholder:text-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/20"
               />
             </div>
             <div className="divide-y divide-slate-100">
-              {debouncedSearch.length < 2 && (
-                <p className="py-6 text-center text-sm text-slate-400">Внеси барем 2 карактери.</p>
-              )}
               {patients.isLoading && [0, 1, 2].map(i => <Skeleton key={i} className="mb-2 h-12" />)}
+              {!patients.isLoading && patients.data?.content.length === 0 && (
+                <p className="py-6 text-center text-sm text-slate-400">{n.noPatientsFound}</p>
+              )}
               {patients.data?.content.map((p) => (
                 <button
                   key={p.id}
@@ -170,26 +180,26 @@ function VitalsTab() {
       {/* Vitals form */}
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="mb-1 flex items-center gap-2 text-base font-semibold text-slate-800">
-          <Activity className="h-4 w-4 text-emerald-500" /> Внеси витали
+          <Activity className="h-4 w-4 text-emerald-500" /> {n.enterVitals}
         </h2>
-        <p className="mb-4 text-xs text-slate-400">Пополни и отпечати лист за лекарот</p>
+        <p className="mb-4 text-xs text-slate-400">{n.vitalsSubtitle}</p>
         {!selectedPatient ? (
           <div className="flex h-48 items-center justify-center text-sm text-slate-400">
-            Прво избери пациент
+            {n.selectPatientFirst}
           </div>
         ) : (
           <div className="space-y-3">
-            {inputField("Крвен притисок", "bloodPressure", "120/80", <Heart className="h-3.5 w-3.5" />, "mmHg")}
-            {inputField("Пулс", "heartRate", "72", <Activity className="h-3.5 w-3.5" />, "bpm")}
-            {inputField("Температура", "temperature", "36.6", <Thermometer className="h-3.5 w-3.5" />, "°C")}
-            {inputField("Тежина", "weight", "70", <Weight className="h-3.5 w-3.5" />, "kg")}
-            {inputField("Висина", "height", "175", <User className="h-3.5 w-3.5" />, "cm")}
+            {inputField(n.bloodPressure, "bloodPressure", "120/80", <Heart className="h-3.5 w-3.5" />, "mmHg")}
+            {inputField(n.pulse, "heartRate", "72", <Activity className="h-3.5 w-3.5" />, "bpm")}
+            {inputField(n.temperature, "temperature", "36.6", <Thermometer className="h-3.5 w-3.5" />, "°C")}
+            {inputField(n.weight, "weight", "70", <Weight className="h-3.5 w-3.5" />, "kg")}
+            {inputField(n.height, "height", "175", <User className="h-3.5 w-3.5" />, "cm")}
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600">Забелешки</label>
+              <label className="mb-1 block text-xs font-medium text-slate-600">{n.notes}</label>
               <textarea
                 value={form.notes}
                 onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
-                placeholder="Дополнителни забелешки…"
+                placeholder={n.notesPlaceholder}
                 rows={2}
                 className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/20"
               />
@@ -200,7 +210,7 @@ function VitalsTab() {
               onClick={printVitals}
               className="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors"
             >
-              <Printer className="h-4 w-4" /> Отпечати лист на витали
+              <Printer className="h-4 w-4" /> {n.printVitalsBtn}
             </button>
           </div>
         )}
@@ -209,29 +219,18 @@ function VitalsTab() {
   );
 }
 
-const STATUS_STYLES: Record<string, string> = {
-  SCHEDULED: "bg-blue-50 text-blue-700",
-  COMPLETED: "bg-emerald-50 text-emerald-700",
-  CANCELLED: "bg-red-50 text-red-700",
-  NO_SHOW: "bg-amber-50 text-amber-700",
-  RESCHEDULED: "bg-purple-50 text-purple-700",
-};
+function PatientPanel({ patient, onClose }: { patient: PatientResponse; onClose: () => void }) {
+  const t = useT();
+  const n = t.nurse;
 
-const STATUS_LABEL: Record<string, string> = {
-  SCHEDULED: "Закажан",
-  COMPLETED: "Завршен",
-  CANCELLED: "Откажан",
-  NO_SHOW: "Не се јавил",
-  RESCHEDULED: "Преместен",
-};
+  const STATUS_LABEL: Record<string, string> = {
+    SCHEDULED:   n.statusScheduled,
+    COMPLETED:   n.statusCompleted,
+    CANCELLED:   n.statusCancelled,
+    NO_SHOW:     n.statusNoShow,
+    RESCHEDULED: n.statusRescheduled,
+  };
 
-function PatientPanel({
-  patient,
-  onClose,
-}: {
-  patient: PatientResponse;
-  onClose: () => void;
-}) {
   const appts = useQuery({
     queryKey: ["patient-appts", patient.id],
     queryFn: () => patientService.appointments(patient.id, 0, 5),
@@ -239,43 +238,34 @@ function PatientPanel({
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-      {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100">
             <User className="h-5 w-5 text-emerald-600" />
           </div>
           <div>
-            <p className="font-semibold text-slate-900">
-              {patient.firstName} {patient.lastName}
-            </p>
+            <p className="font-semibold text-slate-900">{patient.firstName} {patient.lastName}</p>
             <p className="text-xs text-slate-500">{patient.email}</p>
           </div>
         </div>
-        <button
-          onClick={onClose}
-          className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
-        >
+        <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
           <X className="h-4 w-4" />
         </button>
       </div>
 
       <div className="flex-1 overflow-y-auto p-5 space-y-5">
-        {/* Demographics */}
         <div className="grid grid-cols-2 gap-3 text-sm">
           {patient.dateOfBirth && (
             <div className="rounded-lg bg-slate-50 p-3">
-              <p className="text-xs text-slate-400">Датум на раѓање</p>
-              <p className="mt-0.5 font-medium text-slate-800">
-                {format(parseISO(patient.dateOfBirth), "dd.MM.yyyy")}
-              </p>
+              <p className="text-xs text-slate-400">{n.dateOfBirth}</p>
+              <p className="mt-0.5 font-medium text-slate-800">{format(parseISO(patient.dateOfBirth), "dd.MM.yyyy")}</p>
             </div>
           )}
           {patient.bloodType && (
             <div className="rounded-lg bg-slate-50 p-3">
               <div className="flex items-center gap-1.5">
                 <Heart className="h-3 w-3 text-red-400" />
-                <p className="text-xs text-slate-400">Крвна група</p>
+                <p className="text-xs text-slate-400">{n.bloodType}</p>
               </div>
               <p className="mt-0.5 font-medium text-slate-800">
                 {patient.bloodType.replace("_POS", "+").replace("_NEG", "−")}
@@ -286,99 +276,70 @@ function PatientPanel({
             <div className="rounded-lg bg-slate-50 p-3">
               <div className="flex items-center gap-1.5">
                 <Phone className="h-3 w-3 text-slate-400" />
-                <p className="text-xs text-slate-400">Телефон</p>
+                <p className="text-xs text-slate-400">{n.phone}</p>
               </div>
-              <p className="mt-0.5 font-medium text-slate-800">
-                {patient.phoneNumber}
-              </p>
+              <p className="mt-0.5 font-medium text-slate-800">{patient.phoneNumber}</p>
             </div>
           )}
           {patient.city && (
             <div className="rounded-lg bg-slate-50 p-3">
               <div className="flex items-center gap-1.5">
                 <MapPin className="h-3 w-3 text-slate-400" />
-                <p className="text-xs text-slate-400">Град</p>
+                <p className="text-xs text-slate-400">{n.city}</p>
               </div>
               <p className="mt-0.5 font-medium text-slate-800">{patient.city}</p>
             </div>
           )}
         </div>
 
-        {/* Alerts */}
         {(patient.allergies || patient.chronicConditions) && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-2">
             <div className="flex items-center gap-1.5 text-amber-700">
               <AlertCircle className="h-4 w-4" />
-              <p className="text-xs font-semibold uppercase tracking-wide">
-                Клинички напомени
-              </p>
+              <p className="text-xs font-semibold uppercase tracking-wide">{n.clinicalNotes}</p>
             </div>
             {patient.allergies && (
               <div>
-                <p className="text-xs text-amber-600 font-medium">Алергии</p>
+                <p className="text-xs text-amber-600 font-medium">{n.allergies}</p>
                 <p className="text-sm text-amber-800">{patient.allergies}</p>
               </div>
             )}
             {patient.chronicConditions && (
               <div>
-                <p className="text-xs text-amber-600 font-medium">
-                  Хронични состојби
-                </p>
-                <p className="text-sm text-amber-800">
-                  {patient.chronicConditions}
-                </p>
+                <p className="text-xs text-amber-600 font-medium">{n.chronicConditions}</p>
+                <p className="text-sm text-amber-800">{patient.chronicConditions}</p>
               </div>
             )}
           </div>
         )}
 
-        {/* Insurance */}
         {patient.insuranceProvider && (
           <div className="rounded-lg bg-slate-50 p-3 text-sm">
-            <p className="text-xs text-slate-400">Осигурување</p>
+            <p className="text-xs text-slate-400">{n.insurance}</p>
             <p className="mt-0.5 font-medium text-slate-800">
               {patient.insuranceProvider}
-              {patient.insuranceNumber && (
-                <span className="ml-2 text-slate-500">
-                  #{patient.insuranceNumber}
-                </span>
-              )}
+              {patient.insuranceNumber && <span className="ml-2 text-slate-500">#{patient.insuranceNumber}</span>}
             </p>
           </div>
         )}
 
-        {/* Recent appointments */}
         <div>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-            Последни термини
-          </p>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{n.recentAppointments}</p>
           {appts.isLoading ? (
-            <div className="space-y-2">
-              {[0, 1, 2].map((i) => (
-                <Skeleton key={i} className="h-12" />
-              ))}
-            </div>
+            <div className="space-y-2">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-12" />)}</div>
           ) : appts.data?.content.length === 0 ? (
-            <p className="text-sm text-slate-400">Нема термини.</p>
+            <p className="text-sm text-slate-400">{n.noAppointments}</p>
           ) : (
             <div className="space-y-2">
               {appts.data?.content.map((a) => (
-                <div
-                  key={a.id}
-                  className="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2.5"
-                >
+                <div key={a.id} className="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2.5">
                   <div>
-                    <p className="text-sm font-medium text-slate-800">
-                      {a.doctorName}
-                    </p>
+                    <p className="text-sm font-medium text-slate-800">{a.doctorName}</p>
                     <p className="text-xs text-slate-500">
-                      {format(parseISO(a.appointmentDate), "dd.MM.yyyy")} •{" "}
-                      {a.appointmentTime}
+                      {format(parseISO(a.appointmentDate), "dd.MM.yyyy")} · {a.appointmentTime}
                     </p>
                   </div>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[a.status] ?? "bg-slate-100 text-slate-600"}`}
-                  >
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[a.status] ?? "bg-slate-100 text-slate-600"}`}>
                     {STATUS_LABEL[a.status] ?? a.status}
                   </span>
                 </div>
@@ -387,18 +348,11 @@ function PatientPanel({
           )}
         </div>
 
-        {/* Emergency contact */}
         {patient.emergencyContact && (
           <div className="rounded-lg bg-red-50 p-3 text-sm">
-            <p className="text-xs font-medium text-red-500">
-              Контакт во итен случај
-            </p>
-            <p className="mt-0.5 font-medium text-slate-800">
-              {patient.emergencyContact}
-            </p>
-            {patient.emergencyPhone && (
-              <p className="text-slate-600">{patient.emergencyPhone}</p>
-            )}
+            <p className="text-xs font-medium text-red-500">{n.emergencyContact}</p>
+            <p className="mt-0.5 font-medium text-slate-800">{patient.emergencyContact}</p>
+            {patient.emergencyPhone && <p className="text-slate-600">{patient.emergencyPhone}</p>}
           </div>
         )}
       </div>
@@ -406,42 +360,43 @@ function PatientPanel({
   );
 }
 
-function AppointmentRow({ a }: { a: AppointmentResponse }) {
+function AppointmentRow({ a, statusLabel }: { a: AppointmentResponse; statusLabel: Record<string, string> }) {
   return (
     <div className="flex items-center gap-4 py-3">
       <div className="w-14 text-right">
-        <p className="text-sm font-semibold tabular-nums text-slate-800">
-          {a.appointmentTime}
-        </p>
+        <p className="text-sm font-semibold tabular-nums text-slate-800">{a.appointmentTime}</p>
       </div>
       <div className="flex-1 min-w-0">
-        <p className="truncate text-sm font-medium text-slate-800">
-          {a.patientName}
-        </p>
+        <p className="truncate text-sm font-medium text-slate-800">{a.patientName}</p>
         <p className="truncate text-xs text-slate-500">
-          {a.doctorName}
-          {a.doctorSpecialization ? ` · ${a.doctorSpecialization}` : ""}
+          {a.doctorName}{a.doctorSpecialization ? ` · ${a.doctorSpecialization}` : ""}
         </p>
       </div>
-      {a.hospitalName && (
-        <p className="hidden text-xs text-slate-400 md:block">{a.hospitalName}</p>
-      )}
-      <span
-        className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[a.status] ?? "bg-slate-100 text-slate-600"}`}
-      >
-        {STATUS_LABEL[a.status] ?? a.status}
+      {a.hospitalName && <p className="hidden text-xs text-slate-400 md:block">{a.hospitalName}</p>}
+      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[a.status] ?? "bg-slate-100 text-slate-600"}`}>
+        {statusLabel[a.status] ?? a.status}
       </span>
     </div>
   );
 }
 
 export default function NurseDashboard() {
-  const [tab, setTab] = useState<Tab>("patients");
-  const [search, setSearch] = useState("");
+  const t = useT();
+  const n = t.nurse;
+
+  const STATUS_LABEL: Record<string, string> = {
+    SCHEDULED:   n.statusScheduled,
+    COMPLETED:   n.statusCompleted,
+    CANCELLED:   n.statusCancelled,
+    NO_SHOW:     n.statusNoShow,
+    RESCHEDULED: n.statusRescheduled,
+  };
+
+  const [tab, setTab]                         = useState<Tab>("patients");
+  const [search, setSearch]                   = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedHospitalId, setSelectedHospitalId] = useState<number | undefined>(undefined);
-  const [selectedPatient, setSelectedPatient] =
-    useState<PatientResponse | null>(null);
+  const [selectedPatient, setSelectedPatient] = useState<PatientResponse | null>(null);
 
   const handleSearchChange = (val: string) => {
     setSearch(val);
@@ -449,59 +404,45 @@ export default function NurseDashboard() {
     (handleSearchChange as any)._t = setTimeout(() => setDebouncedSearch(val), 350);
   };
 
-  const hospitals = useQuery({
-    queryKey: ["hospitals-active"],
-    queryFn: () => hospitalService.listActive(),
-  });
-
-  const patients = useQuery({
+  const hospitals  = useQuery({ queryKey: ["hospitals-active"],  queryFn: () => hospitalService.listActive() });
+  const patients   = useQuery({
     queryKey: ["nurse-patients", debouncedSearch, selectedHospitalId],
-    queryFn: () => patientService.search(debouncedSearch, 0, 20, selectedHospitalId),
-    enabled: debouncedSearch.length >= 2,
+    queryFn:  () => patientService.search(debouncedSearch, 0, 20, selectedHospitalId),
   });
-
   const todayAppts = useQuery({
     queryKey: ["appointments-today"],
-    queryFn: () => appointmentService.today(),
+    queryFn:  () => appointmentService.today(),
     refetchInterval: 60_000,
   });
-
-  const doctors = useQuery({
-    queryKey: ["doctors"],
-    queryFn: () => doctorService.search(),
-  });
+  const doctors = useQuery({ queryKey: ["doctors"], queryFn: () => doctorService.search() });
 
   const tabs: { id: Tab; label: string }[] = [
-    { id: "patients", label: "Пациенти" },
-    { id: "today",    label: "Денес" },
-    { id: "doctors",  label: "Лекари" },
-    { id: "vitals",   label: "Витали" },
+    { id: "patients", label: n.tabPatients },
+    { id: "today",    label: n.tabToday    },
+    { id: "doctors",  label: n.tabDoctors  },
+    { id: "vitals",   label: n.tabVitals   },
   ];
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">
-          Портал — Медицинска сестра
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Пребарај пациенти, прегледај денешни термини и лекари на дежурство.
-        </p>
+        <h1 className="text-2xl font-bold text-slate-900">{n.portalTitle}</h1>
+        <p className="mt-1 text-sm text-slate-500">{n.portalSubtitle}</p>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-1 rounded-xl border border-slate-200 bg-white p-1 shadow-sm w-fit">
-        {tabs.map((t) => (
+        {tabs.map((tb) => (
           <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
+            key={tb.id}
+            onClick={() => setTab(tb.id)}
             className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-              tab === t.id
+              tab === tb.id
                 ? "bg-emerald-500 text-white shadow-sm"
                 : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
             }`}
           >
-            {t.label}
+            {tb.label}
           </button>
         ))}
       </div>
@@ -509,30 +450,23 @@ export default function NurseDashboard() {
       {/* Patients tab */}
       {tab === "patients" && (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* Search panel */}
           <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-base font-semibold text-slate-800">
-              Пребарај пациент
-            </h2>
+            <h2 className="mb-4 text-base font-semibold text-slate-800">{n.searchPatientTitle}</h2>
             <select
               value={selectedHospitalId ?? ""}
-              onChange={(e) =>
-                setSelectedHospitalId(e.target.value ? Number(e.target.value) : undefined)
-              }
+              onChange={(e) => setSelectedHospitalId(e.target.value ? Number(e.target.value) : undefined)}
               className="mb-3 w-full rounded-lg border border-slate-200 py-2.5 px-3 text-sm text-slate-700 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/20"
             >
-              <option value="">Сите болници</option>
+              <option value="">{n.allHospitals}</option>
               {hospitals.data?.map((h) => (
-                <option key={h.id} value={h.id}>
-                  {h.name} — {h.city}
-                </option>
+                <option key={h.id} value={h.id}>{h.name} — {h.city}</option>
               ))}
             </select>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
-                placeholder="Внеси ime, презиме или e-mail…"
+                placeholder={n.searchNamePlaceholder}
                 value={search}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 className="w-full rounded-lg border border-slate-200 py-2.5 pl-9 pr-4 text-sm text-slate-800 placeholder:text-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/20"
@@ -540,17 +474,8 @@ export default function NurseDashboard() {
             </div>
 
             <div className="mt-4 divide-y divide-slate-100">
-              {debouncedSearch.length < 2 && (
-                <p className="py-6 text-center text-sm text-slate-400">
-                  Внеси барем 2 карактери за пребарување.
-                </p>
-              )}
               {patients.isLoading && (
-                <div className="space-y-3 pt-2">
-                  {[0, 1, 2].map((i) => (
-                    <Skeleton key={i} className="h-14" />
-                  ))}
-                </div>
+                <div className="space-y-3 pt-2">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-14" />)}</div>
               )}
               {patients.data?.content.map((p) => (
                 <button
@@ -562,37 +487,28 @@ export default function NurseDashboard() {
                     <User className="h-4 w-4 text-emerald-600" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="truncate text-sm font-medium text-slate-800">
-                      {p.firstName} {p.lastName}
-                    </p>
+                    <p className="truncate text-sm font-medium text-slate-800">{p.firstName} {p.lastName}</p>
                     <p className="truncate text-xs text-slate-500">{p.email}</p>
                   </div>
                   <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" />
                 </button>
               ))}
-              {patients.data?.content.length === 0 &&
-                debouncedSearch.length >= 2 && (
-                  <p className="py-6 text-center text-sm text-slate-400">
-                    Нема резултати за &bdquo;{debouncedSearch}&ldquo;.
-                  </p>
-                )}
+              {!patients.isLoading && patients.data?.content.length === 0 && (
+                <p className="py-6 text-center text-sm text-slate-400">
+                  {n.noPatientsFound}
+                </p>
+              )}
             </div>
           </div>
 
-          {/* Patient detail */}
           <div className="min-h-[400px]">
             {selectedPatient ? (
-              <PatientPanel
-                patient={selectedPatient}
-                onClose={() => setSelectedPatient(null)}
-              />
+              <PatientPanel patient={selectedPatient} onClose={() => setSelectedPatient(null)} />
             ) : (
               <div className="flex h-full min-h-[400px] items-center justify-center rounded-xl border border-dashed border-slate-200 bg-white">
                 <div className="text-center">
                   <User className="mx-auto h-10 w-10 text-slate-200" />
-                  <p className="mt-2 text-sm text-slate-400">
-                    Избери пациент за детали
-                  </p>
+                  <p className="mt-2 text-sm text-slate-400">{n.selectPatientDetail}</p>
                 </div>
               </div>
             )}
@@ -606,34 +522,26 @@ export default function NurseDashboard() {
           <div className="flex items-center gap-3 border-b border-slate-100 px-6 py-4">
             <Calendar className="h-5 w-5 text-emerald-500" />
             <h2 className="text-base font-semibold text-slate-800">
-              Денешни термини —{" "}
-              {format(new Date(), "dd.MM.yyyy")}
+              {n.todayTitle} — {format(new Date(), "dd.MM.yyyy")}
             </h2>
             {todayAppts.data && (
               <span className="ml-auto rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
-                {todayAppts.data.length} вкупно
+                {todayAppts.data.length} {n.total}
               </span>
             )}
           </div>
-
           <div className="divide-y divide-slate-100 px-6">
             {todayAppts.isLoading && (
-              <div className="space-y-3 py-4">
-                {[0, 1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-12" />
-                ))}
-              </div>
+              <div className="space-y-3 py-4">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-12" />)}</div>
             )}
             {todayAppts.data?.length === 0 && (
               <div className="flex flex-col items-center gap-2 py-12">
                 <Clock className="h-8 w-8 text-slate-200" />
-                <p className="text-sm text-slate-400">
-                  Нема закажани термини денес.
-                </p>
+                <p className="text-sm text-slate-400">{n.noAppointmentsToday}</p>
               </div>
             )}
             {todayAppts.data?.map((a) => (
-              <AppointmentRow key={a.id} a={a} />
+              <AppointmentRow key={a.id} a={a} statusLabel={STATUS_LABEL} />
             ))}
           </div>
         </div>
@@ -645,15 +553,9 @@ export default function NurseDashboard() {
       {/* Doctors tab */}
       {tab === "doctors" && (
         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-base font-semibold text-slate-800">
-            Лекари на дежурство
-          </h2>
+          <h2 className="mb-4 text-base font-semibold text-slate-800">{n.doctorsOnDuty}</h2>
           {doctors.isLoading ? (
-            <div className="space-y-3">
-              {[0, 1, 2].map((i) => (
-                <Skeleton key={i} className="h-16" />
-              ))}
-            </div>
+            <div className="space-y-3">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-16" />)}</div>
           ) : (
             <div className="divide-y divide-slate-100">
               {doctors.data?.content.slice(0, 20).map((doc) => (
@@ -666,19 +568,14 @@ export default function NurseDashboard() {
                       д-р {doc.firstName} {doc.lastName}
                     </p>
                     <p className="text-xs text-slate-500">
-                      {doc.specialization}
-                      {doc.hospitalName ? ` · ${doc.hospitalName}` : ""}
+                      {doc.specialization}{doc.hospitalName ? ` · ${doc.hospitalName}` : ""}
                     </p>
                   </div>
-                  <span className="text-xs text-slate-400">
-                    {doc.officeNumber ?? "—"}
-                  </span>
+                  <span className="text-xs text-slate-400">{doc.officeNumber ?? "—"}</span>
                 </div>
               ))}
               {doctors.data?.content.length === 0 && (
-                <p className="py-4 text-center text-sm text-slate-400">
-                  Нема достапни лекари.
-                </p>
+                <p className="py-4 text-center text-sm text-slate-400">{n.noDoctors}</p>
               )}
             </div>
           )}

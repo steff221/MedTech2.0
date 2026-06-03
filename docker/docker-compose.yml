@@ -14,7 +14,10 @@ services:
       POSTGRES_USER: medtech_app
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      - "5433:5432"
+      # Bound to loopback only — the DB is reachable from this host (psql/pgAdmin)
+      # but NOT from the network. The app reaches Postgres via the compose
+      # network hostname `postgres:5432`, so this does not affect the stack.
+      - "127.0.0.1:5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ../backend/src/main/resources/database/medtech_schema_pg.sql:/docker-entrypoint-initdb.d/01_medtech_schema_pg.sql:ro
@@ -165,7 +168,8 @@ services:
       PGADMIN_CONFIG_SERVER_MODE: 'False'
       PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'True'
     ports:
-      - "5050:80"
+      # Loopback only — DB admin GUI must not be exposed to the network.
+      - "127.0.0.1:5050:80"
     depends_on:
       postgres:
         condition: service_healthy

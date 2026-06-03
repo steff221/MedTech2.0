@@ -21,16 +21,17 @@ import type { AppointmentResponse } from "@/types/api";
 // ── Video URL modal ───────────────────────────────────────────────────────────
 function SetVideoModal({ appointment, onClose }: { appointment: AppointmentResponse; onClose: () => void }) {
   const qc = useQueryClient();
+  const t  = useT();
   const [url, setUrl] = useState(appointment.videoCallUrl ?? "");
 
   const mutation = useMutation({
     mutationFn: (videoCallUrl: string) => appointmentService.setVideoUrl(appointment.id, videoCallUrl),
     onSuccess: () => {
-      toast.success("Видео линкот е зачуван");
+      toast.success(t.doctorSchedule.videoSaved);
       qc.invalidateQueries({ queryKey: ["appointments-today-waiting"] });
       onClose();
     },
-    onError: (err) => toast.error(extractErrorMessage(err) ?? "Грешка"),
+    onError: (err) => toast.error(extractErrorMessage(err) ?? t.doctorSchedule.videoError),
   });
 
   function autoGenerate() {
@@ -48,7 +49,7 @@ function SetVideoModal({ appointment, onClose }: { appointment: AppointmentRespo
       >
         <div className="mb-4 flex items-center gap-2">
           <Video className="h-5 w-5 text-violet-600" />
-          <h2 className="text-base font-bold text-slate-900">Постави видео линк</h2>
+          <h2 className="text-base font-bold text-slate-900">{t.doctorSchedule.videoModalTitle}</h2>
         </div>
         <p className="mb-4 text-sm text-slate-500">
           Пациент: <strong>{appointment.patientName}</strong> · {appointment.appointmentTime.slice(0, 5)}
@@ -72,11 +73,11 @@ function SetVideoModal({ appointment, onClose }: { appointment: AppointmentRespo
           onClick={autoGenerate}
           className="mt-2 flex items-center gap-1.5 text-xs font-medium text-violet-600 hover:text-violet-700"
         >
-          <Link2 className="h-3.5 w-3.5" /> Автоматски генерирај Jitsi соба
+          <Link2 className="h-3.5 w-3.5" /> {t.doctorSchedule.autoGenerateJitsi}
         </button>
         <div className="mt-5 flex justify-end gap-2">
           <button type="button" onClick={onClose} className="rounded-lg px-4 py-2 text-sm text-slate-500 hover:bg-slate-100">
-            Откажи
+            {t.common.cancel}
           </button>
           <button
             type="button"
@@ -84,7 +85,7 @@ function SetVideoModal({ appointment, onClose }: { appointment: AppointmentRespo
             onClick={() => mutation.mutate(url.trim())}
             className="flex items-center gap-1.5 rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50"
           >
-            <Check className="h-4 w-4" /> Зачувај
+            <Check className="h-4 w-4" /> {t.common.save}
           </button>
         </div>
       </motion.div>
@@ -156,7 +157,7 @@ function WaitingRoom({ doctorId }: { doctorId: number }) {
       durationMinutes: 15,
       status: "SCHEDULED",
       appointmentType: "CONSULTATION",
-      reason: walkInReason.trim() || "Влезен без термин",
+      reason: walkInReason.trim() || t.doctorSchedule.walkInDefaultReason,
       cancellationReason: null,
       videoCallUrl: null,
       createdAt: TODAY,
@@ -221,7 +222,7 @@ function WaitingRoom({ doctorId }: { doctorId: number }) {
             onClick={() => setWalkInOpen(true)}
             className="flex items-center gap-1 rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors"
           >
-            <UserPlus className="h-3.5 w-3.5" /> Додај пациент
+            <UserPlus className="h-3.5 w-3.5" /> {t.doctorSchedule.addWalkInBtn}
           </button>
         </div>
       </div>
@@ -230,7 +231,7 @@ function WaitingRoom({ doctorId }: { doctorId: number }) {
       {walkInOpen && (
         <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
           <div className="mb-3 flex items-center justify-between">
-            <p className="text-sm font-semibold text-emerald-800">Влезен без термин</p>
+            <p className="text-sm font-semibold text-emerald-800">{t.doctorSchedule.walkInTitle}</p>
             <button type="button" onClick={() => setWalkInOpen(false)}>
               <X className="h-4 w-4 text-slate-400 hover:text-slate-600" />
             </button>
@@ -239,14 +240,14 @@ function WaitingRoom({ doctorId }: { doctorId: number }) {
             <input
               value={walkInName}
               onChange={(e) => setWalkInName(e.target.value)}
-              placeholder="Ime i prezime na pacientot"
+              placeholder="Име и презиме на пациентот"
               className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
               onKeyDown={(e) => e.key === "Enter" && addWalkIn()}
             />
             <input
               value={walkInReason}
               onChange={(e) => setWalkInReason(e.target.value)}
-              placeholder="Причина (по избор)"
+              placeholder={t.doctorSchedule.walkInReasonPlaceholder}
               className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
               onKeyDown={(e) => e.key === "Enter" && addWalkIn()}
             />
@@ -256,7 +257,7 @@ function WaitingRoom({ doctorId }: { doctorId: number }) {
               disabled={!walkInName.trim()}
               className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors"
             >
-              Додај
+              {t.doctorSchedule.walkInAddBtn}
             </button>
           </div>
         </div>
@@ -288,7 +289,7 @@ function WaitingRoom({ doctorId }: { doctorId: number }) {
             {!isLoading && patients.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-400">
-                  Нема закажани термини денес.
+                  {t.doctorSchedule.noAppointmentsToday}
                 </td>
               </tr>
             )}

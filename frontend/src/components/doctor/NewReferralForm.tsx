@@ -85,9 +85,11 @@ export interface ReferralRow {
   id: string;
   createdAt: string;
   scheduledDate: string;
+  scheduledDateIso: string;
   referredTo: string;
   patientName: string;
   referralType: string;
+  referralTypeValue: ReferralType;
   mkb10Code: string;
   description: string;
   status: "active" | "completed" | "cancelled";
@@ -99,18 +101,20 @@ export interface ReferralRow {
 export function referralResponseToRow(r: ReferralResponse): ReferralRow {
   const [y, m, d] = r.scheduledDate.split("-");
   return {
-    id:            r.referralNumber,
-    backendId:     r.id,
-    createdAt:     format(new Date(r.createdAt), "dd.MM.yyyy"),
-    scheduledDate: `${d}.${m}.${y}`,
-    referredTo:    r.referredTo,
-    patientName:   r.patientName,
-    referralType:  REFERRAL_TYPES.find((t) => t.value === r.referralType)?.label ?? r.referralType,
-    mkb10Code:     r.mkb10Code ?? "—",
-    description:   r.description ?? "—",
-    status:        r.status === "ACTIVE" ? "active" : r.status === "COMPLETED" ? "completed" : "cancelled",
-    outcomeNote:   r.outcomeNote ?? undefined,
-    outcomeDate:   r.outcomeDate
+    id:                r.referralNumber,
+    backendId:         r.id,
+    createdAt:         format(new Date(r.createdAt), "dd.MM.yyyy"),
+    scheduledDate:     `${d}.${m}.${y}`,
+    scheduledDateIso:  r.scheduledDate,
+    referredTo:        r.referredTo,
+    patientName:       r.patientName,
+    referralType:      REFERRAL_TYPES.find((t) => t.value === r.referralType)?.label ?? r.referralType,
+    referralTypeValue: r.referralType,
+    mkb10Code:         r.mkb10Code ?? "—",
+    description:       r.description ?? "—",
+    status:            r.status === "ACTIVE" ? "active" : r.status === "COMPLETED" ? "completed" : "cancelled",
+    outcomeNote:       r.outcomeNote ?? undefined,
+    outcomeDate:       r.outcomeDate
       ? (() => { const [oy, om, od] = r.outcomeDate!.split("-"); return `${od}.${om}.${oy}`; })()
       : undefined,
   };

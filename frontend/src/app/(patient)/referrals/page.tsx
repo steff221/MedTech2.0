@@ -1,11 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Calendar, ClipboardList, Clock, FileText, MapPin } from "lucide-react";
+import { Calendar, ClipboardList, Clock, FileText, Printer } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { format, parseISO } from "date-fns";
+import { differenceInDays, format, parseISO } from "date-fns";
 import { Badge } from "@/components/common/Badge";
+import { Button } from "@/components/common/Button";
 import { Card } from "@/components/common/Card";
 import { EmptyState } from "@/components/common/EmptyState";
 import { Skeleton } from "@/components/common/Skeleton";
@@ -23,6 +24,81 @@ function statusTone(s: ReferralStatus) {
   return "neutral" as const;
 }
 
+function printReferral(r: ReferralResponse, typeLabel: string) {
+  const win = window.open("", "_blank", "width=800,height=600");
+  if (!win) return;
+  const issued    = format(parseISO(r.createdAt), "d MMMM yyyy");
+  const scheduled = format(parseISO(r.scheduledDate), "d MMMM yyyy");
+  win.document.write(`
+    <html>
+      <head>
+        <title>Упат — MedTech</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 40px; color: #1e293b; }
+          .header { border-bottom: 2px solid #10b981; padding-bottom: 16px; margin-bottom: 24px; }
+          .hospital { font-size: 12px; color: #64748b; }
+          .title { font-size: 22px; font-weight: bold; margin-top: 8px; }
+          .ref-number { font-size: 13px; color: #64748b; margin-top: 4px; font-family: monospace; }
+          .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+          .section { margin-bottom: 16px; }
+          .label { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+          .value { font-size: 15px; font-weight: 500; margin-top: 2px; }
+          .desc { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-top: 16px; }
+          .footer { margin-top: 60px; border-top: 1px solid #e2e8f0; padding-top: 16px;
+                    display: flex; justify-content: space-between; font-size: 12px; color: #94a3b8; }
+          .signature-line { border-bottom: 1px solid #1e293b; width: 200px; margin-top: 40px; }
+          @media print { body { padding: 20px; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="hospital">MedTech Здравствен Систем</div>
+          <div class="title">МЕДИЦИНСКИ УПАТ</div>
+          <div class="ref-number">Бр. ${r.referralNumber}</div>
+        </div>
+        <div class="grid">
+          <div class="section">
+            <div class="label">Пациент</div>
+            <div class="value">${r.patientName}</div>
+          </div>
+          <div class="section">
+            <div class="label">Се упатува кон</div>
+            <div class="value">${r.referredTo}</div>
+          </div>
+          <div class="section">
+            <div class="label">Тип на упат</div>
+            <div class="value">${typeLabel}</div>
+          </div>
+          <div class="section">
+            <div class="label">МКБ10</div>
+            <div class="value">${r.mkb10Code ?? "/"}</div>
+          </div>
+          <div class="section">
+            <div class="label">Издаден на</div>
+            <div class="value">${issued}</div>
+          </div>
+          <div class="section">
+            <div class="label">Закажано за</div>
+            <div class="value">${scheduled}</div>
+          </div>
+          ${r.doctorName ? `<div class="section"><div class="label">Доктор</div><div class="value">д-р ${r.doctorName}</div></div>` : ""}
+        </div>
+        ${r.description ? `<div class="desc"><div class="label">Причина / опис</div><div class="value" style="margin-top:6px;">${r.description}</div></div>` : ""}
+        <div style="margin-top:40px;">
+          <div class="label">Потпис на доктор</div>
+          <div class="signature-line"></div>
+        </div>
+        <div class="footer">
+          <span>Издадено преку MedTech платформата</span>
+          <span>${r.referralNumber}</span>
+        </div>
+        <script>window.onload = () => { window.print(); window.close(); }</script>
+      </body>
+    </html>
+  `);
+  win.document.close();
+}
+
 export default function PatientReferralsPage() {
   const profile = usePatientProfile();
   const t = useT();
@@ -35,6 +111,20 @@ export default function PatientReferralsPage() {
     { key: "COMPLETED", label: rt.filterDone     },
     { key: "CANCELLED", label: rt.filterCancelled },
   ];
+
+  const TYPE_LABELS: Record<ReferralType, string> = {
+    GENERAL_MEDICINE: rt.typeGeneral,
+    SPECIALIST:       rt.typeSpecialist,
+    LABORATORY:       rt.typeLab,
+    DIAGNOSTICS:      rt.typeDiag,
+    HOSPITAL:         rt.typeHospital,
+  };
+
+  const STATUS_LABELS: Record<ReferralStatus, string> = {
+    ACTIVE:    rt.statusActive,
+    COMPLETED: rt.statusDone,
+    CANCELLED: rt.statusCancelled,
+  };
 
   const referrals = useQuery({
     queryKey: ["patient", profile.data?.id, "referrals"],
@@ -55,6 +145,21 @@ export default function PatientReferralsPage() {
     return c;
   }, [all]);
 
+  const nextActive = useMemo(() => {
+    const active = all.filter((r) => r.status === "ACTIVE").sort((a, b) =>
+      a.scheduledDate.localeCompare(b.scheduledDate),
+    );
+    return active[0] ?? null;
+  }, [all]);
+
+  function getDaysBadge(isoDate: string) {
+    const days = differenceInDays(parseISO(isoDate), new Date());
+    if (days === 0)  return <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">{rt.daysToday}</span>;
+    if (days < 0)    return <span className="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-600">{rt.daysOverdue}</span>;
+    if (days <= 7)   return <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">{rt.daysIn} {days} {rt.daysSuffix}</span>;
+    return null;
+  }
+
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <motion.div
@@ -66,6 +171,31 @@ export default function PatientReferralsPage() {
         <p className="mt-1 text-slate-500">{rt.subtitle}</p>
       </motion.div>
 
+      {/* Summary stats */}
+      {!profile.isLoading && !referrals.isLoading && profile.data && (
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+          className="grid grid-cols-2 gap-3"
+        >
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-xs text-slate-500">{rt.statsActive}</p>
+            <p className="mt-1 text-2xl font-bold text-slate-900">{counts.ACTIVE}</p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-xs text-slate-500">{rt.statsNext}</p>
+            <p className="mt-1 text-sm font-semibold text-slate-900">
+              {nextActive
+                ? format(parseISO(nextActive.scheduledDate), "d MMM yyyy")
+                : <span className="text-slate-400 font-normal text-sm">{rt.statsNone}</span>
+              }
+            </p>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Filter tabs */}
       <Card>
         <div className="flex flex-wrap gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
           {FILTERS.map((f) => {
@@ -124,7 +254,12 @@ export default function PatientReferralsPage() {
                 visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
               }}
             >
-              <ReferralCard referral={r} />
+              <ReferralCard
+                referral={r}
+                typeLabel={TYPE_LABELS[r.referralType] ?? r.referralType}
+                statusLabel={STATUS_LABELS[r.status]}
+                daysBadge={r.status === "ACTIVE" ? getDaysBadge(r.scheduledDate) : null}
+              />
             </motion.div>
           ))}
         </motion.div>
@@ -133,23 +268,19 @@ export default function PatientReferralsPage() {
   );
 }
 
-function ReferralCard({ referral: r }: { referral: ReferralResponse }) {
+function ReferralCard({
+  referral: r,
+  typeLabel,
+  statusLabel,
+  daysBadge,
+}: {
+  referral: ReferralResponse;
+  typeLabel: string;
+  statusLabel: string;
+  daysBadge: React.ReactNode;
+}) {
   const t = useT();
   const rt = t.patientReferrals;
-
-  const TYPE_LABELS: Record<ReferralType, string> = {
-    GENERAL_MEDICINE: rt.typeGeneral,
-    SPECIALIST:       rt.typeSpecialist,
-    LABORATORY:       rt.typeLab,
-    DIAGNOSTICS:      rt.typeDiag,
-    HOSPITAL:         rt.typeHospital,
-  };
-
-  const STATUS_LABELS: Record<ReferralStatus, string> = {
-    ACTIVE:    rt.statusActive,
-    COMPLETED: rt.statusDone,
-    CANCELLED: rt.statusCancelled,
-  };
 
   const isActive    = r.status === "ACTIVE";
   const isCompleted = r.status === "COMPLETED";
@@ -176,10 +307,11 @@ function ReferralCard({ referral: r }: { referral: ReferralResponse }) {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-2">
             <h3 className="text-lg font-bold text-slate-900">{r.referredTo}</h3>
-            <Badge tone={statusTone(r.status)}>{STATUS_LABELS[r.status]}</Badge>
+            <Badge tone={statusTone(r.status)}>{statusLabel}</Badge>
             <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
-              {TYPE_LABELS[r.referralType] ?? r.referralType}
+              {typeLabel}
             </span>
+            {daysBadge}
           </div>
 
           <p className="mt-0.5 text-sm text-slate-500">
@@ -205,10 +337,7 @@ function ReferralCard({ referral: r }: { referral: ReferralResponse }) {
           </div>
 
           {r.description && r.description !== "—" && (
-            <p className="mt-2 flex items-start gap-1.5 text-sm text-slate-600">
-              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
-              {r.description}
-            </p>
+            <p className="mt-2 text-sm text-slate-600">{r.description}</p>
           )}
 
           {isCompleted && r.outcomeNote && (
@@ -219,6 +348,18 @@ function ReferralCard({ referral: r }: { referral: ReferralResponse }) {
               <p className="mt-1 text-sm text-emerald-900">{r.outcomeNote}</p>
             </div>
           )}
+
+          {/* Print button */}
+          <div className="mt-3 flex justify-end">
+            <Button
+              variant="secondary"
+              className="gap-1.5 text-xs"
+              onClick={() => printReferral(r, typeLabel)}
+            >
+              <Printer className="h-3.5 w-3.5" />
+              {rt.printBtn}
+            </Button>
+          </div>
         </div>
       </div>
     </Card>

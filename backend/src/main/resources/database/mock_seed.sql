@@ -290,6 +290,20 @@ FROM (SELECT id AS did, hospital_id AS hid FROM doctors WHERE license_number = '
      ) AS t(pid, d, t, dur, st, ty, r)
 ON CONFLICT DO NOTHING;
 
+-- nurse@medtech.mk / Demo!Pass#2026  (NURSE — lands on /nurse)
+-- Shared hash documented at top of file (Demo!Pass#2026).
+INSERT INTO users (email, password_hash, first_name, last_name, phone_number, role, status, email_verified, created_by)
+VALUES
+  ('nurse@medtech.mk', '$2b$12$iKKkfqyfbZxtF9UWYS2DOuWtKIxfSH6r9KXcD.JsCJEQQj3vwrXMK',
+   'Ана', 'Стоева', '+389 70 999 002',
+   'NURSE'::user_role_enum, 'ACTIVE'::user_status_enum, TRUE, 'MOCK_SEED')
+ON CONFLICT (email) DO UPDATE
+  SET password_hash      = EXCLUDED.password_hash,
+      role               = EXCLUDED.role,
+      status             = 'ACTIVE'::user_status_enum,
+      failed_login_count = 0,
+      locked_until       = NULL;
+
 -- -----------------------------------------------------------------------------
 -- 8. Stefan's calendar — populates the doctor schedule so the demo never
 --    opens to an empty week. Uses CURRENT_DATE so the data stays "now".
@@ -412,6 +426,56 @@ FROM (VALUES
   ((SELECT id FROM doctors WHERE license_number='DR-ZORAN'),  1, 'SPECIALIST','Нефрологија','Рекурентна нефролитијаза — метаболна обработка.',5,'CANCELLED')
 ) AS v(doc_id, pat_id, rtype, referred_to, description, days_offset, status)
 WHERE NOT EXISTS (SELECT 1 FROM referrals r WHERE r.doctor_id = v.doc_id AND r.referred_to = v.referred_to AND r.patient_id = v.pat_id);
+
+-- -----------------------------------------------------------------------------
+-- Nurse demo data — a full clinic day across multiple doctors so the Nurse
+-- portal's "Today" tab is populated (completed, no-show and scheduled mix).
+-- Hospital is taken from each doctor; slots guarded so the block is re-runnable.
+-- -----------------------------------------------------------------------------
+INSERT INTO appointments (patient_id, doctor_id, hospital_id, appointment_date, appointment_time,
+                          duration_minutes, status, appointment_type, reason, created_by)
+SELECT v.pid, v.did, d.hospital_id, CURRENT_DATE, v.t::time, v.dur,
+       v.st::appointment_status_enum, v.ty::appointment_type_enum, v.r, 'NURSE_SEED'
+FROM (VALUES
+  (2,1,'08:00',20,'COMPLETED','CHECKUP',      'Систематски преглед'),
+  (4,2,'08:30',20,'COMPLETED','CONSULTATION', 'Главоболка и вртоглавица'),
+  (6,3,'09:00',30,'COMPLETED','FOLLOW_UP',    'Контрола по операција'),
+  (8,1,'09:15',15,'NO_SHOW',  'CONSULTATION', 'Не се јави на термин'),
+  (1,2,'10:00',20,'SCHEDULED','CONSULTATION', 'Покачен крвен притисок'),
+  (3,4,'10:30',45,'SCHEDULED','PROCEDURE',    'Мала хируршка интервенција'),
+  (5,5,'11:00',20,'SCHEDULED','CHECKUP',      'Годишен преглед'),
+  (7,6,'11:30',30,'SCHEDULED','FOLLOW_UP',    'Контрола на терапија'),
+  (9,7,'13:00',20,'SCHEDULED','CONSULTATION', 'Болки во грб'),
+  (10,3,'14:00',20,'SCHEDULED','VIRTUAL',     'Видео консултација'),
+  (11,1,'15:00',20,'SCHEDULED','CHECKUP',     'Превентивен преглед'),
+  (12,8,'16:00',30,'SCHEDULED','CONSULTATION','Кожен осип')
+) AS v(pid, did, t, dur, st, ty, r)
+JOIN doctors d ON d.id = v.did
+WHERE NOT EXISTS (
+  SELECT 1 FROM appointments a
+  WHERE a.doctor_id = v.did AND a.appointment_date = CURRENT_DATE AND a.appointment_time = v.t::time
+);
+
+-- -----------------------------------------------------------------------------
+-- Individual reports — so the "Индивидуални пријави" page is populated for the
+-- doctor (DR-STEFAN) and GP (DR-ZORAN). Mix of submitted reports + one draft
+-- each (the draft can be submitted live during a demo).
+-- -----------------------------------------------------------------------------
+INSERT INTO doctor_reports (doctor_id, report_number, period_type, period_label, period_start, period_end,
+                            patient_count, diagnosis_count, appointment_count, prescription_count, status, submitted_at)
+SELECT d.id, v.num, v.ptype::report_period_type_enum, v.plabel, v.pstart::date, v.pend::date,
+       v.pc, v.dc, v.ac, v.rc, v.st::report_status_enum,
+       CASE WHEN v.st='SUBMITTED' THEN (v.pend::date + TIME '17:00') AT TIME ZONE 'Europe/Skopje' ELSE NULL END
+FROM (VALUES
+  ('DR-STEFAN','IP-DEMO-001','MONTHLY',  'Април 2026',   '2026-04-01','2026-04-30',18,22,31,14,'SUBMITTED'),
+  ('DR-STEFAN','IP-DEMO-002','MONTHLY',  'Мај 2026',     '2026-05-01','2026-05-31',21,27,35,16,'SUBMITTED'),
+  ('DR-STEFAN','IP-DEMO-003','QUARTERLY','Q1 2026',      '2026-01-01','2026-03-31',47,61,88,39,'SUBMITTED'),
+  ('DR-STEFAN','IP-DEMO-004','MONTHLY',  'Јуни 2026',    '2026-06-01','2026-06-30', 9,11,14, 6,'DRAFT'),
+  ('DR-ZORAN', 'IP-DEMO-005','MONTHLY',  'Мај 2026',     '2026-05-01','2026-05-31',15,19,26,12,'SUBMITTED'),
+  ('DR-ZORAN', 'IP-DEMO-006','MONTHLY',  'Јуни 2026',    '2026-06-01','2026-06-30', 7, 8,10, 5,'DRAFT')
+) AS v(lic, num, ptype, plabel, pstart, pend, pc, dc, ac, rc, st)
+JOIN doctors d ON d.license_number = v.lic
+WHERE NOT EXISTS (SELECT 1 FROM doctor_reports r WHERE r.report_number = v.num);
 
 COMMIT;
 

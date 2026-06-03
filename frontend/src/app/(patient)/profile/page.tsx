@@ -103,7 +103,7 @@ export default function ProfilePage() {
       <Card>
         <h2 className="text-sm font-semibold text-slate-700">Основни податоци</h2>
         <dl className="mt-3 grid grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2">
-          <Field label="Ime и презиме" value={`${user.firstName} ${user.lastName}`} />
+          <Field label="Име и презиме" value={`${user.firstName} ${user.lastName}`} />
           <Field label="Е-пошта" value={user.email} />
           <Field label="Телефон" value={user.phoneNumber ?? "—"} />
         </dl>

@@ -13,6 +13,7 @@ import { PageBanner } from "@/components/layout/PageBanner";
 import { useAuth } from "@/hooks/useAuth";
 import { useDoctorProfile } from "@/hooks/useDoctor";
 import { doctorService } from "@/services/doctor.service";
+import { useT } from "@/hooks/useT";
 import { cn } from "@/utils/cn";
 
 const schema = z.object({
@@ -30,9 +31,11 @@ const inputCls =
   "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200";
 
 export default function DoctorSettingsPage() {
-  const { user } = useAuth();
-  const profile = useDoctorProfile();
-  const qc = useQueryClient();
+  const { user }  = useAuth();
+  const profile   = useDoctorProfile();
+  const qc        = useQueryClient();
+  const t         = useT();
+  const ds        = t.doctorSettings;
   const [editing, setEditing] = useState(false);
 
   const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<FormData>({
@@ -51,10 +54,10 @@ export default function DoctorSettingsPage() {
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["doctor", "me"] });
-      toast.success("Профилот е зачуван.");
+      toast.success(ds.saveSuccess);
       setEditing(false);
     },
-    onError: () => toast.error("Неуспешно зачувување."),
+    onError: () => toast.error(ds.saveError),
   });
 
   const startEditing = () => {
@@ -73,8 +76,8 @@ export default function DoctorSettingsPage() {
   return (
     <>
       <PageBanner
-        title="Поставки"
-        breadcrumb={[{ label: "Поставки" }]}
+        title={t.doctorNav.settings}
+        breadcrumb={[{ label: t.doctorNav.settings }]}
       />
 
       <div className="mx-auto max-w-4xl px-6 py-6 space-y-6">
@@ -84,14 +87,14 @@ export default function DoctorSettingsPage() {
           <>
             {/* Read-only identity card */}
             <Card>
-              <h2 className="text-sm font-semibold text-slate-700">Основни податоци</h2>
+              <h2 className="text-sm font-semibold text-slate-700">{ds.basicData}</h2>
               <dl className="mt-3 grid grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2">
-                <Field label="Ime и презиме" value={`${user?.firstName ?? ""} ${user?.lastName ?? ""}`} />
-                <Field label="Е-пошта"       value={user?.email ?? "—"} />
-                <Field label="Лиценцен бр."  value={profile.data?.licenseNumber ?? "—"} />
-                <Field label="Специјалност"  value={profile.data?.specialization ?? "—"} />
-                <Field label="Болница"        value={profile.data?.hospitalName ?? "—"} />
-                <Field label="Град"           value={profile.data?.hospitalCity ?? "—"} />
+                <Field label={ds.fullName}       value={`${user?.firstName ?? ""} ${user?.lastName ?? ""}`} />
+                <Field label={ds.email}          value={user?.email ?? "—"} />
+                <Field label={ds.licenseNumber}  value={profile.data?.licenseNumber ?? "—"} />
+                <Field label={ds.specialization} value={profile.data?.specialization ?? "—"} />
+                <Field label={ds.hospital}       value={profile.data?.hospitalName ?? "—"} />
+                <Field label={ds.city}           value={profile.data?.hospitalCity ?? "—"} />
               </dl>
             </Card>
 
@@ -100,14 +103,14 @@ export default function DoctorSettingsPage() {
               <form onSubmit={handleSubmit((d) => mutation.mutate(d))}>
                 <Card>
                   <div className="flex items-center justify-between">
-                    <h2 className="text-sm font-semibold text-slate-700">Клинички детали</h2>
+                    <h2 className="text-sm font-semibold text-slate-700">{ds.clinicalDetails}</h2>
                     <div className="flex gap-2">
                       <button
                         type="button"
                         onClick={() => setEditing(false)}
                         className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100"
                       >
-                        <X className="h-3.5 w-3.5" /> Откажи
+                        <X className="h-3.5 w-3.5" /> {t.common.cancel}
                       </button>
                       <button
                         type="submit"
@@ -115,31 +118,31 @@ export default function DoctorSettingsPage() {
                         className="inline-flex items-center gap-1 rounded-md bg-emerald-500 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-emerald-400 disabled:opacity-60"
                       >
                         <Check className="h-3.5 w-3.5" />
-                        {isSubmitting ? "Се зачувува…" : "Зачувај"}
+                        {isSubmitting ? t.common.saving : t.common.save}
                       </button>
                     </div>
                   </div>
                   <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <EditField label="Квалификација" fullWidth>
+                    <EditField label={ds.qualification} fullWidth>
                       <input {...register("qualification")} className={inputCls} />
                     </EditField>
-                    <EditField label="Искуство (години)">
+                    <EditField label={ds.experienceYears}>
                       <input type="number" min={0} {...register("experienceYears")} className={inputCls} />
                     </EditField>
-                    <EditField label="Број на кабинет">
+                    <EditField label={ds.officeNumber}>
                       <input {...register("officeNumber")} className={inputCls} />
                     </EditField>
-                    <EditField label="Цена на консултација (ден.)">
+                    <EditField label={ds.consultationFee}>
                       <input type="number" min={0} step="0.01" {...register("consultationFee")} className={inputCls} />
                     </EditField>
-                    <EditField label="Работно време" fullWidth>
+                    <EditField label={ds.workingHours} fullWidth>
                       <input
                         {...register("availabilityHours")}
-                        placeholder="пр. Пон–Пет 08:00–16:00"
+                        placeholder={ds.workingHoursPlaceholder}
                         className={inputCls}
                       />
                     </EditField>
-                    <EditField label="Биографија" fullWidth>
+                    <EditField label={ds.bio} fullWidth>
                       <textarea {...register("bio")} rows={4} className={inputCls} />
                     </EditField>
                   </div>
@@ -148,24 +151,27 @@ export default function DoctorSettingsPage() {
             ) : (
               <Card>
                 <div className="flex items-start justify-between">
-                  <h2 className="text-sm font-semibold text-slate-700">Клинички детали</h2>
+                  <h2 className="text-sm font-semibold text-slate-700">{ds.clinicalDetails}</h2>
                   <button
                     type="button"
                     onClick={startEditing}
                     className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
                   >
-                    <Pencil className="h-3.5 w-3.5" /> Измени
+                    <Pencil className="h-3.5 w-3.5" /> {t.common.edit}
                   </button>
                 </div>
                 <dl className="mt-3 grid grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2">
-                  <Field label="Квалификација"              value={profile.data?.qualification ?? "—"} />
-                  <Field label="Искуство (години)"          value={profile.data?.experienceYears?.toString() ?? "—"} />
-                  <Field label="Број на кабинет"            value={profile.data?.officeNumber ?? "—"} />
-                  <Field label="Цена на консултација"       value={profile.data?.consultationFee ? `${profile.data.consultationFee} ден.` : "—"} />
-                  <Field label="Работно време"              value={profile.data?.availabilityHours ?? "—"} />
+                  <Field label={ds.qualification}        value={profile.data?.qualification ?? "—"} />
+                  <Field label={ds.experienceYears}      value={profile.data?.experienceYears?.toString() ?? "—"} />
+                  <Field label={ds.officeNumber}         value={profile.data?.officeNumber ?? "—"} />
+                  <Field
+                    label={ds.consultationFeeDisplay}
+                    value={profile.data?.consultationFee ? `${profile.data.consultationFee} ${ds.currency}` : "—"}
+                  />
+                  <Field label={ds.workingHours}         value={profile.data?.availabilityHours ?? "—"} />
                   {profile.data?.bio && (
                     <div className="sm:col-span-2">
-                      <dt className="text-xs text-slate-500">Биографија</dt>
+                      <dt className="text-xs text-slate-500">{ds.bio}</dt>
                       <dd className="mt-0.5 text-sm text-slate-900 whitespace-pre-line">{profile.data.bio}</dd>
                     </div>
                   )}

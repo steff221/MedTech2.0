@@ -12,15 +12,9 @@ import { Skeleton } from "@/components/common/Skeleton";
 import { useDoctorProfile } from "@/hooks/useDoctor";
 import { useDoctorPatients, type DoctorPatientSummary } from "@/hooks/useDoctorPatients";
 import { prescriptionService } from "@/services/prescription.service";
+import { useT } from "@/hooks/useT";
 import { cn } from "@/utils/cn";
 import type { PrescriptionResponse, PrescriptionStatus } from "@/types/api";
-
-const STATUS_LABELS: Record<PrescriptionStatus, string> = {
-  ACTIVE:    "Активен",
-  COMPLETED: "Завршен",
-  CANCELLED: "Откажан",
-  SUSPENDED: "Суспендиран",
-};
 
 const STATUS_COLORS: Record<PrescriptionStatus, string> = {
   ACTIVE:    "bg-emerald-100 text-emerald-700",
@@ -30,35 +24,44 @@ const STATUS_COLORS: Record<PrescriptionStatus, string> = {
 };
 
 export default function DoctorPrescriptionsPage() {
-  const doctor   = useDoctorProfile();
+  const doctor  = useDoctorProfile();
+  const t       = useT();
+  const px      = t.prescriptions;
   const { summaries: patients, isLoading: patientsLoading } = useDoctorPatients(doctor.data?.id);
-  const qc       = useQueryClient();
-  const printRef  = useRef<HTMLDivElement>(null);
+  const qc      = useQueryClient();
+  const printRef = useRef<HTMLDivElement>(null);
 
   const [selectedPatientId, setSelectedPatientId] = useState<number | null>(null);
-  const [search, setSearch]  = useState("");
+  const [search, setSearch]   = useState("");
   const [selected, setSelected] = useState<PrescriptionResponse | null>(null);
+
+  const STATUS_LABELS: Record<PrescriptionStatus, string> = {
+    ACTIVE:    px.statusActive,
+    COMPLETED: px.statusCompleted,
+    CANCELLED: px.statusCancelled,
+    SUSPENDED: px.statusSuspended,
+  };
 
   const prescriptionsQuery = useQuery({
     queryKey: ["prescriptions", "patient", selectedPatientId],
     queryFn:  () => prescriptionService.activeForPatient(selectedPatientId!, 0, 100),
     enabled:  !!selectedPatientId,
+    staleTime: 2 * 60_000,
   });
 
   const cancelMutation = useMutation({
     mutationFn: (id: number) => prescriptionService.cancel(id),
-    onSuccess:  () => {
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["prescriptions", "patient", selectedPatientId] });
-      toast.success("Рецептот е откажан");
+      toast.success(px.cancelSuccess);
       setSelected(null);
     },
-    onError: () => toast.error("Неуспешно откажување на рецепт"),
+    onError: () => toast.error(px.cancelError),
   });
 
-  const filteredPatients = patients.filter((p: DoctorPatientSummary) => {
-    if (!search) return true;
-    return p.patientName.toLowerCase().includes(search.toLowerCase());
-  });
+  const filteredPatients = patients.filter((p: DoctorPatientSummary) =>
+    !search || p.patientName.toLowerCase().includes(search.toLowerCase()),
+  );
 
   function handlePrint() {
     if (!selected || !printRef.current) return;
@@ -125,8 +128,8 @@ export default function DoctorPrescriptionsPage() {
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Рецепти</h1>
-          <p className="text-sm text-slate-500">Прегледај и печати рецепти по пациент.</p>
+          <h1 className="text-2xl font-bold text-slate-900">{px.title}</h1>
+          <p className="text-sm text-slate-500">{px.subtitle}</p>
         </div>
       </div>
 
@@ -139,7 +142,7 @@ export default function DoctorPrescriptionsPage() {
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Барај пациент…"
+                placeholder={px.searchPlaceholder}
                 className="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
               />
             </div>
@@ -150,7 +153,7 @@ export default function DoctorPrescriptionsPage() {
               {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-12" />)}
             </div>
           ) : filteredPatients.length === 0 ? (
-            <p className="p-4 text-center text-sm text-slate-400">Нема пациенти</p>
+            <p className="p-4 text-center text-sm text-slate-400">{px.noPatients}</p>
           ) : (
             <ul className="divide-y divide-slate-100">
               {filteredPatients.map((p: DoctorPatientSummary) => (
@@ -175,8 +178,8 @@ export default function DoctorPrescriptionsPage() {
         <div className="lg:col-span-2 space-y-4">
           {!selectedPatientId ? (
             <EmptyState
-              title="Избери пациент"
-              description="Избери пациент од листата за да ги видиш неговите рецепти."
+              title={px.selectPatient}
+              description={px.selectPatientDesc}
               action={<FileText className="h-10 w-10 text-slate-300" />}
             />
           ) : prescriptionsQuery.isLoading ? (
@@ -184,10 +187,7 @@ export default function DoctorPrescriptionsPage() {
               {[0, 1, 2].map((i) => <Skeleton key={i} className="h-24" />)}
             </div>
           ) : !prescriptionsQuery.data?.content?.length ? (
-            <EmptyState
-              title="Нема рецепти"
-              description="Овој пациент нема активни рецепти."
-            />
+            <EmptyState title={px.noRx} description={px.noRxDesc} />
           ) : (
             <motion.div
               className="space-y-3"
@@ -227,7 +227,7 @@ export default function DoctorPrescriptionsPage() {
                     <div className="mt-4 flex gap-2 border-t border-slate-100 pt-3">
                       <Button onClick={(e) => { e.stopPropagation(); handlePrint(); }} variant="secondary" className="gap-1.5 text-xs">
                         <Printer className="h-3.5 w-3.5" />
-                        Печати рецепт
+                        {px.printBtn}
                       </Button>
                       {rx.status === "ACTIVE" && (
                         <Button
@@ -237,7 +237,7 @@ export default function DoctorPrescriptionsPage() {
                           disabled={cancelMutation.isPending}
                         >
                           <XCircle className="h-3.5 w-3.5" />
-                          Откажи
+                          {px.cancelBtn}
                         </Button>
                       )}
                     </div>
@@ -249,7 +249,6 @@ export default function DoctorPrescriptionsPage() {
         </div>
       </div>
 
-      {/* Hidden print target (used via window.open approach above) */}
       <div ref={printRef} className="hidden" />
     </div>
   );
