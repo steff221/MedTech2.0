@@ -1,8 +1,11 @@
 package com.medtech.application.service;
 
 import com.medtech.domain.repository.AuditLogRepository;
+import com.medtech.domain.repository.UserAccessFeatures;
 import com.medtech.domain.repository.UserRepository;
 import com.medtech.domain.vo.UserRole;
+import com.medtech.infrastructure.ml.AccessAnomalyScoreRequest;
+import com.medtech.infrastructure.ml.AnomalyScoreClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -22,6 +25,9 @@ import java.util.List;
  *       (Europe/Skopje) in the last 15 minutes.</li>
  *   <li>Failed-login surge — an IP had more than {@value #FAILED_LOGIN_THRESHOLD} failed
  *       login attempts in the last 15 minutes.</li>
+ *   <li>Behavioural anomaly (ML, Phase 4) — the ML service scores each active user's
+ *       last-hour access behaviour with an Isolation Forest; HIGH-band users are alerted.
+ *       Best-effort: a no-op when ML scoring is disabled or the service is unavailable.</li>
  * </ol>
  * Detected anomalies generate an ANOMALY notification sent to every ADMIN user.
  */
@@ -40,6 +46,7 @@ public class AnomalyDetectionJob {
     private final AuditLogRepository auditLogRepository;
     private final UserRepository     userRepository;
     private final NotificationService notificationService;
+    private final AnomalyScoreClient  anomalyScoreClient;
 
     // In-memory dedup: alertKey → time last alerted. Resets on restart which is acceptable.
     private final java.util.concurrent.ConcurrentHashMap<String, Instant> recentAlerts =
@@ -55,6 +62,7 @@ public class AnomalyDetectionJob {
             checkBulkAccess(oneHourAgo);
             checkOffHoursAccess(fifteenAgo);
             checkFailedLoginSurge(fifteenAgo);
+            checkBehavioralAnomalies(oneHourAgo);
 
             // Evict expired dedup entries
             Instant dedupCutoff = now.minus(DEDUP_WINDOW_MINUTES, ChronoUnit.MINUTES);
@@ -110,6 +118,41 @@ public class AnomalyDetectionJob {
                 log.warn("ANOMALY failed_login_surge — {}", msg);
                 notifyAdmins("ANOMALY", "Failed Login Surge Detected", msg);
             }
+        }
+    }
+
+    /**
+     * ML-based behavioural anomaly check (Phase 4). Aggregates each active user's access
+     * behaviour over the window and asks the ML service to score it; alerts on a HIGH
+     * band only. Entirely best-effort — when ML scoring is disabled or the service is
+     * down the client returns empty and this is a no-op, leaving the fixed rules above
+     * as the sole line of defence.
+     */
+    private void checkBehavioralAnomalies(Instant since) {
+        List<UserAccessFeatures> rows = auditLogRepository.aggregateUserAccessSince(since);
+        for (UserAccessFeatures u : rows) {
+            var features = new AccessAnomalyScoreRequest.Features(
+                    u.getTotalActions(),
+                    u.getDistinctPatientsViewed(),
+                    u.getOffHoursActions(),
+                    u.getDistinctIps(),
+                    u.getFailedActions(),
+                    u.getDistinctEntityTypes());
+
+            anomalyScoreClient.scoreAccessAnomaly(u.getUserId(), features)
+                    .filter(score -> score.isHigh())
+                    .ifPresent(score -> {
+                        String key = "behavioral_anomaly:" + u.getUserId();
+                        if (isDuplicate(key)) return;
+                        String factors = score.topFactors() == null || score.topFactors().isEmpty()
+                                ? "n/a" : String.join(", ", score.topFactors());
+                        String msg = "User id=" + u.getUserId()
+                                + " flagged as a HIGH access anomaly (score "
+                                + String.format("%.2f", score.score()) + ", model " + score.modelVersion()
+                                + "). Top factors: " + factors + ".";
+                        log.warn("ANOMALY behavioral — {}", msg);
+                        notifyAdmins("ANOMALY", "Behavioral Access Anomaly Detected", msg);
+                    });
         }
     }
 

@@ -76,4 +76,31 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
              AND ip_address IS NOT NULL
            """, nativeQuery = true)
     List<String> findIpsWithFailedLoginsSince(@Param("since") Instant since);
+
+    /**
+     * Per-user access-behaviour aggregates since the given instant, for the ML
+     * access-anomaly scorer. One row per active user — aggregated in a single pass so the
+     * job avoids N round-trips. Column aliases are quoted to map onto the camelCase
+     * {@link UserAccessFeatures} projection getters.
+     */
+    @Query(value = """
+           SELECT user_id                                            AS "userId",
+                  COUNT(*)                                           AS "totalActions",
+                  COUNT(DISTINCT entity_id) FILTER (
+                      WHERE action_type = 'VIEW'::audit_action_enum
+                        AND entity_type = 'Patient')                 AS "distinctPatientsViewed",
+                  COUNT(*) FILTER (
+                      WHERE EXTRACT(HOUR FROM created_at AT TIME ZONE 'Europe/Skopje') < 6
+                         OR EXTRACT(HOUR FROM created_at AT TIME ZONE 'Europe/Skopje') >= 22)
+                                                                     AS "offHoursActions",
+                  COUNT(DISTINCT ip_address)                         AS "distinctIps",
+                  COUNT(*) FILTER (
+                      WHERE status = 'FAILURE'::audit_status_enum)   AS "failedActions",
+                  COUNT(DISTINCT entity_type)                        AS "distinctEntityTypes"
+             FROM audit_logs
+            WHERE created_at >= :since
+              AND user_id IS NOT NULL
+            GROUP BY user_id
+           """, nativeQuery = true)
+    List<UserAccessFeatures> aggregateUserAccessSince(@Param("since") Instant since);
 }

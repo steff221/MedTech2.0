@@ -47,4 +47,27 @@ public class AnomalyScoreClient {
             return Optional.empty();
         }
     }
+
+    /**
+     * Score a user's recent access behaviour for anomalousness. Returns empty when
+     * scoring is disabled, the service is unreachable, or the response is malformed —
+     * the caller keeps relying on its rule-based checks.
+     */
+    public Optional<AccessAnomalyScoreResponse> scoreAccessAnomaly(
+            Long userId, AccessAnomalyScoreRequest.Features features) {
+        if (!props.enabled()) {
+            return Optional.empty();
+        }
+        try {
+            AccessAnomalyScoreResponse resp = mlRestClient.post()
+                    .uri("/score/access-anomaly")
+                    .body(new AccessAnomalyScoreRequest(userId, features))
+                    .retrieve()
+                    .body(AccessAnomalyScoreResponse.class);
+            return Optional.ofNullable(resp);
+        } catch (Exception ex) {
+            log.warn("ML access-anomaly scoring failed (best-effort, ignoring): {}", ex.getMessage());
+            return Optional.empty();
+        }
+    }
 }

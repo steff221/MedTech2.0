@@ -5,14 +5,18 @@ decision-maker; this service turns feature vectors into **scores + explanations*
 It is meant to be called **best-effort** — if it's down, Spring falls back to its
 existing rule-based logic.
 
-## Status: Phase 3 (trained model available)
+## Status: Phase 4 (no-show + access-anomaly models)
 
-- `POST /score/no-show` — returns no-show risk for an appointment.
-  Backed by a **transparent heuristic** out of the box; loads a **trained
-  GradientBoosting model** when an artifact is present (see *Training a model* below),
-  with **no change to the API contract**.
-- `GET /health` — liveness + active `model_version` (Spring uses this for its
-  circuit breaker).
+- `POST /score/no-show` — no-show risk for an appointment. Transparent heuristic out of
+  the box; loads a **trained GradientBoosting model** when an artifact is present.
+- `POST /score/access-anomaly` — anomaly score for a user's recent access behaviour.
+  Transparent heuristic out of the box; loads a **trained Isolation Forest** when an
+  artifact is present. Called best-effort by `AnomalyDetectionJob` alongside its rules.
+- `GET /health` — liveness + active `model_version` and `access_model_version` (Spring
+  uses this for its circuit breaker).
+
+Both scorers swap heuristic→model with **no change to the API contract** (see
+*Training a model* below).
 
 Interactive docs at `http://localhost:8000/docs` once running.
 
@@ -48,44 +52,47 @@ docker build -t medtech-ml .
 docker run -p 8000:8000 medtech-ml
 ```
 
-## Training a model (Phase 3)
+## Training a model
 
-The scorer runs on the transparent heuristic until a trained artifact is present, then
-loads it automatically — no serving-code or API changes. Build one in two steps:
+Each scorer runs on its transparent heuristic until a trained artifact is present, then
+loads it automatically — no serving-code or API changes.
 
 ```bash
 # Training deps (Postgres driver on top of the serving deps)
 pip install -r requirements-train.txt
+# PG* env vars default to the docker-compose DB on 127.0.0.1:5433.
 
-# 1) Export a leakage-free dataset from Postgres (point-in-time features).
-#    PG* env vars default to the docker-compose DB on 127.0.0.1:5433.
+# --- No-show (GradientBoosting) ---
 PGPASSWORD=... python -m training.extract            # -> data/noshow_dataset.csv
-
-# 2) Train + evaluate vs the heuristic, and save the runtime artifact.
 python -m training.train_noshow                      # -> app/scoring/artifacts/noshow_model.joblib
+
+# --- Access anomaly (Isolation Forest) ---
+PGPASSWORD=... python -m training.extract_access     # -> data/access_dataset.csv
+python -m training.train_access                      # -> app/scoring/artifacts/access_model.joblib
 ```
 
-Restart the service (or rebuild the image) and `/health` will report the new
-`model_version`. Point at a different artifact with `NOSHOW_MODEL_PATH`. The dataset and
-`.joblib` are git-ignored — train them per-environment, never commit them.
+Restart the service (or rebuild the image) and `/health` reports the new versions.
+Override artifact paths with `NOSHOW_MODEL_PATH` / `ACCESS_MODEL_PATH`. Datasets and
+`.joblib` files are git-ignored — train them per-environment, never commit them.
 
 ## Layout
 
 ```
 app/
-  main.py            # FastAPI routes: /health, /score/no-show
+  main.py            # FastAPI routes: /health, /score/no-show, /score/access-anomaly
   schemas.py         # pydantic contracts — THE Spring<->ML integration contract
   scoring/
-    noshow.py        # heuristic + trained-model backends behind one score()
-    artifacts/       # trained noshow_model.joblib lives here (git-ignored)
+    noshow.py        # heuristic + GradientBoosting backends behind one score()
+    access.py        # heuristic + Isolation Forest backends behind one score()
+    artifacts/       # trained *.joblib artifacts live here (git-ignored)
 tests/
-  test_noshow.py     # heuristic + API contract
-  test_features.py   # point-in-time feature engineering (leakage checks)
-  test_training.py   # train -> artifact -> model scoring (skipped without sklearn)
+  test_noshow.py / test_access.py            # heuristic + API contract
+  test_features.py / test_access_features.py # feature engineering (leakage/bucketing)
+  test_training.py / test_train_access.py    # train -> artifact -> scoring (skip w/o sklearn)
 training/
-  features.py        # point-in-time feature engineering (the dataset contract)
-  extract.py         # Postgres -> data/noshow_dataset.csv
-  train_noshow.py    # GradientBoosting + eval vs heuristic -> joblib artifact
+  features.py / access_features.py   # feature engineering (the dataset contracts)
+  extract.py  / extract_access.py    # Postgres -> data/*.csv
+  train_noshow.py / train_access.py  # train + offline eval -> joblib artifact
 ```
 
 ## Roadmap
@@ -95,5 +102,5 @@ training/
 - **Phase 2** ✅ — surface risk badge in the doctor/GP schedule UI.
 - **Phase 3** ✅ — `training/` pipeline: export appointments → train GradientBoosting
   on `NO_SHOW` vs `COMPLETED` → load the artifact in `scoring/noshow.py`.
-- **Phase 4** — Isolation Forest access-anomaly model wired into the existing
+- **Phase 4** ✅ — Isolation Forest access-anomaly model wired into the existing
   `AnomalyDetectionJob`; offline evaluation vs. the rule baseline.

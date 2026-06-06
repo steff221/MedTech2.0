@@ -21,6 +21,9 @@ class AnomalyScoreClientTest {
     private static final NoShowScoreRequest.Features FEATURES =
             new NoShowScoreRequest.Features(0.8, 30, 1, 8, "SPECIALIST", 3, 20);
 
+    private static final AccessAnomalyScoreRequest.Features ACCESS_FEATURES =
+            new AccessAnomalyScoreRequest.Features(80, 40, 70, 4, 10, 3);
+
     private AnomalyScoreClient clientWith(boolean enabled, RestClient restClient) {
         var props = new MlScoringProperties(enabled, "http://ml-test", 500, 1500);
         return new AnomalyScoreClient(restClient, props);
@@ -71,5 +74,50 @@ class AnomalyScoreClientTest {
 
         // A 500 must not propagate — booking flows depend on this being best-effort.
         assertThat(clientWith(true, builder.build()).scoreNoShow(FEATURES)).isEmpty();
+    }
+
+    @Test
+    void accessAnomaly_disabled_shortCircuits_withoutCallingService() {
+        RestClient.Builder builder = RestClient.builder().baseUrl("http://ml-test");
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        AnomalyScoreClient client = clientWith(false, builder.build());
+
+        assertThat(client.scoreAccessAnomaly(42L, ACCESS_FEATURES)).isEmpty();
+        server.verify(); // proves zero requests were made
+    }
+
+    @Test
+    void accessAnomaly_success_mapsSnakeCaseResponse() {
+        RestClient.Builder builder = RestClient.builder().baseUrl("http://ml-test");
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        server.expect(requestTo("http://ml-test/score/access-anomaly"))
+              .andExpect(method(POST))
+              .andExpect(jsonPath("$.user_id").value(42))
+              .andExpect(jsonPath("$.features.distinct_patients_viewed").value(40))
+              .andExpect(jsonPath("$.features.off_hours_actions").value(70))
+              .andRespond(withSuccess("""
+                      {"user_id":42,"score":0.91,"band":"HIGH",
+                       "top_factors":["distinct_patients_viewed","off_hours_actions"],
+                       "model_version":"access-iforest-v1"}
+                      """, APPLICATION_JSON));
+
+        Optional<AccessAnomalyScoreResponse> result =
+                clientWith(true, builder.build()).scoreAccessAnomaly(42L, ACCESS_FEATURES);
+
+        assertThat(result).isPresent();
+        assertThat(result.get().score()).isEqualTo(0.91);
+        assertThat(result.get().isHigh()).isTrue();
+        assertThat(result.get().topFactors()).containsExactly("distinct_patients_viewed", "off_hours_actions");
+        server.verify();
+    }
+
+    @Test
+    void accessAnomaly_serviceError_isSwallowed_returnsEmpty() {
+        RestClient.Builder builder = RestClient.builder().baseUrl("http://ml-test");
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        server.expect(requestTo("http://ml-test/score/access-anomaly"))
+              .andRespond(withServerError());
+
+        assertThat(clientWith(true, builder.build()).scoreAccessAnomaly(42L, ACCESS_FEATURES)).isEmpty();
     }
 }
