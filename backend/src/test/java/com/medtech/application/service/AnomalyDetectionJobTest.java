@@ -8,6 +8,8 @@ import com.medtech.domain.vo.UserRole;
 import com.medtech.fixture.Entities;
 import com.medtech.infrastructure.ml.AccessAnomalyScoreResponse;
 import com.medtech.infrastructure.ml.AnomalyScoreClient;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,6 +24,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.medtech.application.service.AnomalyDetectionJob.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -35,10 +38,13 @@ class AnomalyDetectionJobTest {
 
     AnomalyDetectionJob job;
     User admin;
+    MeterRegistry meterRegistry;
 
     @BeforeEach
     void setUp() {
-        job   = new AnomalyDetectionJob(auditLogRepository, userRepository, notificationService, anomalyScoreClient);
+        meterRegistry = new SimpleMeterRegistry();
+        job   = new AnomalyDetectionJob(auditLogRepository, userRepository, notificationService,
+                anomalyScoreClient, meterRegistry);
         admin = Entities.user(100L, UserRole.ADMIN);
 
         // default stubs — no anomalies
@@ -144,6 +150,9 @@ class AnomalyDetectionJobTest {
 
         verify(notificationService).create(eq(admin.getId()), eq("ANOMALY"),
                 contains("Behavioral"), anyString(), isNull());
+        // The flagged anomaly is counted for observability.
+        assertThat(meterRegistry.find("medtech.ml.access.flagged").tag("band", "HIGH").counter().count())
+                .isEqualTo(1.0);
     }
 
     @Test

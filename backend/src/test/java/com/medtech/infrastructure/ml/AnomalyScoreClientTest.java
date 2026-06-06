@@ -1,6 +1,8 @@
 package com.medtech.infrastructure.ml;
 
 import com.medtech.infrastructure.config.MlScoringProperties;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
@@ -24,9 +26,17 @@ class AnomalyScoreClientTest {
     private static final AccessAnomalyScoreRequest.Features ACCESS_FEATURES =
             new AccessAnomalyScoreRequest.Features(80, 40, 70, 4, 10, 3);
 
+    private final MeterRegistry meterRegistry = new SimpleMeterRegistry();
+
     private AnomalyScoreClient clientWith(boolean enabled, RestClient restClient) {
         var props = new MlScoringProperties(enabled, "http://ml-test", 500, 1500);
-        return new AnomalyScoreClient(restClient, props);
+        return new AnomalyScoreClient(restClient, props, meterRegistry);
+    }
+
+    private long scoringTimerCount(String model, String outcome) {
+        var timer = meterRegistry.find("medtech.ml.scoring")
+                .tag("model", model).tag("outcome", outcome).timer();
+        return timer == null ? 0 : timer.count();
     }
 
     @Test
@@ -38,6 +48,8 @@ class AnomalyScoreClientTest {
 
         assertThat(client.scoreNoShow(FEATURES)).isEmpty();
         server.verify(); // proves zero requests were made
+        // Disabled short-circuits before the timer — nothing recorded.
+        assertThat(meterRegistry.find("medtech.ml.scoring").timer()).isNull();
     }
 
     @Test
@@ -63,6 +75,8 @@ class AnomalyScoreClientTest {
         assertThat(result.get().topFactors()).containsExactly("historical_no_show_rate", "lead_time_days");
         assertThat(result.get().modelVersion()).isEqualTo("noshow-heuristic-v0");
         server.verify();
+        // A successful call is recorded as a hit on the scoring timer.
+        assertThat(scoringTimerCount("no-show", "hit")).isEqualTo(1);
     }
 
     @Test
@@ -74,6 +88,8 @@ class AnomalyScoreClientTest {
 
         // A 500 must not propagate — booking flows depend on this being best-effort.
         assertThat(clientWith(true, builder.build()).scoreNoShow(FEATURES)).isEmpty();
+        // The failed attempt is still recorded, tagged as an error.
+        assertThat(scoringTimerCount("no-show", "error")).isEqualTo(1);
     }
 
     @Test
@@ -109,6 +125,7 @@ class AnomalyScoreClientTest {
         assertThat(result.get().isHigh()).isTrue();
         assertThat(result.get().topFactors()).containsExactly("distinct_patients_viewed", "off_hours_actions");
         server.verify();
+        assertThat(scoringTimerCount("access-anomaly", "hit")).isEqualTo(1);
     }
 
     @Test

@@ -47,6 +47,7 @@ public class AnomalyDetectionJob {
     private final UserRepository     userRepository;
     private final NotificationService notificationService;
     private final AnomalyScoreClient  anomalyScoreClient;
+    private final io.micrometer.core.instrument.MeterRegistry meterRegistry;
 
     // In-memory dedup: alertKey → time last alerted. Resets on restart which is acceptable.
     private final java.util.concurrent.ConcurrentHashMap<String, Instant> recentAlerts =
@@ -151,6 +152,7 @@ public class AnomalyDetectionJob {
                                 + String.format("%.2f", score.score()) + ", model " + score.modelVersion()
                                 + "). Top factors: " + factors + ".";
                         log.warn("ANOMALY behavioral — {}", msg);
+                        meterRegistry.counter("medtech.ml.access.flagged", "band", score.band()).increment();
                         notifyAdmins("ANOMALY", "Behavioral Access Anomaly Detected", msg);
                     });
         }
