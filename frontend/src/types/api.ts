@@ -107,6 +107,10 @@ export interface AppointmentResponse {
   createdAt: string;
   ratingId: number | null;
   ratingValue: number | null;
+  /** No-show probability 0..1 from the ML scoring service; null when not scored. */
+  noShowRisk: number | null;
+  /** LOW / MEDIUM / HIGH band; null when not scored. */
+  noShowRiskBand: "LOW" | "MEDIUM" | "HIGH" | null;
 }
 
 export interface BookAppointmentRequest {

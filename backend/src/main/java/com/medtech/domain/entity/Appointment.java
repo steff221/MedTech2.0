@@ -77,6 +77,14 @@ public class Appointment {
     @Column(name = "video_call_url", length = 2048)
     private String videoCallUrl;
 
+    /** No-show probability (0..1) from the ML scoring service; {@code null} when not scored. */
+    @Column(name = "no_show_risk")
+    private Double noShowRisk;
+
+    /** LOW / MEDIUM / HIGH band echoed by the scoring service; {@code null} when not scored. */
+    @Column(name = "no_show_risk_band", length = 10)
+    private String noShowRiskBand;
+
     @Column(name = "created_by", length = 100)
     private String createdBy;
 

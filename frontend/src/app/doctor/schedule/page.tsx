@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { CalendarPlus, Check, ExternalLink, Link2, UserPlus, Video, X } from "lucide-react";
+import { AlertTriangle, CalendarPlus, Check, ExternalLink, Link2, UserPlus, Video, X } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { Skeleton } from "@/components/common/Skeleton";
@@ -17,6 +17,27 @@ import { cn } from "@/utils/cn";
 import { useMemo, useState } from "react";
 import { BookAppointmentModal } from "@/components/doctor/BookAppointmentModal";
 import type { AppointmentResponse } from "@/types/api";
+
+// ── No-show risk badge ────────────────────────────────────────────────────────
+// Renders only for MEDIUM/HIGH bands from the ML scoring service. LOW and
+// unscored (null) appointments show nothing, to avoid cluttering the schedule.
+function NoShowRiskBadge({ band, risk }: { band: AppointmentResponse["noShowRiskBand"]; risk: number | null }) {
+  if (band !== "HIGH" && band !== "MEDIUM") return null;
+  const pct = risk != null ? `${Math.round(risk * 100)}%` : "";
+  const isHigh = band === "HIGH";
+  return (
+    <span
+      title={`Ризик од непојавување${pct ? `: ${pct}` : ""}`}
+      className={cn(
+        "inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
+        isHigh ? "bg-rose-100 text-rose-600" : "bg-amber-100 text-amber-700",
+      )}
+    >
+      <AlertTriangle className="h-2.5 w-2.5" />
+      {isHigh ? "Висок ризик" : "Можен ризик"}{pct && ` · ${pct}`}
+    </span>
+  );
+}
 
 // ── Video URL modal ───────────────────────────────────────────────────────────
 function SetVideoModal({ appointment, onClose }: { appointment: AppointmentResponse; onClose: () => void }) {
@@ -163,6 +184,8 @@ function WaitingRoom({ doctorId }: { doctorId: number }) {
       createdAt: TODAY,
       ratingId: null,
       ratingValue: null,
+      noShowRisk: null,
+      noShowRiskBand: null,
     };
     saveWalkIns([...walkIns, entry]);
     setWalkInName("");
@@ -321,6 +344,7 @@ function WaitingRoom({ doctorId }: { doctorId: number }) {
                           <Video className="h-2.5 w-2.5" /> Виртуелен
                         </span>
                       )}
+                      <NoShowRiskBadge band={p.noShowRiskBand} risk={p.noShowRisk} />
                     </div>
                   </td>
                   <td className="px-4 py-3 text-slate-600">{p.reason ?? "—"}</td>

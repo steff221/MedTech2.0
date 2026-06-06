@@ -109,4 +109,9 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
                                              @Param("date") LocalDate date,
                                              @Param("time") java.time.LocalTime time,
                                              @Param("statuses") java.util.Collection<AppointmentStatus> statuses);
+
+    // ── Feature counts for ML no-show scoring ────────────────────────────────
+    long countByPatient_Id(Long patientId);
+
+    long countByPatient_IdAndStatus(Long patientId, AppointmentStatus status);
 }

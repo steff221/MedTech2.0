@@ -4,6 +4,7 @@ import com.medtech.application.dto.request.BookAppointmentRequest;
 import com.medtech.application.dto.request.CancelAppointmentRequest;
 import com.medtech.application.dto.request.RescheduleAppointmentRequest;
 import com.medtech.constant.ErrorCode;
+import com.medtech.infrastructure.ml.AnomalyScoreClient;
 import com.medtech.domain.entity.Appointment;
 import com.medtech.domain.entity.Doctor;
 import com.medtech.domain.entity.Hospital;
@@ -52,6 +53,7 @@ class AppointmentServiceTest {
     @Mock DoctorAvailabilityRepository availabilityRepository;
     @Mock EmailService emailService;
     @Mock NotificationService notificationService;
+    @Mock AnomalyScoreClient anomalyScoreClient;
 
     AppointmentService service;
 
@@ -71,7 +73,11 @@ class AppointmentServiceTest {
 
         AppointmentProperties props = new AppointmentProperties(30, 24);
         service = new AppointmentService(appointmentRepository, patientRepository,
-                doctorRepository, availabilityRepository, props, fixedClock, emailService, notificationService);
+                doctorRepository, availabilityRepository, props, fixedClock, emailService,
+                notificationService, anomalyScoreClient);
+
+        // Scoring is best-effort and off by default in tests → return no score.
+        lenient().when(anomalyScoreClient.scoreNoShow(any())).thenReturn(java.util.Optional.empty());
 
         // No availability configured by default → validation skipped
         lenient().when(availabilityRepository.findByDoctorId(any())).thenReturn(List.of());
