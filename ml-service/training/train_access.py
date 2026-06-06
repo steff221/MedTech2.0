@@ -28,12 +28,28 @@ from .access_features import FEATURE_COLUMNS, RULE_FLAG_COLUMN
 DEFAULT_DATA = Path("data/access_dataset.csv")
 DEFAULT_OUT = Path("app/scoring/artifacts/access_model.joblib")
 
+# Guardrails: Isolation Forest needs a decent amount of mostly-normal history, and we
+# want it to at least track the existing rules before it goes live. Override with --force.
+MIN_WINDOWS = 300
+MIN_ROC_AUC_VS_RULES = 0.70
+
 # Band cutoffs on the 0..1 anomaly percentile. Kept identical to app.scoring.access.
 MEDIUM_CUTOFF = 0.55
 HIGH_CUTOFF = 0.75
 
 
-def train(data_path: Path, out_path: Path) -> dict:
+def _guardrail_reasons(n: int, auc: float | None) -> list[str]:
+    """Reasons this model should NOT be promoted to the active scorer (empty == OK)."""
+    reasons = []
+    if n < MIN_WINDOWS:
+        reasons.append(f"only {n} windows (need >= {MIN_WINDOWS} of mostly-normal history)")
+    if auc is not None and auc < MIN_ROC_AUC_VS_RULES:
+        reasons.append(f"ROC-AUC vs rules {auc:.3f} below {MIN_ROC_AUC_VS_RULES:.2f} "
+                       "(model barely tracks the known rule signal)")
+    return reasons
+
+
+def train(data_path: Path, out_path: Path, force: bool = False) -> dict:
     from sklearn.ensemble import IsolationForest
     from sklearn.metrics import roc_auc_score
     import joblib
@@ -79,6 +95,18 @@ def train(data_path: Path, out_path: Path) -> dict:
     else:
         print("ROC-AUC vs rules: n/a (need both flagged and unflagged windows)")
 
+    # Guardrail: don't let a weak model silently become the active scorer.
+    reasons = _guardrail_reasons(len(df), auc)
+    if reasons:
+        bullet = "\n  - ".join(reasons)
+        if not force:
+            raise SystemExit(
+                "Refusing to save — this model is not trustworthy yet:\n  - " + bullet
+                + "\nThe service keeps using the transparent heuristic. Re-run with --force to "
+                  "override (not recommended for production)."
+            )
+        print("WARNING: saving despite guardrail failures (--force):\n  - " + bullet)
+
     artifact = {
         "model": model,
         "feature_columns": FEATURE_COLUMNS,
@@ -101,8 +129,10 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="Train the access-anomaly Isolation Forest.")
     ap.add_argument("--data", type=Path, default=DEFAULT_DATA, help="Training CSV from extract_access.py.")
     ap.add_argument("--out", type=Path, default=DEFAULT_OUT, help="Where to write the joblib artifact.")
+    ap.add_argument("--force", action="store_true",
+                    help="Save even if guardrails fail (too few windows / weak AUC). Not for production.")
     args = ap.parse_args()
-    train(args.data, args.out)
+    train(args.data, args.out, force=args.force)
 
 
 if __name__ == "__main__":

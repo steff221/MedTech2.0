@@ -47,7 +47,8 @@ def test_train_saves_artifact_that_scores(tmp_path):
     out = tmp_path / "model.joblib"
     _synthetic_dataset().to_csv(data, index=False)
 
-    metrics = train(data, out)
+    # force=True: this test exercises the train->save->score mechanics, not the guardrail.
+    metrics = train(data, out, force=True)
 
     assert out.exists()
     # On a genuinely learnable signal the model should be clearly better than chance.
@@ -67,3 +68,14 @@ def test_train_saves_artifact_that_scores(tmp_path):
 
 def test_load_model_missing_file_returns_none(tmp_path):
     assert noshow._load_model(tmp_path / "nope.joblib") is None
+
+
+def test_guardrail_refuses_to_save_tiny_dataset(tmp_path):
+    # 40 rows is well below MIN_ROWS -> must refuse and write nothing.
+    data = tmp_path / "tiny.csv"
+    out = tmp_path / "tiny_model.joblib"
+    _synthetic_dataset(n=40).to_csv(data, index=False)
+
+    with pytest.raises(SystemExit):
+        train(data, out)  # no force
+    assert not out.exists()

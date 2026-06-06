@@ -75,6 +75,11 @@ Restart the service (or rebuild the image) and `/health` reports the new version
 Override artifact paths with `NOSHOW_MODEL_PATH` / `ACCESS_MODEL_PATH`. Datasets and
 `.joblib` files are git-ignored — train them per-environment, never commit them.
 
+**Guardrails:** the trainers *refuse to save* a model that isn't trustworthy — too little
+data, too few positive examples, or (no-show) not beating the heuristic / (access) not
+tracking the rule baseline. In that case nothing is written and the service keeps using
+the transparent heuristic. Pass `--force` to override for experiments (not for production).
+
 ## Layout
 
 ```

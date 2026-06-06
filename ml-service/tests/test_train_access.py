@@ -44,7 +44,8 @@ def test_train_saves_artifact_and_flags_outlier(tmp_path):
     out = tmp_path / "access_model.joblib"
     _synthetic().to_csv(data, index=False)
 
-    train(data, out)
+    # force=True: this test exercises the train->save->score mechanics, not the guardrail.
+    train(data, out, force=True)
     assert out.exists()
 
     artifact = access._load_model(out)
@@ -69,3 +70,14 @@ def test_train_saves_artifact_and_flags_outlier(tmp_path):
 
 def test_load_missing_returns_none(tmp_path):
     assert access._load_model(tmp_path / "nope.joblib") is None
+
+
+def test_guardrail_refuses_to_save_too_few_windows(tmp_path):
+    # 60 windows is below MIN_WINDOWS -> must refuse and write nothing.
+    data = tmp_path / "small.csv"
+    out = tmp_path / "small_model.joblib"
+    _synthetic(n=60).to_csv(data, index=False)
+
+    with pytest.raises(SystemExit):
+        train(data, out)  # no force
+    assert not out.exists()

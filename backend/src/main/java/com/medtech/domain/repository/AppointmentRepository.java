@@ -114,4 +114,25 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     long countByPatient_Id(Long patientId);
 
     long countByPatient_IdAndStatus(Long patientId, AppointmentStatus status);
+
+    /**
+     * Bulk-marks past-due, still-open appointments as NO_SHOW. An appointment is
+     * past-due when its date+time is strictly before {@code cutoffDate}/{@code cutoffTime}
+     * (the scheduler passes "now minus a grace period", so legitimate late documentation
+     * has time to flip it to COMPLETED first). The date/time pair is compared field-wise
+     * since they are stored separately.
+     *
+     * @return number of appointments transitioned to NO_SHOW
+     */
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("""
+           UPDATE Appointment a SET a.status = :noShow
+           WHERE a.status IN :openStatuses
+             AND (a.appointmentDate < :cutoffDate
+                  OR (a.appointmentDate = :cutoffDate AND a.appointmentTime < :cutoffTime))
+           """)
+    int markPastDueAsNoShow(@Param("noShow") AppointmentStatus noShow,
+                            @Param("openStatuses") java.util.Collection<AppointmentStatus> openStatuses,
+                            @Param("cutoffDate") LocalDate cutoffDate,
+                            @Param("cutoffTime") java.time.LocalTime cutoffTime);
 }

@@ -33,6 +33,11 @@ from .features import (
 DEFAULT_DATA = Path("data/noshow_dataset.csv")
 DEFAULT_OUT = Path("app/scoring/artifacts/noshow_model.joblib")
 
+# Guardrails: refuse to save a model that isn't trustworthy, so a weak model can't
+# silently become the active scorer. Override with --force for experiments.
+MIN_ROWS = 200
+MIN_POSITIVES = 30
+
 # Band cutoffs on the predicted probability — kept identical to the heuristic so the
 # UI's LOW/MEDIUM/HIGH semantics don't shift when the model swaps in.
 MEDIUM_CUTOFF = 0.35
@@ -102,7 +107,19 @@ def _heuristic_auc(df: pd.DataFrame) -> float | None:
     return float(roc_auc_score(df[LABEL_COLUMN], risks))
 
 
-def train(data_path: Path, out_path: Path) -> dict:
+def _guardrail_reasons(n: int, positives: int, model_auc: float, baseline_auc: float | None) -> list[str]:
+    """Reasons this model should NOT be promoted to the active scorer (empty == OK)."""
+    reasons = []
+    if n < MIN_ROWS:
+        reasons.append(f"only {n} rows (need >= {MIN_ROWS} for a reliable split)")
+    if positives < MIN_POSITIVES:
+        reasons.append(f"only {positives} NO_SHOW examples (need >= {MIN_POSITIVES})")
+    if baseline_auc is not None and model_auc <= baseline_auc:
+        reasons.append(f"ROC-AUC {model_auc:.3f} does not beat the heuristic ({baseline_auc:.3f})")
+    return reasons
+
+
+def train(data_path: Path, out_path: Path, force: bool = False) -> dict:
     from sklearn.metrics import average_precision_score, classification_report, roc_auc_score
     from sklearn.model_selection import train_test_split
     import joblib
@@ -143,6 +160,18 @@ def train(data_path: Path, out_path: Path) -> dict:
         print(f"heuristic AUC : {baseline_auc:.3f}   -> model {verdict} the heuristic")
     print(classification_report(y_te, (proba >= 0.5).astype(int), zero_division=0))
 
+    # Guardrail: don't let a weak model silently become the active scorer.
+    reasons = _guardrail_reasons(len(df), int(y.sum()), model_auc, baseline_auc)
+    if reasons:
+        bullet = "\n  - ".join(reasons)
+        if not force:
+            raise SystemExit(
+                "Refusing to save — this model is not trustworthy yet:\n  - " + bullet
+                + "\nThe service keeps using the transparent heuristic. Re-run with --force to "
+                  "override (not recommended for production)."
+            )
+        print("WARNING: saving despite guardrail failures (--force):\n  - " + bullet)
+
     artifact = {
         "pipeline": pipeline,
         "feature_columns": FEATURE_COLUMNS,
@@ -163,8 +192,10 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="Train the no-show GradientBoosting model.")
     ap.add_argument("--data", type=Path, default=DEFAULT_DATA, help="Training CSV from extract.py.")
     ap.add_argument("--out", type=Path, default=DEFAULT_OUT, help="Where to write the joblib artifact.")
+    ap.add_argument("--force", action="store_true",
+                    help="Save even if guardrails fail (small data / no improvement). Not for production.")
     args = ap.parse_args()
-    train(args.data, args.out)
+    train(args.data, args.out, force=args.force)
 
 
 if __name__ == "__main__":
