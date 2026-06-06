@@ -217,18 +217,6 @@ export function LandingPage() {
 
         {/* ── Hero ────────────────────────────────────────────────────────── */}
         <section className="mt-20 text-center">
-          <motion.div {...fadeUp(0)}>
-            <div className={`mb-4 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 ${T.liveBadge}`}>
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-              </span>
-              <span className={`text-xs font-semibold ${T.liveText}`}>
-                Во живо · {format(today, "dd MMM yyyy")}
-              </span>
-            </div>
-          </motion.div>
-
           <motion.h1
             {...fadeUp(0.08)}
             className={`mx-auto mt-4 max-w-4xl text-5xl font-bold leading-tight tracking-tight sm:text-6xl lg:text-7xl ${T.heading}`}
@@ -274,6 +262,15 @@ export function LandingPage() {
         {/* ── Live KPIs ───────────────────────────────────────────────────── */}
         <section id="live" className="mt-20">
           <motion.div {...fadeUp(0)} className="mb-8 text-center">
+            <div className={`mb-4 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 ${T.liveBadge}`}>
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+              </span>
+              <span className={`text-xs font-semibold ${T.liveText}`}>
+                Во живо · {format(today, "dd MMM yyyy")}
+              </span>
+            </div>
             <h2 className={`text-2xl font-bold ${T.heading}`}>Денешни статистики</h2>
             <p className={`mt-2 text-sm ${T.faint}`}>Освежува на секои 30 секунди</p>
           </motion.div>
