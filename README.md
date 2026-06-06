@@ -8,7 +8,7 @@
 
 Appointment booking · Doctor portals · Medical records · Live admin analytics
 
-[![CI / CD](https://github.com/steff221/MedTech2.0/actions/workflows/ci.yml/badge.svg)](https://github.com/steff221/MedTech2.0/actions/workflows/ci.yml)
+<img width="1440" height="786" alt="landing page" src="https://github.com/user-attachments/assets/65a4bb88-66c1-432e-946e-60e92e269e2b" />
 [![Java](https://img.shields.io/badge/Java-21-orange?logo=openjdk)](https://openjdk.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)](https://nextjs.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue?logo=postgresql)](https://www.postgresql.org/)
