@@ -1,10 +1,13 @@
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
 pydantic==2.10.4
-# ML/training deps come online in Phase 3; pinned here so the image is stable.
-# scikit-learn==1.6.0
-# pandas==2.2.3
-# joblib==1.4.2
+
+# ML serving (Phase 3) — needed to load the joblib artifact and predict. The service
+# still falls back to the pure-Python heuristic when no model file is present.
+scikit-learn==1.6.0
+pandas==2.2.3
+numpy==2.2.1
+joblib==1.4.2
 
 # Dev/test
 httpx==0.28.1

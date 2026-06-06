@@ -1,0 +1,6 @@
+# Training-only dependencies (training/extract.py, training/train_noshow.py).
+# Kept out of the runtime image, which only needs the serving deps in requirements.txt.
+-r requirements.txt
+
+# Postgres driver for extracting the dataset.
+psycopg[binary]==3.2.3
