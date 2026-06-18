@@ -18,6 +18,8 @@ import com.medtech.infrastructure.config.AppointmentProperties;
 import com.medtech.infrastructure.exception.ConflictException;
 import com.medtech.infrastructure.exception.ResourceNotFoundException;
 import com.medtech.infrastructure.exception.ValidationException;
+import com.medtech.infrastructure.ml.AnomalyScoreClient;
+import com.medtech.infrastructure.ml.NoShowScoreRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -61,6 +63,7 @@ public class AppointmentService {
     private final Clock clock;
     private final EmailService emailService;
     private final NotificationService notificationService;
+    private final AnomalyScoreClient anomalyScoreClient;
 
     @Transactional
     public Appointment book(BookAppointmentRequest req) {
@@ -153,7 +156,47 @@ public class AppointmentService {
             log.warn("Doctor booking notification failed for appointment id={}: {}", saved.getId(), ex.getMessage());
         }
 
+        // Best-effort ML no-show scoring. The client is a no-op when scoring is disabled
+        // or the service is down, so this never affects the booking outcome.
+        scoreNoShowRisk(saved);
+
         return saved;
+    }
+
+    /**
+     * Asks the ML service for this appointment's no-show risk and stores it on the
+     * (managed) entity so the change is flushed at commit. Entirely best-effort.
+     */
+    private void scoreNoShowRisk(Appointment saved) {
+        try {
+            Long patientId = saved.getPatient().getId();
+            long total      = appointmentRepository.countByPatient_Id(patientId);
+            long prior      = Math.max(total - 1, 0); // exclude the appointment just booked
+            long noShows    = appointmentRepository.countByPatient_IdAndStatus(patientId, AppointmentStatus.NO_SHOW);
+            long reschedules= appointmentRepository.countByPatient_IdAndStatus(patientId, AppointmentStatus.RESCHEDULED);
+            double historyRate = prior == 0 ? 0.0 : (double) noShows / prior;
+
+            int leadDays = (int) ChronoUnit.DAYS.between(
+                    LocalDate.now(clock), saved.getAppointmentDate());
+
+            var features = new NoShowScoreRequest.Features(
+                    historyRate,
+                    Math.max(leadDays, 0),
+                    saved.getAppointmentDate().getDayOfWeek().getValue(),
+                    saved.getAppointmentTime().getHour(),
+                    saved.getAppointmentType() == null ? "UNKNOWN" : saved.getAppointmentType().name(),
+                    (int) reschedules,
+                    (int) prior);
+
+            anomalyScoreClient.scoreNoShow(features).ifPresent(score -> {
+                saved.setNoShowRisk(score.risk());
+                saved.setNoShowRiskBand(score.band());
+                log.debug("Appointment id={} scored no-show risk={} band={} ({})",
+                        saved.getId(), score.risk(), score.band(), score.modelVersion());
+            });
+        } catch (Exception ex) {
+            log.warn("No-show scoring failed for appointment id={}: {}", saved.getId(), ex.getMessage());
+        }
     }
 
     @Transactional

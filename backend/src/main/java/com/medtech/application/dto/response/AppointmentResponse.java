@@ -28,5 +28,7 @@ public record AppointmentResponse(
         String videoCallUrl,
         Instant createdAt,
         Long ratingId,
-        Short ratingValue
+        Short ratingValue,
+        Double noShowRisk,
+        String noShowRiskBand
 ) {}

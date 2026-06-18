@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# Phase 3 artifacts — never commit data or large model binaries.
+data/
+*.parquet
+*.pkl
+*.joblib

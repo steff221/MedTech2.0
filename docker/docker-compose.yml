@@ -59,6 +59,33 @@ services:
       retries: 5
 
   # ---------------------------------------------------------------------------
+  # ML service — stateless FastAPI scorer (no-show risk, anomaly intelligence).
+  # Called best-effort by the backend at `http://ml-service:8000`; if it's down
+  # the backend falls back to its rule-based logic, so nothing depends on it.
+  # ---------------------------------------------------------------------------
+  ml-service:
+    build:
+      context: ../ml-service
+      dockerfile: Dockerfile
+    container_name: medtech-ml-service
+    restart: unless-stopped
+    expose:
+      - "8000"
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "0.5"
+    networks:
+      - medtech-network
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status==200 else 1)\""]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ---------------------------------------------------------------------------
   # Backend — Spring Boot. Inside the compose network the DB is at
   # `postgres:5432`, so env vars override the dev defaults from application.yml.
   # ---------------------------------------------------------------------------
@@ -73,11 +100,18 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      ml-service:
+        condition: service_healthy
     env_file:
       - .env
     environment:
       SPRING_PROFILES_ACTIVE: prod
       JAVA_OPTS: -XX:+UseG1GC -XX:MaxRAMPercentage=75.0
+      # ML scoring — reached via the compose network hostname. Enabled by
+      # default in the stack since the service ships alongside it; the backend
+      # still degrades gracefully if it becomes unavailable at runtime.
+      MEDTECH_ML_ENABLED: ${MEDTECH_ML_ENABLED:-true}
+      MEDTECH_ML_BASE_URL: http://ml-service:8000
       # Override to false when running locally over plain HTTP (nginx without TLS).
       # Remove this line when deploying to a server with HTTPS.
       MEDTECH_SECURITY_COOKIE_SECURE: "false"
