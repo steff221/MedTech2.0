@@ -10,10 +10,12 @@ import com.medtech.application.service.AppointmentService;
 import com.medtech.domain.entity.Appointment;
 import com.medtech.infrastructure.exception.AuthorizationException;
 import com.medtech.infrastructure.security.PatientAccessGuard;
+import com.medtech.infrastructure.security.PhiViewAuditor;
 import com.medtech.infrastructure.security.SecurityUtils;
 import com.medtech.infrastructure.security.Roles;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -44,6 +46,7 @@ public class AppointmentController {
     private final AppointmentService appointmentService;
     private final AppointmentMapper mapper;
     private final PatientAccessGuard accessGuard;
+    private final PhiViewAuditor phiViewAuditor;
 
     @PostMapping
     @PreAuthorize("hasAnyRole('PATIENT', 'NURSE')")
@@ -60,9 +63,10 @@ public class AppointmentController {
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get an appointment (caller must be patient, assigned doctor, nurse, or admin)")
-    public ResponseEntity<AppointmentResponse> getById(@PathVariable Long id) {
+    public ResponseEntity<AppointmentResponse> getById(@PathVariable Long id, HttpServletRequest request) {
         Appointment appt = appointmentService.getById(id);
         accessGuard.assertCanAccessPatient(appt.getPatient().getId());
+        phiViewAuditor.recordView("Appointment", id, "Appointment viewed", request);
         return ResponseEntity.ok(mapper.toResponse(appt));
     }
 

@@ -30,6 +30,7 @@ public class OperationService {
     private final DoctorRepository doctorRepository;
     private final PatientRepository patientRepository;
     private final HospitalRepository hospitalRepository;
+    private final Icd10CatalogService icd10Catalog;
 
     @Transactional
     public Operation schedule(Long surgeonUserId, ScheduleOperationRequest req) {
@@ -45,6 +46,8 @@ public class OperationService {
         op.setDoctor(surgeon);
         op.setHospital(hospital);
         op.setOperationName(req.operationName());
+        icd10Catalog.requireValidCode(req.mkb10Code());
+        op.setMkb10Code(req.mkb10Code());
         op.setOperationDate(req.operationDate());
         op.setOperationTime(req.operationTime());
         op.setDurationMinutes(req.durationMinutes());
@@ -63,8 +66,13 @@ public class OperationService {
     }
 
     @Transactional
-    public Operation updateStatus(Long operationId, UpdateOperationStatusRequest req) {
+    public Operation updateStatus(Long operationId, Long surgeonUserId, UpdateOperationStatusRequest req) {
         Operation op = getById(operationId);
+        if (!op.getDoctor().getUser().getId().equals(surgeonUserId)) {
+            throw new AuthorizationException(
+                    "OPERATION_ACCESS_DENIED",
+                    "Only the surgeon assigned to this operation may update it");
+        }
         op.setStatus(req.status());
         if (req.complications() != null)        op.setComplications(req.complications());
         if (req.outcome() != null)              op.setOutcome(req.outcome());

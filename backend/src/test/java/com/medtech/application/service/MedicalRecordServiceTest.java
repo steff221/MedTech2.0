@@ -66,7 +66,8 @@ class MedicalRecordServiceTest {
 
         service = new MedicalRecordService(
                 medicalRecordRepository, medicalRecordEventRepository, patientRepository,
-                doctorRepository, appointmentRepository, new ObjectMapper(), fixedClock);
+                doctorRepository, appointmentRepository, new Icd10CatalogService(),
+                new ObjectMapper(), fixedClock);
 
         lenient().when(doctorRepository.findByUserId(doctor.getUser().getId()))
                 .thenReturn(Optional.of(doctor));

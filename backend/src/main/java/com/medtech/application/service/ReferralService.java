@@ -31,6 +31,7 @@ public class ReferralService {
     private final ReferralRepository referralRepository;
     private final DoctorRepository   doctorRepository;
     private final PatientRepository  patientRepository;
+    private final Icd10CatalogService icd10Catalog;
 
     @Transactional
     public Referral create(Long doctorUserId, CreateReferralRequest req) {
@@ -47,6 +48,7 @@ public class ReferralService {
         referral.setPatient(patient);
         referral.setReferralType(req.referralType());
         referral.setReferredTo(req.referredTo());
+        icd10Catalog.requireValidCode(req.mkb10Code());
         referral.setMkb10Code(req.mkb10Code());
         referral.setDescription(req.description());
         referral.setScheduledDate(req.scheduledDate());

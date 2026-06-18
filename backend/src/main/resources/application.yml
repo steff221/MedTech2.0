@@ -34,6 +34,11 @@ spring:
     baseline-version: 1
     validate-on-migrate: true
     out-of-order: false
+    # Flyway uses the superuser credential so it can execute DDL migrations.
+    # The app runtime (HikariCP datasource) uses medtech_app (DML only).
+    url: ${MEDTECH_DB_URL:jdbc:postgresql://localhost:5433/medtech}
+    user: ${MEDTECH_DB_FLYWAY_USER:postgres}
+    password: ${MEDTECH_DB_FLYWAY_PASSWORD:}
   jpa:
     open-in-view: false
     hibernate:

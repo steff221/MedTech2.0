@@ -9,12 +9,14 @@ import com.medtech.application.dto.request.CreatePatientRequest;
 import com.medtech.application.dto.request.UpdatePatientRequest;
 import com.medtech.application.dto.response.AppointmentResponse;
 import com.medtech.application.dto.response.MedicalRecordResponse;
+import com.medtech.application.dto.response.PatientDataExportResponse;
 import com.medtech.application.dto.response.PatientResponse;
 import com.medtech.application.dto.response.PrescriptionResponse;
 import com.medtech.application.service.AppointmentService;
 import com.medtech.application.service.AuditLogService;
 import com.medtech.application.service.DoctorRatingService;
 import com.medtech.application.service.MedicalRecordService;
+import com.medtech.application.service.PatientDataExportService;
 import com.medtech.application.service.PatientService;
 import com.medtech.application.service.PrescriptionService;
 import com.medtech.domain.vo.AuditAction;
@@ -60,6 +62,7 @@ public class PatientController {
     private final DoctorRatingService doctorRatingService;
     private final PatientAccessGuard accessGuard;
     private final AuditLogService auditLogService;
+    private final PatientDataExportService exportService;
 
     @GetMapping("/my-patients")
     @PreAuthorize(Roles.CLINICIAN)
@@ -130,6 +133,21 @@ public class PatientController {
             }
         }
         return ResponseEntity.ok(patientMapper.toResponse(patientService.update(id, request)));
+    }
+
+    @GetMapping("/me/export")
+    @PreAuthorize("hasRole('PATIENT')")
+    @Operation(summary = "Full machine-readable export of the current patient's data (GDPR Art. 15/20)")
+    public ResponseEntity<PatientDataExportResponse> exportMyData(HttpServletRequest request) {
+        Long userId = SecurityUtils.currentUserId()
+                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+        PatientDataExportResponse export = exportService.exportForUser(userId);
+        auditLogService.recordByUserId(userId, AuditAction.VIEW, "Patient", export.profile().id(),
+                "Full data export (GDPR subject access)", clientIp(request),
+                request.getHeader("User-Agent"), AuditStatus.SUCCESS);
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=\"medtech-data-export.json\"")
+                .body(export);
     }
 
     @GetMapping("/{id}/appointments")

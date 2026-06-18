@@ -326,6 +326,7 @@ export interface OperationResponse {
   hospitalId: number;
   hospitalName: string;
   operationName: string;
+  mkb10Code: string | null;
   operationDate: string;
   operationTime: string | null;
   durationMinutes: number | null;
@@ -347,6 +348,7 @@ export interface ScheduleOperationRequest {
   patientId: number;
   hospitalId: number;
   operationName: string;
+  mkb10Code?: string;
   operationDate: string;
   operationTime?: string;
   durationMinutes?: number;
@@ -356,6 +358,29 @@ export interface ScheduleOperationRequest {
   anesthesiologist?: string;
   preOperativeNotes?: string;
   implantsUsed?: string;
+}
+
+// ── WHO ICD-10 (MKB-10) catalog ─────────────────────────────────────────────
+
+export interface Icd10CodeResponse {
+  code: string;
+  title: string;
+  chapter: number;
+  group: string;
+  groupTitle: string;
+  terminal: boolean;
+}
+
+export interface Icd10GroupResponse {
+  range: string;
+  title: string;
+}
+
+export interface Icd10ChapterResponse {
+  number: number;
+  title: string;
+  codeCount: number;
+  groups: Icd10GroupResponse[];
 }
 
 export interface ApiError {

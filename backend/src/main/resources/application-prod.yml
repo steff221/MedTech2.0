@@ -1,8 +1,17 @@
 spring:
   datasource:
+    # MEDTECH_DB_URL must include ?sslmode=require for managed Postgres (RDS,
+    # Cloud SQL, etc.).  Example:
+    #   jdbc:postgresql://db.example.com:5432/medtech?sslmode=require
+    # For the compose stack (postgres is in the same private network) this is
+    # not required, but it should still be set when the DB runs on a separate host.
     url: ${MEDTECH_DB_URL}
     username: ${MEDTECH_DB_USER}
     password: ${MEDTECH_DB_PASSWORD}
+    hikari:
+      # Enforce SSL on every new connection acquired from the pool.
+      data-source-properties:
+        sslmode: ${MEDTECH_DB_SSLMODE:prefer}
   jpa:
     properties:
       hibernate:

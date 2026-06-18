@@ -15,6 +15,7 @@ public record OperationResponse(
         Long hospitalId,
         String hospitalName,
         String operationName,
+        String mkb10Code,
         LocalDate operationDate,
         String operationTime,
         Integer durationMinutes,

@@ -11,7 +11,10 @@ services:
       - .env
     environment:
       POSTGRES_DB: medtech
-      POSTGRES_USER: medtech_app
+      # Use the real superuser — medtech_app is created by 00_create_app_user.sql
+      # with DML-only privileges.  This separation means a compromised app
+      # credential cannot DROP or ALTER any table.
+      POSTGRES_USER: postgres
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
       # Bound to loopback only — the DB is reachable from this host (psql/pgAdmin)
@@ -20,12 +23,18 @@ services:
       - "127.0.0.1:5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      # initdb scripts run alphabetically on a clean volume:
+      #   00_ — create medtech_app login role (DML only)
+      #   01_ — create schema owned by the superuser
+      #   02_ — mock seed data
+      #   03_ — grant DML to medtech_app on all tables created above
+      - ./postgres-init/00_create_app_user.sh:/docker-entrypoint-initdb.d/00_create_app_user.sh:ro
       - ../backend/src/main/resources/database/medtech_schema_pg.sql:/docker-entrypoint-initdb.d/01_medtech_schema_pg.sql:ro
-      - ../backend/src/main/resources/database/mock_seed.sql:/docker-entrypoint-initdb.d/02_mock_seed.sql:ro
+      - ./postgres-init/02_grant_app_privileges.sql:/docker-entrypoint-initdb.d/02_grant_app_privileges.sql:ro
     networks:
       - medtech-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U medtech_app -d medtech"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d medtech"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -74,6 +83,8 @@ services:
       MEDTECH_SECURITY_COOKIE_SECURE: "false"
     expose:
       - "8080"
+    ports:
+      - "8080:8080"
     deploy:
       resources:
         limits:

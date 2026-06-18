@@ -9,10 +9,12 @@ import com.medtech.application.service.MedicalRecordService;
 import com.medtech.domain.entity.MedicalRecord;
 import com.medtech.infrastructure.exception.AuthorizationException;
 import com.medtech.infrastructure.security.PatientAccessGuard;
+import com.medtech.infrastructure.security.PhiViewAuditor;
 import com.medtech.infrastructure.security.SecurityUtils;
 import com.medtech.infrastructure.security.Roles;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -38,6 +40,7 @@ public class MedicalRecordController {
     private final MedicalRecordService medicalRecordService;
     private final MedicalRecordMapper mapper;
     private final PatientAccessGuard accessGuard;
+    private final PhiViewAuditor phiViewAuditor;
 
     @GetMapping("/my")
     @PreAuthorize(Roles.CLINICIAN)
@@ -62,9 +65,10 @@ public class MedicalRecordController {
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get a medical record (patient who owns it, or clinician with care relationship)")
-    public ResponseEntity<MedicalRecordResponse> getById(@PathVariable Long id) {
+    public ResponseEntity<MedicalRecordResponse> getById(@PathVariable Long id, HttpServletRequest request) {
         MedicalRecord record = medicalRecordService.getById(id);
         accessGuard.assertCanAccessPatient(record.getPatient().getId());
+        phiViewAuditor.recordView("MedicalRecord", id, "Medical record viewed", request);
         return ResponseEntity.ok(mapper.toResponse(record));
     }
 
@@ -81,9 +85,10 @@ public class MedicalRecordController {
     @GetMapping("/{id}/history")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Full event history for a medical record (immutable audit log)")
-    public ResponseEntity<List<MedicalRecordEventResponse>> history(@PathVariable Long id) {
+    public ResponseEntity<List<MedicalRecordEventResponse>> history(@PathVariable Long id, HttpServletRequest request) {
         MedicalRecord record = medicalRecordService.getById(id);
         accessGuard.assertCanAccessPatient(record.getPatient().getId());
+        phiViewAuditor.recordView("MedicalRecord", id, "Medical record history viewed", request);
         return ResponseEntity.ok(
                 medicalRecordService.getHistory(id).stream()
                         .map(MedicalRecordEventResponse::from)

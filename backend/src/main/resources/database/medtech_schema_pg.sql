@@ -9,7 +9,7 @@
 -- ============================================================================
 -- PART 1: ENUM TYPES (replace Oracle CHECK constraints)
 -- ============================================================================
-CREATE TYPE user_role_enum         AS ENUM ('PATIENT', 'DOCTOR', 'NURSE');
+CREATE TYPE user_role_enum         AS ENUM ('PATIENT', 'DOCTOR', 'NURSE', 'ADMIN', 'GENERAL_PRACTITIONER');
 CREATE TYPE user_status_enum       AS ENUM ('ACTIVE', 'INACTIVE', 'SUSPENDED');
 CREATE TYPE gender_enum            AS ENUM ('M', 'F', 'O');
 CREATE TYPE blood_type_enum        AS ENUM ('O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-');

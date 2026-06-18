@@ -43,6 +43,10 @@ public class Operation {
     @Column(name = "operation_name", nullable = false, length = 255)
     private String operationName;
 
+    /** Pre-operative diagnosis as WHO ICD-10 (MKB-10) code, e.g. {@code K35.8}. */
+    @Column(name = "mkb10_code", length = 10)
+    private String mkb10Code;
+
     @Column(name = "operation_date", nullable = false)
     private LocalDate operationDate;
 

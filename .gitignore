@@ -18,6 +18,13 @@ hs_err_pid*
 mvnw
 mvnw.cmd
 
+# ===== Python (ml-service) =====
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
 # ===== Node / Next.js (frontend) =====
 node_modules/
 .next/

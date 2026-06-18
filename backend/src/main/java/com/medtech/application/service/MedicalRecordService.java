@@ -49,6 +49,7 @@ public class MedicalRecordService {
     private final PatientRepository patientRepository;
     private final DoctorRepository doctorRepository;
     private final AppointmentRepository appointmentRepository;
+    private final Icd10CatalogService icd10Catalog;
     private final ObjectMapper objectMapper;
     private final Clock clock;
 
@@ -77,6 +78,7 @@ public class MedicalRecordService {
         record.setHospital(doctor.getHospital());
         record.setAppointment(appointment);
         record.setDiagnosis(req.diagnosis());
+        icd10Catalog.requireValidCode(req.mkb10Code());
         record.setMkb10Code(req.mkb10Code());
         record.setClinicalNotes(req.clinicalNotes());
         record.setVitalSignsJson(serializeVitalSigns(req));

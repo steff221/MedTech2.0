@@ -2,8 +2,8 @@
 -- MedTech 2.0 — Demo Mock Data
 -- =============================================================================
 -- Idempotent: only inserts rows that don't already exist.
--- All mock users share password: magii1002
--- (bcrypt strength-12)
+-- All mock users share password: Demo!Pass#2026
+-- (hash below was generated via bcryptjs strength-12)
 -- =============================================================================
 
 BEGIN;
@@ -34,7 +34,7 @@ WHERE NOT EXISTS (SELECT 1 FROM hospitals WHERE hospitals.name = v.name);
 -- -----------------------------------------------------------------------------
 -- 2. Mock doctors (6 new — joins the 2 existing for 8 total)
 -- -----------------------------------------------------------------------------
--- Password for ALL mock accounts: magii1002
+-- Password for ALL mock accounts: Demo!Pass#2026
 -- bcrypt strength 12
 
 WITH new_doctors AS (
@@ -49,7 +49,7 @@ WITH new_doctors AS (
 ),
 inserted_users AS (
   INSERT INTO users (email, password_hash, first_name, last_name, phone_number, role, status, email_verified, created_by)
-  SELECT email, '$2y$12$jBjc6F0gOUyPjx4sHhRzxu.HnyHmhV5EolJoOjV.9rh/aoLj3ZBI2',
+  SELECT email, '$2b$12$iKKkfqyfbZxtF9UWYS2DOuWtKIxfSH6r9KXcD.JsCJEQQj3vwrXMK',
          first_name, last_name, '+389 70 000 000', 'DOCTOR'::user_role_enum, 'ACTIVE'::user_status_enum, TRUE, 'MOCK_SEED'
   FROM new_doctors
   WHERE NOT EXISTS (SELECT 1 FROM users u WHERE u.email = new_doctors.email)
@@ -90,7 +90,7 @@ WITH new_patients AS (
 ),
 inserted_users AS (
   INSERT INTO users (email, password_hash, first_name, last_name, phone_number, role, status, email_verified, created_by)
-  SELECT email, '$2y$12$jBjc6F0gOUyPjx4sHhRzxu.HnyHmhV5EolJoOjV.9rh/aoLj3ZBI2',
+  SELECT email, '$2b$12$iKKkfqyfbZxtF9UWYS2DOuWtKIxfSH6r9KXcD.JsCJEQQj3vwrXMK',
          first_name, last_name, '+389 71 ' || lpad((row_number() OVER ())::int::text, 6, '0'),
          'PATIENT'::user_role_enum, 'ACTIVE'::user_status_enum, TRUE, 'MOCK_SEED'
   FROM new_patients
@@ -218,7 +218,7 @@ ON CONFLICT DO NOTHING;
 -- -----------------------------------------------------------------------------
 -- patient@medtech.mk (renamed from p.kostadinov@medtech.mk above)
 UPDATE users
-SET password_hash = '$2y$12$jBjc6F0gOUyPjx4sHhRzxu.HnyHmhV5EolJoOjV.9rh/aoLj3ZBI2',
+SET password_hash = '$2b$12$iKKkfqyfbZxtF9UWYS2DOuWtKIxfSH6r9KXcD.JsCJEQQj3vwrXMK',
     failed_login_count = 0,
     locked_until = NULL
 WHERE email = 'patient@medtech.mk';
@@ -227,7 +227,7 @@ WHERE email = 'patient@medtech.mk';
 WITH u AS (
   INSERT INTO users (email, password_hash, first_name, last_name, phone_number, role, status, email_verified, created_by)
   VALUES ('stefan@medtech.mk',
-          '$2y$12$jBjc6F0gOUyPjx4sHhRzxu.HnyHmhV5EolJoOjV.9rh/aoLj3ZBI2',
+          '$2b$12$iKKkfqyfbZxtF9UWYS2DOuWtKIxfSH6r9KXcD.JsCJEQQj3vwrXMK',
           'Stefan', 'Perovski', '+389 70 555 000',
           'DOCTOR'::user_role_enum, 'ACTIVE'::user_status_enum, TRUE, 'MOCK_SEED')
   ON CONFLICT (email) DO UPDATE
@@ -252,7 +252,7 @@ WHERE NOT EXISTS (SELECT 1 FROM doctors d WHERE d.user_id = u.id);
 WITH u AS (
   INSERT INTO users (email, password_hash, first_name, last_name, phone_number, role, status, email_verified, created_by)
   VALUES ('zoran@medtech.mk',
-          '$2y$12$jBjc6F0gOUyPjx4sHhRzxu.HnyHmhV5EolJoOjV.9rh/aoLj3ZBI2',
+          '$2b$12$iKKkfqyfbZxtF9UWYS2DOuWtKIxfSH6r9KXcD.JsCJEQQj3vwrXMK',
           'Зоран', 'Николовски', '+389 70 123 456',
           'GENERAL_PRACTITIONER'::user_role_enum, 'ACTIVE'::user_status_enum, TRUE, 'MOCK_SEED')
   ON CONFLICT (email) DO UPDATE
@@ -294,11 +294,11 @@ FROM (SELECT id AS did, hospital_id AS hid FROM doctors WHERE license_number = '
 JOIN (SELECT id, row_number() OVER (ORDER BY id) AS rn FROM patients) p ON p.rn = t.rn;
 ALTER TABLE appointments ENABLE TRIGGER ALL;
 
--- nurse@medtech.mk / magii1002  (NURSE — lands on /nurse)
--- Shared hash documented at top of file (magii1002).
+-- nurse@medtech.mk / Demo!Pass#2026  (NURSE — lands on /nurse)
+-- Shared hash documented at top of file (Demo!Pass#2026).
 INSERT INTO users (email, password_hash, first_name, last_name, phone_number, role, status, email_verified, created_by)
 VALUES
-  ('nurse@medtech.mk', '$2y$12$jBjc6F0gOUyPjx4sHhRzxu.HnyHmhV5EolJoOjV.9rh/aoLj3ZBI2',
+  ('nurse@medtech.mk', '$2b$12$iKKkfqyfbZxtF9UWYS2DOuWtKIxfSH6r9KXcD.JsCJEQQj3vwrXMK',
    'Ана', 'Стоева', '+389 70 999 002',
    'NURSE'::user_role_enum, 'ACTIVE'::user_status_enum, TRUE, 'MOCK_SEED')
 ON CONFLICT (email) DO UPDATE
@@ -498,44 +498,6 @@ FROM (VALUES
 ) AS v(lic, num, ptype, plabel, pstart, pend, pc, dc, ac, rc, st)
 JOIN doctors d ON d.license_number = v.lic
 WHERE NOT EXISTS (SELECT 1 FROM doctor_reports r WHERE r.report_number = v.num);
-
--- -----------------------------------------------------------------------------
--- 14. Dr Zoran Perovski — Urology specialist (shared password documented at top)
--- -----------------------------------------------------------------------------
-WITH u AS (
-  INSERT INTO users (email, password_hash, first_name, last_name, phone_number, role, status, email_verified, created_by)
-  VALUES ('zoran.perovski@medtech.mk',
-          '$2y$12$jBjc6F0gOUyPjx4sHhRzxu.HnyHmhV5EolJoOjV.9rh/aoLj3ZBI2',
-          'Zoran', 'Perovski', '+389 70 555 111',
-          'DOCTOR'::user_role_enum, 'ACTIVE'::user_status_enum, TRUE, 'MOCK_SEED')
-  ON CONFLICT (email) DO UPDATE
-    SET password_hash      = EXCLUDED.password_hash,
-        failed_login_count = 0,
-        locked_until       = NULL
-  RETURNING id
-)
-INSERT INTO doctors (user_id, hospital_id, license_number, specialization, sub_specialization,
-                     experience_years, consultation_fee, bio, status)
-SELECT u.id,
-       (SELECT id FROM hospitals WHERE name = 'Универзитетска клиника' LIMIT 1),
-       'DR-ZORAN-URO', 'Urology',
-       'Endourology, Urologic Oncology, Minimally Invasive Surgery',
-       12, 2000,
-       'Board-certified urologist specialising in minimally invasive and endourologic procedures.',
-       'ACTIVE'::user_status_enum
-FROM u
-WHERE NOT EXISTS (SELECT 1 FROM doctors d WHERE d.user_id = u.id);
-
--- -----------------------------------------------------------------------------
--- 15. Doctor working hours — Mon–Fri 09:00–17:00 for every doctor so the
---     patient booking flow always shows time slots. day_of_week is ISO
---     (1=Monday … 7=Sunday), matching LocalDate.getDayOfWeek().getValue().
--- -----------------------------------------------------------------------------
-INSERT INTO doctor_availability (doctor_id, day_of_week, start_time, end_time, is_active)
-SELECT d.id, dow, '09:00'::time, '17:00'::time, TRUE
-FROM doctors d
-CROSS JOIN generate_series(1, 5) AS dow
-ON CONFLICT (doctor_id, day_of_week) DO NOTHING;
 
 COMMIT;
 

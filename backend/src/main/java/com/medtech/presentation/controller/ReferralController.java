@@ -8,10 +8,12 @@ import com.medtech.application.service.ReferralService;
 import com.medtech.domain.vo.ReferralStatus;
 import com.medtech.infrastructure.exception.AuthorizationException;
 import com.medtech.infrastructure.security.PatientAccessGuard;
+import com.medtech.infrastructure.security.PhiViewAuditor;
 import com.medtech.infrastructure.security.SecurityUtils;
 import com.medtech.infrastructure.security.Roles;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -30,6 +32,7 @@ public class ReferralController {
     private final ReferralService  referralService;
     private final ReferralMapper   mapper;
     private final PatientAccessGuard accessGuard;
+    private final PhiViewAuditor phiViewAuditor;
 
     @PostMapping
     @PreAuthorize(Roles.CLINICIAN)
@@ -43,9 +46,10 @@ public class ReferralController {
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get referral by ID")
-    public ResponseEntity<ReferralResponse> getById(@PathVariable Long id) {
+    public ResponseEntity<ReferralResponse> getById(@PathVariable Long id, HttpServletRequest request) {
         var referral = referralService.getById(id);
         accessGuard.assertCanAccessPatient(referral.getPatient().getId());
+        phiViewAuditor.recordView("Referral", id, "Referral viewed", request);
         return ResponseEntity.ok(mapper.toResponse(referral));
     }
 
@@ -83,8 +87,10 @@ public class ReferralController {
     @Operation(summary = "List all referrals for a patient")
     public ResponseEntity<Page<ReferralResponse>> patientReferrals(
             @PathVariable Long patientId,
-            Pageable pageable) {
+            Pageable pageable,
+            HttpServletRequest request) {
         accessGuard.assertCanAccessPatient(patientId);
+        phiViewAuditor.recordView("Patient", patientId, "Referral history viewed", request);
         return ResponseEntity.ok(
                 referralService.listByPatient(patientId, pageable).map(mapper::toResponse));
     }

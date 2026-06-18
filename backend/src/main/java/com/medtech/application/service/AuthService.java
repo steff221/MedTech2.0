@@ -58,6 +58,15 @@ public class AuthService {
     private static final Duration LOCKOUT_WINDOW = Duration.ofMinutes(15);
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
+    /**
+     * BCrypt hash (strength 12, matching {@code SecurityConfig#passwordEncoder})
+     * of a random throwaway value. Matched against when the email is unknown so
+     * the "no such user" path costs the same as a real password check —
+     * otherwise response time leaks which emails are registered.
+     */
+    private static final String DUMMY_PASSWORD_HASH =
+            "$2a$12$BG6E7tIhGJ0fVc8ffnhHvekrgBQvx3T9hG8cseZIu4Vg.Jjoz7wpW";
+
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final EmailVerificationTokenRepository emailVerificationTokenRepository;
@@ -104,17 +113,23 @@ public class AuthService {
     @Transactional
     public AuthResponse login(LoginRequest req) {
         User user = userRepository.findByEmailIgnoreCase(req.email())
-                .orElseThrow(AuthorizationException::invalidCredentials);
+                .orElseThrow(() -> {
+                    passwordEncoder.matches(req.password(), DUMMY_PASSWORD_HASH);
+                    return AuthorizationException.invalidCredentials();
+                });
 
         if (user.getStatus() != UserStatus.ACTIVE) {
             throw new AppException(ErrorCode.AUTH_ACCOUNT_INACTIVE, HttpStatus.UNAUTHORIZED,
                     "Account is not active") {};
         }
+        // Lockout must gate ALL attempts — checking it only on a wrong password
+        // would let an attacker keep brute-forcing during the lockout window and
+        // log straight in the moment the password is guessed.
+        if (user.isLocked()) {
+            throw new AppException(ErrorCode.AUTH_ACCOUNT_LOCKED, HttpStatus.UNAUTHORIZED,
+                    "Account is temporarily locked. Try again later.") {};
+        }
         if (!passwordEncoder.matches(req.password(), user.getPasswordHash())) {
-            if (user.isLocked()) {
-                throw new AppException(ErrorCode.AUTH_ACCOUNT_LOCKED, HttpStatus.UNAUTHORIZED,
-                        "Account is temporarily locked. Try again later.") {};
-            }
             int attempted = user.getFailedLoginCount() + 1;
             userRepository.incrementFailedLogins(user.getId());
             if (attempted >= MAX_FAILED_ATTEMPTS) {
@@ -187,13 +202,13 @@ public class AuthService {
     @Transactional
     public void logout(LogoutRequest req) {
         String hash = hashToken(req.refreshToken());
-        refreshTokenRepository.findByTokenHash(hash).ifPresent(t -> {
-            t.setRevoked(true);
-            t.setRevokedAt(Instant.now());
-            refreshTokenRepository.save(t);
-            auditLogService.record(t.getUser(), AuditAction.LOGOUT, "User", t.getUser().getId(),
-                    null, "Logout", currentIp(), currentUserAgent(), AuditStatus.SUCCESS);
-        });
+        Instant now = Instant.now();
+        int updated = refreshTokenRepository.revokeByTokenHash(hash, now);
+        if (updated > 0) {
+            refreshTokenRepository.findByTokenHash(hash).ifPresent(t ->
+                auditLogService.record(t.getUser(), AuditAction.LOGOUT, "User", t.getUser().getId(),
+                        null, "Logout", currentIp(), currentUserAgent(), AuditStatus.SUCCESS));
+        }
     }
 
     /**

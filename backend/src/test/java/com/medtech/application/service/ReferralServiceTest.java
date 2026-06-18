@@ -51,7 +51,8 @@ class ReferralServiceTest {
         doctor  = Entities.doctor(20L, Entities.user(2L, UserRole.DOCTOR), hospital);
         patient = Entities.patient(10L, Entities.user(1L, UserRole.PATIENT));
 
-        service = new ReferralService(referralRepository, doctorRepository, patientRepository);
+        service = new ReferralService(referralRepository, doctorRepository, patientRepository,
+                new Icd10CatalogService());
 
         lenient().when(doctorRepository.findByUserId(doctor.getUser().getId()))
                 .thenReturn(Optional.of(doctor));

@@ -114,6 +114,7 @@ const ROLES = [
 
 const TRUST = [
   { value: "100%", label: "Дигитализиран процес" },
+  { value: "4",    label: "Типа корисници" },
   { value: "24/7", label: "Достапност" },
 ];
 

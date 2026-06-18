@@ -92,7 +92,7 @@ class PatientServiceTest {
         verify(patientRepository).save(any(Patient.class));
     }
 
-    // ── getById ──────────────────────────────────────────────────────────────
+    // ── getById ─────────────────────────────────────────────────────────────
 
     @Test
     void getById_notFound_throwsResourceNotFound() {

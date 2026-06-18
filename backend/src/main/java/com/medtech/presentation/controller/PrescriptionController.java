@@ -7,10 +7,12 @@ import com.medtech.application.service.PrescriptionService;
 import com.medtech.domain.entity.Prescription;
 import com.medtech.infrastructure.exception.AuthorizationException;
 import com.medtech.infrastructure.security.PatientAccessGuard;
+import com.medtech.infrastructure.security.PhiViewAuditor;
 import com.medtech.infrastructure.security.SecurityUtils;
 import com.medtech.infrastructure.security.Roles;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -36,6 +38,7 @@ public class PrescriptionController {
     private final PrescriptionService prescriptionService;
     private final PrescriptionMapper mapper;
     private final PatientAccessGuard accessGuard;
+    private final PhiViewAuditor phiViewAuditor;
 
     @PostMapping
     @PreAuthorize(Roles.CLINICIAN)
@@ -49,9 +52,10 @@ public class PrescriptionController {
 
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<PrescriptionResponse> getById(@PathVariable Long id) {
+    public ResponseEntity<PrescriptionResponse> getById(@PathVariable Long id, HttpServletRequest request) {
         Prescription rx = prescriptionService.getById(id);
         accessGuard.assertCanAccessPatient(rx.getPatient().getId());
+        phiViewAuditor.recordView("Prescription", id, "Prescription viewed", request);
         return ResponseEntity.ok(mapper.toResponse(rx));
     }
 
@@ -75,8 +79,10 @@ public class PrescriptionController {
 
     @GetMapping("/patient/{patientId}/active")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Page<PrescriptionResponse>> active(@PathVariable Long patientId, Pageable pageable) {
+    public ResponseEntity<Page<PrescriptionResponse>> active(@PathVariable Long patientId, Pageable pageable,
+                                                             HttpServletRequest request) {
         accessGuard.assertCanAccessPatient(patientId);
+        phiViewAuditor.recordView("Patient", patientId, "Active prescriptions viewed", request);
         return ResponseEntity.ok(prescriptionService.activeFor(patientId, pageable).map(mapper::toResponse));
     }
 }

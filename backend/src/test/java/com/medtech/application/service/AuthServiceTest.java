@@ -30,6 +30,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.startsWith;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -110,6 +113,31 @@ class AuthServiceTest {
 
         assertThatThrownBy(() -> authService.login(new LoginRequest(user.getEmail(), "wrong")))
                 .isInstanceOf(AppException.class);
+    }
+
+    @Test
+    void login_rejectsLockedAccountEvenWithCorrectPassword() {
+        // Regression: the lockout gate must run BEFORE password verification,
+        // otherwise a brute-forcer can log in the moment the password is guessed.
+        User user = activeUser();
+        user.setLockedUntil(java.time.Instant.now().plusSeconds(600));
+        when(userRepository.findByEmailIgnoreCase(any())).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> authService.login(new LoginRequest(user.getEmail(), "correct-password")))
+                .isInstanceOf(AppException.class)
+                .hasMessageContaining("locked");
+        verify(passwordEncoder, never()).matches(any(), any());
+    }
+
+    @Test
+    void login_unknownEmailStillPaysBcryptCost() {
+        // Timing parity: the "no such user" path must run one bcrypt match so
+        // response time does not reveal which emails are registered.
+        when(userRepository.findByEmailIgnoreCase(any())).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> authService.login(new LoginRequest("missing@x.mk", "whatever")))
+                .isInstanceOf(AppException.class);
+        verify(passwordEncoder).matches(eq("whatever"), startsWith("$2a$12$"));
     }
 
     private User activeUser() {

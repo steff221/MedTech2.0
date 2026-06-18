@@ -8,6 +8,7 @@ import { Badge } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
 import { Card } from "@/components/common/Card";
 import { Input } from "@/components/common/Input";
+import { Mkb10Autocomplete } from "@/components/doctor/Mkb10Autocomplete";
 import { PageBanner } from "@/components/layout/PageBanner";
 import { useAuth } from "@/hooks/useAuth";
 import { useT } from "@/hooks/useT";
@@ -40,6 +41,7 @@ function ScheduleModal({ onClose, onCreated }: ScheduleModalProps) {
   const [hospitals, setHospitals] = useState<HospitalResponse[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
+  const [diagnosis, setDiagnosis] = useState<{ code: string; label: string } | null>(null);
   const [form, setForm] = useState<Omit<ScheduleOperationRequest, "patientId" | "hospitalId">>({
     operationName: "",
     operationDate: "",
@@ -82,6 +84,7 @@ function ScheduleModal({ onClose, onCreated }: ScheduleModalProps) {
         ...form,
         patientId: selectedPatient.id,
         hospitalId: hospitalId as number,
+        mkb10Code: diagnosis?.code,
         durationMinutes: form.durationMinutes || undefined,
       };
       const created = await operationService.schedule(body);
@@ -178,6 +181,13 @@ function ScheduleModal({ onClose, onCreated }: ScheduleModalProps) {
             value={form.operationName}
             onChange={(e) => set("operationName", e.target.value)}
             placeholder="пр. Лапароскопска холецистектомија"
+          />
+
+          {/* Pre-operative diagnosis (WHO ICD-10 / MKB-10) */}
+          <Mkb10Autocomplete
+            value={diagnosis}
+            onChange={setDiagnosis}
+            label={t.doctorOperations.fieldDiagnosis}
           />
 
           {/* Date + Time row */}
@@ -470,7 +480,14 @@ export default function OperationsPage() {
                               </span>
                             )}
                           </div>
-                          <p className="mt-1 text-base font-semibold text-slate-900">{op.operationName}</p>
+                          <p className="mt-1 text-base font-semibold text-slate-900">
+                            {op.operationName}
+                            {op.mkb10Code && (
+                              <span className="ml-2 rounded-md bg-rose-50 px-1.5 py-0.5 align-middle font-mono text-xs font-bold text-rose-700">
+                                {op.mkb10Code}
+                              </span>
+                            )}
+                          </p>
                           <p className="mt-0.5 text-sm font-medium text-slate-700">{op.hospitalName}</p>
                           {op.surgicalTeam && (
                             <p className="mt-0.5 text-xs text-slate-500">{op.surgicalTeam}</p>

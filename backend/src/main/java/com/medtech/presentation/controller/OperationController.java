@@ -7,9 +7,11 @@ import com.medtech.application.dto.response.OperationResponse;
 import com.medtech.application.service.OperationService;
 import com.medtech.infrastructure.exception.AuthorizationException;
 import com.medtech.infrastructure.security.PatientAccessGuard;
+import com.medtech.infrastructure.security.PhiViewAuditor;
 import com.medtech.infrastructure.security.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -34,6 +36,7 @@ public class OperationController {
     private final OperationService operationService;
     private final OperationMapper mapper;
     private final PatientAccessGuard accessGuard;
+    private final PhiViewAuditor phiViewAuditor;
 
     @PostMapping
     @PreAuthorize("hasAnyRole('DOCTOR')")
@@ -50,14 +53,17 @@ public class OperationController {
     @Operation(summary = "Update operation status + post-op notes")
     public ResponseEntity<OperationResponse> updateStatus(@PathVariable Long id,
                                                           @Valid @RequestBody UpdateOperationStatusRequest request) {
-        return ResponseEntity.ok(mapper.toResponse(operationService.updateStatus(id, request)));
+        Long surgeonUserId = SecurityUtils.currentUserId()
+                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+        return ResponseEntity.ok(mapper.toResponse(operationService.updateStatus(id, surgeonUserId, request)));
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<OperationResponse> getById(@PathVariable Long id) {
+    public ResponseEntity<OperationResponse> getById(@PathVariable Long id, HttpServletRequest request) {
         var operation = operationService.getById(id);
         accessGuard.assertCanAccessPatient(operation.getPatient().getId());
+        phiViewAuditor.recordView("Operation", id, "Operation record viewed", request);
         return ResponseEntity.ok(mapper.toResponse(operation));
     }
 
@@ -72,8 +78,10 @@ public class OperationController {
 
     @GetMapping("/patient/{patientId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Page<OperationResponse>> history(@PathVariable Long patientId, Pageable pageable) {
+    public ResponseEntity<Page<OperationResponse>> history(@PathVariable Long patientId, Pageable pageable,
+                                                           HttpServletRequest request) {
         accessGuard.assertCanAccessPatient(patientId);
+        phiViewAuditor.recordView("Patient", patientId, "Operation history viewed", request);
         return ResponseEntity.ok(operationService.historyOf(patientId, pageable).map(mapper::toResponse));
     }
 }
