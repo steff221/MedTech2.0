@@ -41,6 +41,33 @@ services:
       start_period: 20s
 
   # ---------------------------------------------------------------------------
+  # Automated PostgreSQL backups — daily pg_dump with tiered retention
+  # (7 daily, 4 weekly, 6 monthly) into the postgres_backups volume.
+  # Restore: gunzip -c <file>.sql.gz | psql -U postgres -d medtech
+  # ---------------------------------------------------------------------------
+  postgres-backup:
+    image: prodrigestivill/postgres-backup-local:16-alpine
+    container_name: medtech-postgres-backup
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: medtech
+      POSTGRES_USER: postgres
+      SCHEDULE: "@daily"
+      BACKUP_KEEP_DAYS: "7"
+      BACKUP_KEEP_WEEKS: "4"
+      BACKUP_KEEP_MONTHS: "6"
+    volumes:
+      - postgres_backups:/backups
+    networks:
+      - medtech-network
+
+  # ---------------------------------------------------------------------------
   # Redis — in-memory store used for distributed rate limiting.
   # ---------------------------------------------------------------------------
   redis:
@@ -206,6 +233,8 @@ networks:
 
 volumes:
   postgres_data:
+    driver: local
+  postgres_backups:
     driver: local
   pgadmin_data:
     driver: local

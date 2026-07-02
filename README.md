@@ -101,6 +101,12 @@ A real-time system dashboard that refreshes every 60 seconds.
 | **Testing** | JUnit 5 · Mockito · Spring Security Test |
 | **Infra** | Docker Compose · GitHub Actions CI/CD · GitHub Container Registry |
 
+## Deployment
+
+Production runs from `docker/docker-compose.yml` (TLS via nginx + Let's Encrypt,
+daily database backups, PHI encrypted at rest, no demo data). Full runbook:
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
 ---
 
 <div align="center">

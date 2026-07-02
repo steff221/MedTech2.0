@@ -517,41 +517,8 @@ INSERT INTO hospitals (name, city, address, postal_code, phone_number, latitude,
 ('Универзитетска клиника',  'Скопје',  'ул. Водњанска 17',   '1000', '+389 2 309 3000', 41.9973, 21.4280, 'TERTIARY',  'Проф. Д-р Марко Миланов',   500, 'ACTIVE'),
 ('Болница Куманово',        'Куманово','ул. Болнична 50',    '1300', '+389 31 245 123', 42.1327, 21.7156, 'SECONDARY', 'Д-р Александар Стојев',     150, 'ACTIVE');
 
--- Doctor (user + doctor in one CTE) -----------------------------------------
-WITH new_user AS (
-    INSERT INTO users (email, password_hash, first_name, last_name, phone_number, role, status, email_verified, created_by)
-    VALUES ('dr.petrov@medtech.mk',
-            '$2a$10$dXJ3SW6G7P50eS6DmwzkKe.1Z7XvKRPZ9y.iR3dP8vJNuRpHKjYAO',
-            'Иван', 'Петров', '+389 70 234 567',
-            'DOCTOR', 'ACTIVE', TRUE, 'SYSTEM')
-    RETURNING id
-)
-INSERT INTO doctors (user_id, hospital_id, license_number, specialization, sub_specialization,
-                     qualification, experience_years, office_number, consultation_fee,
-                     availability_hours, bio, status)
-SELECT new_user.id,
-       (SELECT id FROM hospitals WHERE name = 'Клиничка болница Тетово'),
-       'LIC-MK-001', 'Кардиологија', 'Интервенциона кардиологија',
-       'MD, PhD Cardiology University of Skopje', 15, '301', 100.00,
-       '08:00-16:00', 'Специјалист по болести на срцето', 'ACTIVE'
-FROM new_user;
-
--- Patient (user + patient in one CTE) ---------------------------------------
-WITH new_user AS (
-    INSERT INTO users (email, password_hash, first_name, last_name, phone_number, role, status, email_verified, created_by)
-    VALUES ('patient1@medtech.mk',
-            '$2a$10$dXJ3SW6G7P50eS6DmwzkKe.1Z7XvKRPZ9y.iR3dP8vJNuRpHKjYAO',
-            'Мирна', 'Стефановска', '+389 70 111 222',
-            'PATIENT', 'ACTIVE', TRUE, 'SYSTEM')
-    RETURNING id
-)
-INSERT INTO patients (user_id, date_of_birth, gender, blood_type, allergies, chronic_conditions,
-                      insurance_provider, insurance_number, emergency_contact, emergency_phone,
-                      address, city, postal_code, country)
-SELECT new_user.id, DATE '1985-05-15', 'F', 'O+', 'Пеницилин', 'Хипертензија',
-       'Blue Cross', 'BC-MK-123456', 'Марко Стефановски', '+389 75 555 666',
-       'Ул. Гоце Делчев 45', 'Тетово', '1200', 'Македонија'
-FROM new_user;
+-- Demo users (dr.petrov, patient1) are dev-only — seeded by the dev Flyway
+-- migration database/dev/V103__dev_demo_users.sql, never in production.
 
 -- ============================================================================
 -- PART 7: STATISTICS (PostgreSQL planner)

@@ -19,6 +19,12 @@ spring:
   jackson:
     serialization:
       indent-output: false
+  flyway:
+    # Prod excludes classpath:database/dev — mock seed (V98) never runs here.
+    locations: classpath:database
+    # A database that previously applied dev migrations (e.g. a local compose
+    # stack promoted through profiles) still validates cleanly.
+    ignore-migration-patterns: "*:missing"
 
 server:
   error:
