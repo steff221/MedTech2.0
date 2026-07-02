@@ -1,3 +1,4 @@
+// Страница (Next.js): упати — дел за матичен лекар (GP).
 "use client";
 
 import { motion } from "framer-motion";

@@ -20,6 +20,8 @@ import org.springframework.stereotype.Component;
  *   <li>{@code ADMIN} — allowed for any patient.</li>
  *   <li>Anyone else — denied.</li>
  * </ul>
+ *
+ * Безбедносна проверка: дали тековниот корисник смее да пристапи до даден пациент (спречува BOLA).
  */
 @Component
 @RequiredArgsConstructor

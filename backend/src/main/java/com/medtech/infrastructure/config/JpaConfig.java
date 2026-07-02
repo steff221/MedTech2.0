@@ -14,6 +14,8 @@ import java.util.Optional;
  * <p>Excluded from {@code @WebMvcTest} slices via {@code excludeFilters} on those
  * test classes — slice tests have no JPA, and {@code @EnableJpaAuditing} would
  * fail there because the metamodel is empty.
+ *
+ * Конфигурација на JPA/Hibernate (на пр. auditing на created/updated полиња).
  */
 @Configuration
 @EnableJpaAuditing(auditorAwareRef = "auditorAware")

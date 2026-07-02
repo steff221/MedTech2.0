@@ -18,6 +18,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * REST контролер: endpoints за слободните термини (достапноста) на докторите.
+ */
 @RestController
 @RequiredArgsConstructor
 @Tag(name = "Doctor Availability", description = "Weekly working-hours schedule for doctors")

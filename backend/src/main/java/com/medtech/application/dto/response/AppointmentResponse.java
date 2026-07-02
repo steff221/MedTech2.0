@@ -8,6 +8,9 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+/**
+ * Излезен DTO: податоци за термин што се враќаат кон клиентот.
+ */
 @Builder
 public record AppointmentResponse(
         Long id,

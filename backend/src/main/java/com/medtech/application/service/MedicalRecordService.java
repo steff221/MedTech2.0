@@ -36,6 +36,9 @@ import java.util.List;
 import java.util.Map;
 
 
+/**
+ * Сервис: бизнис-логика за медицинските картони и нивната историја на измени.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor

@@ -1,3 +1,4 @@
+// React provider-и (state, query, тема) што ја обвиткуваат апликацијата.
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";

@@ -31,6 +31,8 @@ import java.time.Instant;
  * <p>Writes use {@link Propagation#REQUIRES_NEW} so an audit insert never
  * rolls back when the surrounding business transaction fails — audit is
  * append-only by regulation.
+ *
+ * Сервис: запишување и читање на ревизорскиот лог (audit trail) за следење на дејствата.
  */
 @Slf4j
 @Service

@@ -15,6 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * Сервис: управување со слободните термини (достапноста) на докторите.
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)

@@ -1,3 +1,4 @@
+// API сервис: повици за термини.
 import { api } from "./api";
 import type { AppointmentResponse, BookAppointmentRequest } from "@/types/api";
 

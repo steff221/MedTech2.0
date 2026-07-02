@@ -1,3 +1,4 @@
+// Страница (Next.js): пациенти — дел за доктор.
 "use client";
 
 import { Skeleton } from "@/components/common/Skeleton";

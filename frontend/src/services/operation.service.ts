@@ -1,3 +1,4 @@
+// API сервис: повици за операции.
 import { api } from "./api";
 import type { OperationResponse, ScheduleOperationRequest, Page } from "@/types/api";
 

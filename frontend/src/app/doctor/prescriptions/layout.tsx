@@ -1,3 +1,4 @@
+// Layout (Next.js): рецепти — дел за доктор.
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

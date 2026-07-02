@@ -1,3 +1,4 @@
+// Страница (Next.js): упати — дел за пациент.
 "use client";
 
 import { motion } from "framer-motion";

@@ -1,3 +1,4 @@
+// Страница (Next.js): почетен дел за матичен лекар (GP).
 "use client";
 
 import { useRouter } from "next/navigation";

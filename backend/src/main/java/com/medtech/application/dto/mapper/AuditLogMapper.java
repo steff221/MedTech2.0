@@ -5,6 +5,9 @@ import com.medtech.domain.entity.AuditLog;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+/**
+ * MapStruct мапер: пресликува помеѓу ентитетот AuditLog (ревизорски лог) и неговиот DTO.
+ */
 @Mapper(componentModel = "spring")
 public interface AuditLogMapper {
 

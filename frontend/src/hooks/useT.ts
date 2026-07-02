@@ -1,3 +1,4 @@
+// React hook: пристап до преводите (i18n) во компонентите.
 "use client";
 
 import { useLanguageStore } from "@/store/language.store";

@@ -9,6 +9,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
 
+/**
+ * JPA ентитет: известување наменето за корисник.
+ */
 @Entity
 @Table(name = "notifications")
 @Getter

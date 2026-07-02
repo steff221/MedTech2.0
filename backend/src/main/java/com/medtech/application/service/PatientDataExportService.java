@@ -19,6 +19,8 @@ import java.time.Instant;
  * Assembles the full GDPR subject-access export for one patient.
  * Callers are responsible for authorization (the patient themself) and for
  * writing the audit row — every export is a PHI disclosure.
+ *
+ * Сервис: составува целосен извоз на податоците на пациент (GDPR право на пристап).
  */
 @Service
 @RequiredArgsConstructor

@@ -7,6 +7,9 @@ import lombok.Builder;
 import java.time.Instant;
 import java.time.LocalDate;
 
+/**
+ * Излезен DTO: податоци за упат што се враќаат кон клиентот.
+ */
 @Builder
 public record ReferralResponse(
         Long id,

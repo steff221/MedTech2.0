@@ -7,6 +7,9 @@ import lombok.Builder;
 
 import java.time.Instant;
 
+/**
+ * Излезен DTO: податоци за корисник што се враќаат кон клиентот.
+ */
 @Builder
 public record UserResponse(
         Long id,

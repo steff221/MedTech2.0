@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
  *
  * <p>Never use this hierarchy for genuinely unexpected technical failures —
  * let those propagate so they are logged at ERROR and returned as 500.
+ *
+ * Основна (апстрактна) класа за сите апликациски исклучоци со код на грешка.
  */
 @Getter
 public abstract class AppException extends RuntimeException {

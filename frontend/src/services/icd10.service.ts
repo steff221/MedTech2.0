@@ -1,3 +1,4 @@
+// API сервис: пребарување на МКБ-10 (ICD-10) каталог.
 import { api } from "./api";
 import type { Icd10ChapterResponse, Icd10CodeResponse } from "@/types/api";
 

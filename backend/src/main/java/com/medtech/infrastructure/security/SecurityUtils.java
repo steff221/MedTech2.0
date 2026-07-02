@@ -8,6 +8,8 @@ import java.util.Optional;
 /**
  * Helpers for accessing the current request's principal from anywhere
  * (services, audit aspects, controllers).
+ *
+ * Помошни методи за пристап до тековно најавениот корисник од безбедносниот контекст.
  */
 public final class SecurityUtils {
 

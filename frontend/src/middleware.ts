@@ -1,3 +1,4 @@
+// Next.js middleware: ги штити рутите и пренасочува според најава и улога.
 import { NextResponse } from "next/server";
 
 // The refresh_token cookie is set by the backend (port 8080) and is therefore

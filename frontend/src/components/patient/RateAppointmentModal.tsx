@@ -1,3 +1,4 @@
+// React компонента: модал за оценување на термин/доктор.
 "use client";
 
 import { useState } from "react";

@@ -1,3 +1,4 @@
+// Помошни функции за форматирање (датуми, броеви, текст).
 import { format, parseISO } from "date-fns";
 
 export function formatDate(iso: string, pattern = "MMM d, yyyy"): string {

@@ -1,3 +1,4 @@
+// Страница (Next.js): почетен дел за медицинска сестра.
 "use client";
 
 import { useState } from "react";

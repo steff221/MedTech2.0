@@ -8,6 +8,8 @@ import java.util.regex.Pattern;
  * (Macedonian ICD-10 implementation, e.g. {@code I10}, {@code E11.9}).
  *
  * <p>Format: 1 letter, 2 digits, optional dot + 1–2 digits.
+ *
+ * Value object: МКБ-10 (ICD-10) код за дијагноза, со валидација на форматот.
  */
 public record MKB10Code(String value) {
 

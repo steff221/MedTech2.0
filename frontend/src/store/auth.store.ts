@@ -1,3 +1,4 @@
+// Глобален state (store): податоци за најавениот корисник и токени.
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { UserResponse } from "@/types/api";

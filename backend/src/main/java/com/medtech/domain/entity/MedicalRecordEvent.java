@@ -9,6 +9,9 @@ import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 
+/**
+ * JPA ентитет: настан/измена во историјата на медицинскиот картон.
+ */
 @Entity
 @Table(name = "medical_record_events")
 @Getter

@@ -15,6 +15,8 @@ import java.util.List;
 /**
  * Aggregate counts for the public landing dashboard. Reads only, no PII.
  * Native SQL keeps the queries cheap and unaffected by lazy-loading.
+ *
+ * Сервис: пресметка на збирни статистики за admin контролната табла.
  */
 @Service
 @RequiredArgsConstructor

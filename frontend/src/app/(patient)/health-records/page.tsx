@@ -1,3 +1,4 @@
+// Страница (Next.js): медицински картони — дел за пациент.
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";

@@ -4,6 +4,9 @@ import com.medtech.domain.vo.OperationStatus;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+/**
+ * Влезен DTO: барање за менување на статусот на операција.
+ */
 public record UpdateOperationStatusRequest(
         @NotNull OperationStatus status,
         @Size(max = 500) String complications,

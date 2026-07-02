@@ -4,6 +4,8 @@ package com.medtech.infrastructure.validation;
  * Lightweight XSS/HTML sanitizer for free-text fields stored in the database.
  * Strips angle-bracket tags and encodes the five dangerous HTML entities.
  * Apply at service boundaries before persisting user-supplied strings.
+ *
+ * Помошник: чисти/санира влезен текст (на пр. од опасни знаци).
  */
 public final class Sanitizer {
 

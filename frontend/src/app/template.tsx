@@ -1,3 +1,4 @@
+// Next.js template — се ре-рендерира при навигација (анимации/транзиции).
 "use client";
 
 import { motion } from "framer-motion";

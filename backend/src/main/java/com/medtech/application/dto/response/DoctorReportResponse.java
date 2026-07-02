@@ -7,6 +7,9 @@ import lombok.Builder;
 import java.time.Instant;
 import java.time.LocalDate;
 
+/**
+ * Излезен DTO: генериран извештај за доктор.
+ */
 @Builder
 public record DoctorReportResponse(
         Long id,

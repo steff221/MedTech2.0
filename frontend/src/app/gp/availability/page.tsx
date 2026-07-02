@@ -1,3 +1,4 @@
+// Страница (Next.js): слободни термини (достапност) — дел за матичен лекар (GP).
 "use client";
 
 import { motion } from "framer-motion";

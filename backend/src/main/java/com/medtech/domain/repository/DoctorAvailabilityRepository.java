@@ -7,6 +7,9 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 
+/**
+ * Spring Data JPA репозиториум: пристап до слободните термини на докторите.
+ */
 public interface DoctorAvailabilityRepository extends JpaRepository<DoctorAvailability, Long> {
 
     List<DoctorAvailability> findByDoctorId(Long doctorId);

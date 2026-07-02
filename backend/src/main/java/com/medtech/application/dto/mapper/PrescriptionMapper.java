@@ -7,6 +7,9 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 
+/**
+ * MapStruct мапер: пресликува помеѓу ентитетот Prescription (рецепт) и неговиот DTO.
+ */
 @Mapper(componentModel = "spring")
 public interface PrescriptionMapper {
 

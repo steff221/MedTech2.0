@@ -16,6 +16,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.Instant;
 import java.time.LocalDate;
 
+/**
+ * JPA ентитет: рецепт издаден на пациент.
+ */
 @Entity
 @Table(name = "prescriptions")
 @Getter

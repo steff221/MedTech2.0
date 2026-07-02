@@ -142,9 +142,9 @@ CREATE TABLE medical_records (
     doctor_id           BIGINT NOT NULL,
     hospital_id         BIGINT NOT NULL,
     appointment_id      BIGINT,
-    diagnosis           VARCHAR(500),
+    diagnosis           TEXT,           -- encrypted at rest (enc:v1:...) by PhiStringConverter
     mkb10_code          VARCHAR(20),
-    clinical_notes      TEXT NOT NULL,
+    clinical_notes      TEXT NOT NULL,  -- encrypted at rest (enc:v1:...) by PhiStringConverter
     vital_signs         JSONB,
     blood_pressure      VARCHAR(20),
     heart_rate          INTEGER,

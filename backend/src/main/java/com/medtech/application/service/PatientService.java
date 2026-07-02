@@ -21,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
  * Patient profile lifecycle. The {@link User} authentication row is created by
  * {@link AuthService}; this service then attaches the demographic / health
  * profile linked 1:1 to that user.
+ *
+ * Сервис: бизнис-логика за пациентите — креирање, ажурирање и пребарување.
  */
 @Slf4j
 @Service

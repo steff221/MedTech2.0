@@ -36,6 +36,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         excludeFilters = @ComponentScan.Filter(
                 type = FilterType.ASSIGNABLE_TYPE,
                 classes = {SecurityConfig.class, JpaConfig.class}))
+/**
+ * WebMvc тестови за AuthController (endpoints за автентикација).
+ */
 @Import(WebMvcTestSecurityConfig.class)
 @WithMockUser
 class AuthControllerTest {

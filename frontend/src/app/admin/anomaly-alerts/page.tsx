@@ -1,3 +1,4 @@
+// Страница (Next.js): аларми за аномалии — дел за администратор.
 "use client";
 
 import { useQuery } from "@tanstack/react-query";

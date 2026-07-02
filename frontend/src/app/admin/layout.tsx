@@ -1,3 +1,4 @@
+// Layout (Next.js): почетен дел за администратор.
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";

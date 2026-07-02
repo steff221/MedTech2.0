@@ -10,6 +10,9 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 
+/**
+ * Spring Data JPA репозиториум: пристап до извештаите за докторите.
+ */
 @Repository
 public interface DoctorReportRepository extends JpaRepository<DoctorReport, Long> {
 

@@ -1,3 +1,4 @@
+// React компонента: оценување со ѕвездички.
 "use client";
 
 import { useState } from "react";

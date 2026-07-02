@@ -17,6 +17,8 @@ import java.time.LocalTime;
  * <p>This is the Transactional Outbox pattern: if the caller's transaction
  * rolls back, the outbox row is rolled back too — no spurious emails sent.
  * If SMTP is down, the row stays PENDING and will be retried automatically.
+ *
+ * Сервис: реално испраќање на е-пошта преку SMTP/провајдер и подготовка на содржина.
  */
 @Slf4j
 @Service

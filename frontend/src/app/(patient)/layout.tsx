@@ -1,3 +1,4 @@
+// Layout (Next.js): почетен дел за пациент.
 "use client";
 
 import { useRouter } from "next/navigation";

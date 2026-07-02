@@ -1,3 +1,4 @@
+// React компонента: фаќа грешки во UI и прикажува резервен приказ.
 "use client";
 
 import { AlertTriangle, RefreshCcw } from "lucide-react";

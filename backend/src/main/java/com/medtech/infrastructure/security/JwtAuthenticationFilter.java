@@ -21,6 +21,8 @@ import java.util.List;
 /**
  * Validates the {@code Authorization: Bearer <jwt>} header on every request
  * and populates the Spring Security context. Stateless; never touches sessions.
+ *
+ * Филтер: го чита и валидира JWT токенот од секое барање и поставува автентикација.
  */
 @Slf4j
 @RequiredArgsConstructor

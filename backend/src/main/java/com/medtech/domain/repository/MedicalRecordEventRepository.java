@@ -6,6 +6,9 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+/**
+ * Spring Data JPA репозиториум: пристап до настаните во медицинските картони.
+ */
 @Repository
 public interface MedicalRecordEventRepository extends JpaRepository<MedicalRecordEvent, Long> {
 

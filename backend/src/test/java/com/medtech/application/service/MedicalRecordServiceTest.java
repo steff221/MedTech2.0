@@ -38,6 +38,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
+/**
+ * Unit тестови за MedicalRecordService (медицински картони).
+ */
 @ExtendWith(MockitoExtension.class)
 class MedicalRecordServiceTest {
 

@@ -14,6 +14,9 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Spring Data JPA репозиториум: пристап до записите за корисници.
+ */
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 

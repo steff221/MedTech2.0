@@ -1,3 +1,4 @@
+// Страница (Next.js): рецепти — дел за пациент.
 "use client";
 
 import { motion } from "framer-motion";

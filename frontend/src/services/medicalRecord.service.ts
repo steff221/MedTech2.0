@@ -1,3 +1,4 @@
+// API сервис: повици за медицински картони.
 import { api } from "./api";
 import type {
   CreateMedicalRecordRequest,

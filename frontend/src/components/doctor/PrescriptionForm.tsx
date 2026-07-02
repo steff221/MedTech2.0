@@ -1,3 +1,4 @@
+// React компонента: форма за издавање рецепт.
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";

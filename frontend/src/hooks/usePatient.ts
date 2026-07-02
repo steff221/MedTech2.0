@@ -1,3 +1,4 @@
+// React hook: вчитување податоци за пациент.
 "use client";
 
 import { useQuery } from "@tanstack/react-query";

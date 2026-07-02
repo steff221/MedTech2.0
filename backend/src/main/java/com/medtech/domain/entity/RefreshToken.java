@@ -7,6 +7,9 @@ import lombok.Setter;
 
 import java.time.Instant;
 
+/**
+ * JPA ентитет: refresh токен за обновување на сесијата.
+ */
 @Entity
 @Table(name = "refresh_tokens")
 @Getter

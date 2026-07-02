@@ -7,6 +7,9 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 
+/**
+ * MapStruct мапер: пресликува помеѓу ентитетот Patient (пациент) и неговите DTO објекти.
+ */
 @Mapper(componentModel = "spring")
 public interface PatientMapper {
 

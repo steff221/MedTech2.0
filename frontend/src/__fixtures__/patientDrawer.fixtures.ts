@@ -1,3 +1,4 @@
+// Тест-фикстури: примероци податоци за PatientDetailDrawer.
 import type {
   MedicalRecordResponse,
   PatientResponse,

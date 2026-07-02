@@ -1,3 +1,4 @@
+// React компонента: потсетник за дополнување на профилот (пациент).
 "use client";
 
 import { motion } from "framer-motion";

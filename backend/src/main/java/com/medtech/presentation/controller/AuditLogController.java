@@ -21,6 +21,8 @@ import java.time.temporal.ChronoUnit;
 
 /**
  * Audit log access. ADMIN-only — compliance reporting surface.
+ *
+ * REST контролер: endpoints за прегледување на ревизорскиот лог.
  */
 @RestController
 @RequestMapping("/api/audit-logs")

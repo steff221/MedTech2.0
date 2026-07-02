@@ -1,3 +1,4 @@
+// React компонента: модал за закажување термин (доктор).
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";

@@ -14,6 +14,9 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * Spring Data JPA репозиториум: пристап до записите за термини (Appointment).
+ */
 @Repository
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
 

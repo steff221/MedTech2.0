@@ -1,3 +1,4 @@
+// Страница (Next.js): контролна табла — дел за администратор.
 "use client";
 
 import { motion } from "framer-motion";

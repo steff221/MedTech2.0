@@ -1,3 +1,4 @@
+// API сервис: повици за известувања.
 import { api } from "./api";
 import type { NotificationResponse } from "@/types/api";
 

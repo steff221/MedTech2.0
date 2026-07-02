@@ -1,3 +1,4 @@
+// API сервис: повици за пациенти.
 import { api } from "./api";
 import type {
   AppointmentResponse,

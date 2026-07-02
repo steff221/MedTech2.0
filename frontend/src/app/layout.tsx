@@ -1,3 +1,4 @@
+// Главен (root) layout на апликацијата — заеднички за сите страници.
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Providers } from "./providers";

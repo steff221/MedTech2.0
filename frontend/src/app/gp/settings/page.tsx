@@ -1,3 +1,4 @@
+// Страница (Next.js): поставки — дел за матичен лекар (GP).
 "use client";
 
 import { useState } from "react";

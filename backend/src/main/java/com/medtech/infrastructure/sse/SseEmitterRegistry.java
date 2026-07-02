@@ -10,6 +10,8 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * In-process store of active SSE connections keyed by userId.
  * One emitter per user — a new connection replaces the previous one.
+ *
+ * Регистар на отворени SSE врски — овозможува испраќање настани во реално време до клиентите.
  */
 @Slf4j
 @Component

@@ -18,6 +18,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * REST контролер: endpoints за оцените на докторите.
+ */
 @RestController
 @RequiredArgsConstructor
 @Tag(name = "Doctor Ratings", description = "Patient reviews for completed appointments")

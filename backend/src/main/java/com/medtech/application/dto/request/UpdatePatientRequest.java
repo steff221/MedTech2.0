@@ -8,6 +8,9 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 
 /** All fields nullable — only non-null values are applied. */
+/**
+ * Влезен DTO: барање за ажурирање на податоци на пациент.
+ */
 public record UpdatePatientRequest(
         @Past LocalDate dateOfBirth,
         Gender gender,

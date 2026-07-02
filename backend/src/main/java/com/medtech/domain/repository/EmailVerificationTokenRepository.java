@@ -10,6 +10,9 @@ import org.springframework.stereotype.Repository;
 import java.time.Instant;
 import java.util.Optional;
 
+/**
+ * Spring Data JPA репозиториум: пристап до токените за потврда на е-пошта.
+ */
 @Repository
 public interface EmailVerificationTokenRepository extends JpaRepository<EmailVerificationToken, Long> {
 

@@ -5,6 +5,9 @@ import org.springframework.data.domain.Page;
 
 import java.util.Map;
 
+/**
+ * Излезен DTO: сумарен преглед на оцените за доктор (просек и број).
+ */
 @Builder
 public record DoctorRatingSummaryResponse(
         Long doctorId,

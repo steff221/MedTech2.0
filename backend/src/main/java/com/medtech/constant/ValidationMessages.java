@@ -3,6 +3,8 @@ package com.medtech.constant;
 /**
  * Reusable validation message keys / strings.
  * Externalisation to a ResourceBundle is a Phase 6 concern.
+ *
+ * Константи: пораки за валидација (за @NotNull, @Size и сл.) на едно место.
  */
 public final class ValidationMessages {
 

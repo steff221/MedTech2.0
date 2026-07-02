@@ -27,6 +27,9 @@ import java.util.Map;
 
 import org.springframework.data.domain.Page;
 
+/**
+ * Сервис: бизнис-логика за оцените на докторите и пресметка на просек.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor

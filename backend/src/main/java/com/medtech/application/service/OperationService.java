@@ -20,6 +20,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Сервис: бизнис-логика за операциите — закажување и менување статус.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor

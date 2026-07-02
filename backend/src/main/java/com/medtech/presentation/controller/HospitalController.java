@@ -19,6 +19,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * REST контролер: endpoints за болниците.
+ */
 @RestController
 @RequestMapping("/api/hospitals")
 @RequiredArgsConstructor

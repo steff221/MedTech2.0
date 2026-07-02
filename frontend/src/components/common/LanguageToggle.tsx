@@ -1,3 +1,4 @@
+// React компонента: префрлување на јазикот на интерфејсот.
 "use client";
 
 import { useLanguageStore } from "@/store/language.store";

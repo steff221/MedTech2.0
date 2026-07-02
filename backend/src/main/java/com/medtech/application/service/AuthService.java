@@ -49,6 +49,9 @@ import java.util.Base64;
 import java.util.HexFormat;
 import java.util.Objects;
 
+/**
+ * Сервис: автентикација — регистрација, најава, освежување токени, ресет на лозинка.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor

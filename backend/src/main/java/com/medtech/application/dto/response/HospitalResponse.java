@@ -6,6 +6,9 @@ import lombok.Builder;
 
 import java.math.BigDecimal;
 
+/**
+ * Излезен DTO: податоци за болница што се враќаат кон клиентот.
+ */
 @Builder
 public record HospitalResponse(
         Long id,

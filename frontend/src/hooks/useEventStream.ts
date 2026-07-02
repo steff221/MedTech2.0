@@ -1,3 +1,4 @@
+// React hook: слуша SSE настани во реално време (известувања).
 "use client";
 
 import { useEffect } from "react";

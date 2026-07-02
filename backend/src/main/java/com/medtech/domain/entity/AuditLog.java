@@ -20,6 +20,8 @@ import java.time.Instant;
  * {@code fn_prescriptions_audit}).
  *
  * <p>Never updated; never deleted (regulatory requirement).
+ *
+ * JPA ентитет: непроменлив запис во ревизорскиот лог за секое значајно дејство.
  */
 @Entity
 @Table(name = "audit_logs")

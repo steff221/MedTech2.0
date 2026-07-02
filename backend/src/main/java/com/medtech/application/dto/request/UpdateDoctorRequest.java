@@ -5,6 +5,9 @@ import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 
+/**
+ * Влезен DTO: барање за ажурирање на податоци на доктор.
+ */
 public record UpdateDoctorRequest(
         @Size(max = 500) String qualification,
         @PositiveOrZero Integer experienceYears,

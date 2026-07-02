@@ -29,6 +29,8 @@ import java.util.stream.Collectors;
  * on the classpath instead of the database: no migration weight, no joins
  * needed (clinical entities store the code as a plain string), and search is
  * a sub-millisecond in-memory scan.
+ *
+ * Сервис: пристап и пребарување на МКБ-10 (ICD-10) каталогот на дијагнози.
  */
 @Slf4j
 @Service

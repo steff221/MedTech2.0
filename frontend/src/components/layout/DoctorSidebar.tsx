@@ -1,3 +1,4 @@
+// React компонента: страничен мени (sidebar) за докторот.
 "use client";
 
 import { motion } from "framer-motion";

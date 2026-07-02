@@ -37,6 +37,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * REST контролер: endpoints за термини — закажување, презакажување, откажување.
+ */
 @RestController
 @RequestMapping("/api/appointments")
 @RequiredArgsConstructor

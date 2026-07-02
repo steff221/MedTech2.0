@@ -3,6 +3,9 @@ package com.medtech.infrastructure.exception;
 import com.medtech.constant.ErrorCode;
 import org.springframework.http.HttpStatus;
 
+/**
+ * Исклучок: фрлен кога бараниот ресурс не е најден (404).
+ */
 public class ResourceNotFoundException extends AppException {
 
     public ResourceNotFoundException(String message) {

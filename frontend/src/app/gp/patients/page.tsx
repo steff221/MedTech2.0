@@ -1,3 +1,4 @@
+// Страница (Next.js): пациенти — дел за матичен лекар (GP).
 "use client";
 
 import { Skeleton } from "@/components/common/Skeleton";

@@ -1,3 +1,4 @@
+// API сервис: повици за оцените на докторите.
 import { api } from "./api";
 import type {
   CreateRatingRequest,

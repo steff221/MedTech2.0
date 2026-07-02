@@ -1,3 +1,4 @@
+// React компонента: страничен мени за матичниот лекар.
 "use client";
 
 import { motion } from "framer-motion";

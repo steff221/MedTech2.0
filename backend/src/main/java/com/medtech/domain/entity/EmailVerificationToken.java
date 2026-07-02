@@ -7,6 +7,9 @@ import lombok.Setter;
 
 import java.time.Instant;
 
+/**
+ * JPA ентитет: токен за потврда на е-пошта при регистрација.
+ */
 @Entity
 @Table(name = "email_verification_tokens")
 @Getter

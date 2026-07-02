@@ -1,3 +1,4 @@
+// Страница (Next.js): заборавена лозинка — дел за автентикација.
 "use client";
 
 import { CheckCircle2 } from "lucide-react";

@@ -6,6 +6,9 @@ import lombok.Builder;
 
 import java.time.LocalDate;
 
+/**
+ * Излезен DTO: податоци за пациент што се враќаат кон клиентот.
+ */
 @Builder
 public record PatientResponse(
         Long id,

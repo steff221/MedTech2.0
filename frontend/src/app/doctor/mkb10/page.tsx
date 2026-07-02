@@ -1,3 +1,4 @@
+// Страница (Next.js): МКБ-10 каталог — дел за доктор.
 "use client";
 
 import { Mkb10Browser } from "@/components/doctor/Mkb10Browser";

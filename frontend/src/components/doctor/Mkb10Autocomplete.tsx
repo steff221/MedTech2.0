@@ -1,3 +1,4 @@
+// React компонента: автоматско пополнување на МКБ-10 кодови.
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";

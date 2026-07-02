@@ -10,6 +10,9 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+/**
+ * Spring Data JPA репозиториум: пристап до записите за болници.
+ */
 @Repository
 public interface HospitalRepository extends JpaRepository<Hospital, Long> {
 

@@ -1,3 +1,4 @@
+// API сервис: административни повици (корисници, болници, персонал).
 import { api } from "./api";
 import type { AuditLogResponse, NotificationResponse, Page, UserResponse } from "@/types/api";
 

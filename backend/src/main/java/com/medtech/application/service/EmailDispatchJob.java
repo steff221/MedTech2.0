@@ -14,6 +14,8 @@ import java.util.List;
  * Polls the email_outbox table every 30 seconds and delivers PENDING messages.
  * Each message is dispatched in its own transaction via {@link EmailDispatcher}
  * so one SMTP failure does not roll back successfully sent siblings.
+ *
+ * Закажана задача (job): ги испраќа е-пораките натрупани во outbox табелата.
  */
 @Slf4j
 @Component

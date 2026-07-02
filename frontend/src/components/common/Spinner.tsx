@@ -1,3 +1,4 @@
+// React компонента: индикатор за вчитување (spinner).
 "use client";
 
 import { Loader2 } from "lucide-react";

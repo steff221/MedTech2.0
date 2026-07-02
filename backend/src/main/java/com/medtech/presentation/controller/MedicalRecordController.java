@@ -31,6 +31,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * REST контролер: endpoints за медицинските картони и нивната историја.
+ */
 @RestController
 @RequestMapping("/api/medical-records")
 @RequiredArgsConstructor

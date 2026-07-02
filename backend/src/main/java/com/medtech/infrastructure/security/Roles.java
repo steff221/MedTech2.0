@@ -4,6 +4,8 @@ package com.medtech.infrastructure.security;
  * Central source of truth for Spring Security role expression strings.
  * Use these constants in @PreAuthorize to avoid typos and make future
  * role additions a single-file change.
+ *
+ * Константи: имиња на улогите/овластувањата што се користат во безбедносните правила.
  */
 public final class Roles {
 

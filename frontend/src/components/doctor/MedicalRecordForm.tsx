@@ -1,3 +1,4 @@
+// React компонента: форма за медицински картон.
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";

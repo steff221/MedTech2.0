@@ -1,3 +1,4 @@
+// API сервис: повици за автентикација (најава, регистрација, токени).
 import { api } from "./api";
 import type { AuthResponse, LoginRequest, RegisterRequest } from "@/types/api";
 

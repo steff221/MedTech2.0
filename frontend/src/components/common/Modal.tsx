@@ -1,3 +1,4 @@
+// React компонента: модален дијалог (modal).
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";

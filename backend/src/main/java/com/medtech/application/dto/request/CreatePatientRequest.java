@@ -8,6 +8,9 @@ import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
 
+/**
+ * Влезен DTO: барање за креирање нов пациент.
+ */
 public record CreatePatientRequest(
         @NotNull @Past LocalDate dateOfBirth,
         Gender gender,

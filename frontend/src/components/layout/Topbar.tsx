@@ -1,3 +1,4 @@
+// React компонента: горна лента (topbar) на апликацијата.
 "use client";
 
 import Link from "next/link";

@@ -9,6 +9,9 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+/**
+ * Влезен DTO: барање за закажување нов термин кај доктор.
+ */
 public record BookAppointmentRequest(
         @NotNull Long doctorId,
         @NotNull Long patientId,

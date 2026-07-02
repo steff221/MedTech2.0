@@ -4,6 +4,9 @@ import com.medtech.domain.entity.Notification;
 
 import java.time.Instant;
 
+/**
+ * Излезен DTO: известување наменето за корисникот.
+ */
 public record NotificationResponse(
         Long id,
         String type,

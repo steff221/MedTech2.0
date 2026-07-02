@@ -43,6 +43,9 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
+/**
+ * Unit тестови за AppointmentService (логика за термини).
+ */
 @ExtendWith(MockitoExtension.class)
 class AppointmentServiceTest {
 

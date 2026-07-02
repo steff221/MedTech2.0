@@ -43,6 +43,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST контролер: endpoints за пациентите (вкл. GDPR извоз на податоци).
+ */
 @RestController
 @RequestMapping("/api/patients")
 @RequiredArgsConstructor

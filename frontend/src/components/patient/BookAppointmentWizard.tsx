@@ -1,3 +1,4 @@
+// React компонента: чекор-по-чекор закажување термин (пациент).
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";

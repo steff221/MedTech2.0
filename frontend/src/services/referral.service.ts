@@ -1,3 +1,4 @@
+// API сервис: повици за упати.
 import { api } from "./api";
 import type {
   CompleteReferralRequest,

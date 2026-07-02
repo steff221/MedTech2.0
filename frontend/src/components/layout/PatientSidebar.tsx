@@ -1,3 +1,4 @@
+// React компонента: страничен мени за пациентот.
 "use client";
 
 import { motion } from "framer-motion";

@@ -1,3 +1,4 @@
+// React компонента: горна навигација за докторот.
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";

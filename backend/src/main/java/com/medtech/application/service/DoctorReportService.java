@@ -24,6 +24,9 @@ import java.time.Year;
 import java.time.format.TextStyle;
 import java.util.Locale;
 
+/**
+ * Сервис: генерирање извештаи за работата на докторите по период.
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)

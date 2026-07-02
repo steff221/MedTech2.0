@@ -1,3 +1,4 @@
+// Тестови за report.service (извештаи).
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { reportService } from "@/services/report.service";
 import { api } from "@/services/api";

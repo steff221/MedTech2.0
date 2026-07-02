@@ -18,6 +18,8 @@ import java.time.Instant;
  * Sends a single outbox entry via SMTP in its own transaction.
  * Keeping this in a separate bean (not EmailDispatchJob) ensures
  * Spring's AOP proxy wraps the @Transactional correctly.
+ *
+ * Сервис: ги става е-пораките во outbox (отпорно испраќање) за подоцнежна испорака.
  */
 @Slf4j
 @Service

@@ -10,6 +10,9 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Конфигурација на OpenAPI/Swagger документацијата за API-то.
+ */
 @Configuration
 public class OpenApiConfig {
 

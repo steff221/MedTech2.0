@@ -16,6 +16,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * REST контролер: административни endpoints (управување со корисници, болници, персонал).
+ */
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor

@@ -24,6 +24,8 @@ import java.util.List;
  *       login attempts in the last 15 minutes.</li>
  * </ol>
  * Detected anomalies generate an ANOMALY notification sent to every ADMIN user.
+ *
+ * Закажана задача (job): детектира сомнителни/аномални пристапи во ревизорскиот лог.
  */
 @Slf4j
 @Component

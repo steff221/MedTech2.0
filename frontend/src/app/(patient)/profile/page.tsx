@@ -1,3 +1,4 @@
+// Страница (Next.js): профил — дел за пациент.
 "use client";
 
 import { useState } from "react";

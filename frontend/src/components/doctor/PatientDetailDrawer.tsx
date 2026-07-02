@@ -1,3 +1,4 @@
+// React компонента: страничен панел со детали за пациент.
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";

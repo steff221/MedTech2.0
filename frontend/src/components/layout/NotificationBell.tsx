@@ -1,3 +1,4 @@
+// React компонента: ѕвонче со известувања.
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";

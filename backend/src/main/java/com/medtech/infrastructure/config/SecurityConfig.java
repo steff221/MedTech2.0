@@ -25,6 +25,8 @@ import org.springframework.web.cors.CorsConfigurationSource;
 /**
  * Central Spring Security configuration. Stateless JWT model; method-level
  * security enabled via {@link org.springframework.security.access.prepost.PreAuthorize}.
+ *
+ * Главна Spring Security конфигурација — филтри, правила за пристап и JWT.
  */
 @Configuration
 @EnableMethodSecurity(prePostEnabled = true, securedEnabled = true)

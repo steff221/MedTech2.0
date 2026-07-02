@@ -9,6 +9,9 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.Objects;
 
+/**
+ * Конфигурација на кеширањето (cache) во апликацијата.
+ */
 @Configuration
 @EnableCaching
 public class CacheConfig {

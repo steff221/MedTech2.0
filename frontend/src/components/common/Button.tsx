@@ -1,3 +1,4 @@
+// React компонента: копче (button) за повеќекратна употреба.
 "use client";
 
 import { motion, type HTMLMotionProps } from "framer-motion";

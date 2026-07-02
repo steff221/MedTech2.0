@@ -1,3 +1,4 @@
+// React компонента: неделен календар со термини.
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";

@@ -5,6 +5,9 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
+/**
+ * Влезен DTO: барање за генерирање извештај за доктор за даден период.
+ */
 public record GenerateReportRequest(
         @NotNull ReportPeriodType periodType,
         @NotNull @Min(2000) @Max(2100) Integer year,

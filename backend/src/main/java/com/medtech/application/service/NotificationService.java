@@ -16,6 +16,9 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import java.util.Map;
 
+/**
+ * Сервис: креирање и испорака на известувања до корисниците (вкл. во реално време).
+ */
 @Service
 @RequiredArgsConstructor
 public class NotificationService {

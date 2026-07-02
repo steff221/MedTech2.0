@@ -1,3 +1,4 @@
+// React компонента: картичка (card) — контејнер за содржина.
 "use client";
 
 import { motion, type HTMLMotionProps } from "framer-motion";

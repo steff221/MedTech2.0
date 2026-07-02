@@ -1,3 +1,4 @@
+// Страница (Next.js): операции — дел за доктор.
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";

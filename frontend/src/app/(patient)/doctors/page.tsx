@@ -1,3 +1,4 @@
+// Страница (Next.js): доктори — дел за пациент.
 "use client";
 
 import { motion } from "framer-motion";

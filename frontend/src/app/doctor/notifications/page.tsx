@@ -1,3 +1,4 @@
+// Страница (Next.js): известувања — дел за доктор.
 "use client";
 
 import { Bell, CheckCheck } from "lucide-react";

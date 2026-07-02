@@ -1,3 +1,4 @@
+// React компонента: содржина на почетната (landing) страница.
 "use client";
 
 import { motion } from "framer-motion";

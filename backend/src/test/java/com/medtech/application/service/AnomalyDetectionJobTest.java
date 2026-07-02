@@ -21,6 +21,9 @@ import static com.medtech.application.service.AnomalyDetectionJob.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * Unit тестови за AnomalyDetectionJob (детекција на аномални пристапи).
+ */
 @ExtendWith(MockitoExtension.class)
 class AnomalyDetectionJobTest {
 

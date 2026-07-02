@@ -1,3 +1,4 @@
+// Помошни податоци/функции за медицински процедури.
 // Common medical procedures (kept in one place so the map filter, the
 // doctor card, and any future doctor-profile form stay in sync).
 export const PROCEDURES = [

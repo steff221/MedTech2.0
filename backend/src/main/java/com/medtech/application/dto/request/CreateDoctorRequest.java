@@ -7,6 +7,9 @@ import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 
+/**
+ * Влезен DTO: барање за креирање нов доктор.
+ */
 public record CreateDoctorRequest(
         @NotNull Long hospitalId,
         @NotBlank @Size(max = 100) String licenseNumber,

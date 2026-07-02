@@ -20,6 +20,8 @@ import static com.medtech.infrastructure.config.CacheConfig.HOSPITALS_LIST;
 /**
  * Read-mostly directory of healthcare facilities. Cached because the data
  * changes rarely but is fetched on nearly every doctor / appointment view.
+ *
+ * Сервис: бизнис-логика за болниците — креирање, ажурирање и пребарување.
  */
 @Service
 @RequiredArgsConstructor

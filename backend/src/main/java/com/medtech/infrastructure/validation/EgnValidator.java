@@ -6,6 +6,8 @@ import jakarta.validation.ConstraintValidatorContext;
 /**
  * Validates Macedonian EGN/EMBG: exactly 13 digits, null/blank accepted
  * (use @NotBlank separately if the field is required).
+ *
+ * Валидатор: проверува дали матичниот број (ЕГН) е валиден.
  */
 public class EgnValidator implements ConstraintValidator<ValidEgn, String> {
 

@@ -1,3 +1,4 @@
+// Глобален state (store): избран јазик на интерфејсот.
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { Lang } from "@/i18n/translations";

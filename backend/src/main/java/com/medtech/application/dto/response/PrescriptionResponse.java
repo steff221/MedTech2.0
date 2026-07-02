@@ -7,6 +7,9 @@ import lombok.Builder;
 import java.time.Instant;
 import java.time.LocalDate;
 
+/**
+ * Излезен DTO: податоци за рецепт што се враќаат кон клиентот.
+ */
 @Builder
 public record PrescriptionResponse(
         Long id,

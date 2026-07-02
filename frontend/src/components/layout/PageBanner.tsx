@@ -1,3 +1,4 @@
+// React компонента: банер/наслов на врвот на страницата.
 "use client";
 
 import { motion } from "framer-motion";

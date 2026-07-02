@@ -8,6 +8,8 @@ import java.util.List;
  * right of access / data portability (Art. 15 & 20). Clinical records are
  * exempt from the right to erasure (Art. 17(3)(b) — legal retention), so
  * export is the supported subject-access mechanism.
+ *
+ * Излезен DTO: целосен извоз на податоците на пациент (GDPR преземање).
  */
 public record PatientDataExportResponse(
         Instant generatedAt,

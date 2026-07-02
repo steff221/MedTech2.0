@@ -10,6 +10,9 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 /** Self-registration payload. */
+/**
+ * Влезен DTO: барање за регистрација на нов корисник.
+ */
 public record RegisterRequest(
         @NotBlank(message = ValidationMessages.EMAIL_REQUIRED)
         @Email(message = ValidationMessages.EMAIL_FORMAT)

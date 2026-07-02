@@ -1,3 +1,4 @@
+// Страница (Next.js): поставки — дел за доктор.
 "use client";
 
 import { useState } from "react";

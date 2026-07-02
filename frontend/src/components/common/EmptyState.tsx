@@ -1,3 +1,4 @@
+// React компонента: приказ кога нема податоци (празна состојба).
 "use client";
 
 import { motion } from "framer-motion";

@@ -1,6 +1,7 @@
 package com.medtech.domain.entity;
 
 import com.medtech.domain.vo.Gender;
+import com.medtech.infrastructure.security.crypto.PhiStringConverter;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,6 +17,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.Instant;
 import java.time.LocalDate;
 
+/**
+ * JPA ентитет: пациент со лични и медицински податоци.
+ */
 @Entity
 @Table(name = "patients")
 @Getter
@@ -49,9 +53,11 @@ public class Patient {
     @Column(name = "blood_type", columnDefinition = "blood_type_enum")
     private String bloodType;
 
+    @Convert(converter = PhiStringConverter.class)
     @Column(columnDefinition = "text")
     private String allergies;
 
+    @Convert(converter = PhiStringConverter.class)
     @Column(name = "chronic_conditions", columnDefinition = "text")
     private String chronicConditions;
 

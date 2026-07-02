@@ -1,3 +1,4 @@
+// React компонента: мапа со болници.
 "use client";
 
 import { Icon } from "leaflet";

@@ -16,6 +16,8 @@ import org.springframework.stereotype.Component;
  * <p>Call this after the {@link PatientAccessGuard} check passes, so denied
  * attempts surface as {@code AuthorizationException}s and successful reads are
  * logged here.
+ *
+ * Запишува во ревизорскиот лог секое гледање на чувствителни здравствени податоци (PHI).
  */
 @Component
 @RequiredArgsConstructor

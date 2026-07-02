@@ -1,3 +1,4 @@
+// React компонента: значка (badge) за статус/ознака.
 "use client";
 
 import { motion } from "framer-motion";

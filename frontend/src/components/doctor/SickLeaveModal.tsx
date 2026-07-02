@@ -1,3 +1,4 @@
+// React компонента: модал за издавање боледување.
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";

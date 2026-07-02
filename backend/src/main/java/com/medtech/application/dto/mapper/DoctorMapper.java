@@ -5,6 +5,9 @@ import com.medtech.domain.entity.Doctor;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+/**
+ * MapStruct мапер: пресликува помеѓу ентитетот Doctor (доктор) и неговите DTO објекти.
+ */
 @Mapper(componentModel = "spring")
 public interface DoctorMapper {
 

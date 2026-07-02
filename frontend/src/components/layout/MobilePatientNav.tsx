@@ -1,3 +1,4 @@
+// React компонента: мобилна навигација за пациентот.
 "use client";
 
 import { Bell, Calendar, LayoutDashboard, Stethoscope, User } from "lucide-react";

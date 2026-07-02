@@ -8,6 +8,9 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+/**
+ * Spring Data JPA репозиториум: пристап до outbox редот на е-пораки.
+ */
 @Repository
 public interface EmailOutboxRepository extends JpaRepository<EmailOutbox, Long> {
 

@@ -13,6 +13,8 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
  * <p>Spring Boot 3 REST API backend for hospital management. Layered DDD-style
  * architecture (domain / application / infrastructure / presentation) with
  * PostgreSQL persistence, JWT authentication, and full audit trails.
+ *
+ * Влезна точка на Spring Boot апликацијата — го стартува целиот backend (MedTech).
  */
 @SpringBootApplication
 @ConfigurationPropertiesScan("com.medtech")

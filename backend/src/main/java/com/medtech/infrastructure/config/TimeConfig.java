@@ -8,6 +8,8 @@ import java.time.Clock;
 /**
  * Single source of truth for "current time" so services are deterministically
  * testable (inject {@link Clock#fixed} in tests).
+ *
+ * Конфигурација на часовникот (Clock) — овозможува тестабилно мерење време.
  */
 @Configuration
 public class TimeConfig {

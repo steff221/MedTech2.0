@@ -10,6 +10,9 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Spring Data JPA репозиториум: пристап до оцените на докторите.
+ */
 public interface DoctorRatingRepository extends JpaRepository<DoctorRating, Long> {
 
     boolean existsByAppointmentId(Long appointmentId);

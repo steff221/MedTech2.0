@@ -9,6 +9,9 @@ import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
 
+/**
+ * Влезен DTO: барање за закажување операција.
+ */
 public record ScheduleOperationRequest(
         @NotNull Long patientId,
         @NotNull Long hospitalId,

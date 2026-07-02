@@ -6,6 +6,9 @@ import lombok.Builder;
 
 import java.time.Instant;
 
+/**
+ * Излезен DTO: запис од ревизорскиот лог што се враќа кон клиентот.
+ */
 @Builder
 public record AuditLogResponse(
         Long id,

@@ -9,6 +9,8 @@ import java.math.BigDecimal;
  * Persisted in {@code medical_records.vital_signs} as {@code JSONB}.
  *
  * <p>All fields nullable to represent partial recordings.
+ *
+ * Value object: виталните знаци на пациент (крвен притисок, пулс, температура...).
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record VitalSigns(

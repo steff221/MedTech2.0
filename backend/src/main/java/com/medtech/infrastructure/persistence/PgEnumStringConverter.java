@@ -14,6 +14,8 @@ import jakarta.persistence.Converter;
  * and Hibernate's {@code StringJavaType} cannot wrap that. Routing both
  * directions through this converter keeps the value a String end-to-end —
  * pgJDBC's implicit {@code varchar → enum} cast handles writes.
+ *
+ * JPA конвертор: мапира PostgreSQL enum типови во String и обратно.
  */
 @Converter
 public class PgEnumStringConverter implements AttributeConverter<String, String> {

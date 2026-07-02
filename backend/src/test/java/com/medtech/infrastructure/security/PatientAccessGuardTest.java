@@ -33,6 +33,9 @@ import static org.mockito.Mockito.when;
  * <p>{@link SecurityUtils} is a static-method facade over the Spring Security context;
  * we stub it with {@code mockStatic} rather than wiring a real {@code SecurityContext}.
  */
+/**
+ * Unit тестови за PatientAccessGuard (контрола на пристап до пациент).
+ */
 @ExtendWith(MockitoExtension.class)
 class PatientAccessGuardTest {
 

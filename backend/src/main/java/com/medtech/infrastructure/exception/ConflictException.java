@@ -3,6 +3,9 @@ package com.medtech.infrastructure.exception;
 import com.medtech.constant.ErrorCode;
 import org.springframework.http.HttpStatus;
 
+/**
+ * Исклучок: фрлен при конфликт (на пр. дупликат запис) (409).
+ */
 public class ConflictException extends AppException {
 
     public ConflictException(String message) {

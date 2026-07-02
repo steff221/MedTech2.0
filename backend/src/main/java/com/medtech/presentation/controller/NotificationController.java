@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+/**
+ * REST контролер: endpoints за известувањата на корисникот.
+ */
 @RestController
 @RequestMapping("/api/notifications")
 @RequiredArgsConstructor

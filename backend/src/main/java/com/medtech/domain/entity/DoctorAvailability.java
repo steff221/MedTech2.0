@@ -7,6 +7,9 @@ import lombok.Setter;
 
 import java.time.LocalTime;
 
+/**
+ * JPA ентитет: слободен термин (достапност) дефиниран од доктор.
+ */
 @Entity
 @Table(name = "doctor_availability")
 @Getter

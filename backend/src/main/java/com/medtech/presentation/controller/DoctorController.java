@@ -23,6 +23,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * REST контролер: endpoints за доктори — креирање, ажурирање, пребарување.
+ */
 @RestController
 @RequestMapping("/api/doctors")
 @RequiredArgsConstructor

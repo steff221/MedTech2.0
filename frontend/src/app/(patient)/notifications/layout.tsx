@@ -1,3 +1,4 @@
+// Layout (Next.js): известувања — дел за пациент.
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

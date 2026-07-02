@@ -1,3 +1,4 @@
+// React компонента: поле за внес (input).
 "use client";
 
 import { forwardRef, useId, useState, type InputHTMLAttributes } from "react";

@@ -8,6 +8,8 @@ import org.springframework.validation.annotation.Validated;
 
 /**
  * Strongly-typed binding for {@code medtech.security.jwt.*} properties.
+ *
+ * Конфигурациски својства за JWT (таен клуч, рок на важност на токените).
  */
 @Validated
 @ConfigurationProperties(prefix = "medtech.security.jwt")

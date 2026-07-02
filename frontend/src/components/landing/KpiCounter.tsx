@@ -1,3 +1,4 @@
+// React компонента: анимиран бројач (KPI) на почетната страница.
 "use client";
 
 import { useEffect, useRef, useState } from "react";

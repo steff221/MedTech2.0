@@ -9,6 +9,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Кастомна валидациска анотација: означува дека полето мора да биде валиден ЕГН.
+ */
 @Documented
 @Constraint(validatedBy = EgnValidator.class)
 @Target({ElementType.FIELD, ElementType.PARAMETER})

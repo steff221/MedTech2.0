@@ -1,3 +1,4 @@
+// API сервис: повици за извештаите на докторите.
 import { api } from "./api";
 import type { DoctorReportResponse, Page } from "@/types/api";
 

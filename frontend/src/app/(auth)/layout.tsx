@@ -1,3 +1,4 @@
+// Layout (Next.js): почетен дел за автентикација.
 "use client";
 
 import { motion } from "framer-motion";

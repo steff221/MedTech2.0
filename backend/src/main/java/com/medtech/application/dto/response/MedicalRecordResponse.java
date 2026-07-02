@@ -5,6 +5,9 @@ import lombok.Builder;
 import java.math.BigDecimal;
 import java.time.Instant;
 
+/**
+ * Излезен DTO: податоци за медицински картон што се враќаат кон клиентот.
+ */
 @Builder
 public record MedicalRecordResponse(
         Long id,

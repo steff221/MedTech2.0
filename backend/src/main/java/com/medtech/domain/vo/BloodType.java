@@ -16,6 +16,8 @@ import java.util.Optional;
  *
  * <p>JSON serialization uses the short API name ({@code O_POS}, {@code A_NEG}, …)
  * to match the TypeScript {@code BloodType} union type on the frontend.
+ *
+ * Енумерација: крвни групи (A, B, AB, 0 со Rh фактор).
  */
 public enum BloodType {
     O_POSITIVE ("O+",  "O_POS"),

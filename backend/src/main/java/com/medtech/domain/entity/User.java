@@ -18,6 +18,8 @@ import java.time.Instant;
 /**
  * Aggregate root for authentication and identity.
  * Backed by {@code users} table; PK is generated as a PG IDENTITY column.
+ *
+ * JPA ентитет: корисник на системот со улога и податоци за најава.
  */
 @Entity
 @Table(name = "users")

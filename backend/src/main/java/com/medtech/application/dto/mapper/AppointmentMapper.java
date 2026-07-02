@@ -8,6 +8,9 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 
+/**
+ * MapStruct мапер: пресликува помеѓу ентитетот Appointment (термин) и неговите DTO објекти.
+ */
 @Mapper(componentModel = "spring")
 public interface AppointmentMapper {
 

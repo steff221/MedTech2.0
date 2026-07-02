@@ -1,5 +1,6 @@
 package com.medtech.domain.entity;
 
+import com.medtech.infrastructure.security.crypto.PhiStringConverter;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,6 +15,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.math.BigDecimal;
 import java.time.Instant;
 
+/**
+ * JPA ентитет: медицински картон на пациент.
+ */
 @Entity
 @Table(name = "medical_records")
 @Getter
@@ -43,12 +47,14 @@ public class MedicalRecord {
     @JoinColumn(name = "appointment_id")
     private Appointment appointment;
 
-    @Column(length = 500)
+    @Convert(converter = PhiStringConverter.class)
+    @Column(columnDefinition = "text")
     private String diagnosis;
 
     @Column(name = "mkb10_code", length = 20)
     private String mkb10Code;
 
+    @Convert(converter = PhiStringConverter.class)
     @Column(name = "clinical_notes", nullable = false, columnDefinition = "text")
     private String clinicalNotes;
 
@@ -75,9 +81,11 @@ public class MedicalRecord {
     @Column(precision = 5, scale = 2)
     private BigDecimal bmi;
 
+    @Convert(converter = PhiStringConverter.class)
     @Column(columnDefinition = "text")
     private String assessment;
 
+    @Convert(converter = PhiStringConverter.class)
     @Column(name = "plan", columnDefinition = "text")
     private String plan;
 

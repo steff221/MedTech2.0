@@ -17,9 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.LinkedHashSet;
 import java.util.List;
 
+
 /**
- * Read-only catalog of the complete WHO ICD-10 2019 release (MKB-10).
- * Authenticated reference data for the doctor/surgeon portals — no PHI here.
+ * REST контролер: endpoints за пребарување на МКБ-10 (ICD-10) каталогот.
  */
 @RestController
 @RequestMapping("/api/icd10")
@@ -28,8 +28,8 @@ import java.util.List;
 @Tag(name = "ICD-10 catalog", description = "WHO ICD-10 2019 (MKB-10) diagnosis code catalog")
 public class Icd10Controller {
 
-    private final Icd10CatalogService catalog;
 
+        private final Icd10CatalogService catalog;
     @GetMapping("/search")
     @Operation(summary = "Search diagnosis codes by code prefix or title text")
     public ResponseEntity<List<Icd10CodeResponse>> search(

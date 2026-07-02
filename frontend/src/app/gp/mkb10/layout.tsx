@@ -1,3 +1,4 @@
+// Layout (Next.js): МКБ-10 каталог — дел за матичен лекар (GP).
 import type { Metadata } from "next";
 export const metadata: Metadata = { title: "MedTech GP" };
 export default function Layout({ children }: { children: React.ReactNode }) {

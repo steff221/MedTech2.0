@@ -16,6 +16,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.Instant;
 import java.time.LocalDate;
 
+/**
+ * JPA ентитет: упат на пациент кон друг доктор/специјалист.
+ */
 @Entity
 @Table(name = "referrals")
 @Getter

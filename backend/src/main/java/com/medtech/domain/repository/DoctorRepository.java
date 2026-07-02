@@ -11,6 +11,9 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+/**
+ * Spring Data JPA репозиториум: пристап до записите за доктори.
+ */
 @Repository
 public interface DoctorRepository extends JpaRepository<Doctor, Long> {
 

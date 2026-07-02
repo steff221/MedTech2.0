@@ -1,3 +1,4 @@
+// Страница (Next.js): упатства — дел за матичен лекар (GP).
 "use client";
 
 import { motion } from "framer-motion";

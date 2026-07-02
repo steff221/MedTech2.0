@@ -1,3 +1,4 @@
+// API сервис: повици за збирни статистики.
 import { api } from "./api";
 import type { StatsOverviewResponse } from "@/types/api";
 

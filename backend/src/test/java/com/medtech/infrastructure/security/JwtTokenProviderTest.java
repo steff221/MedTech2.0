@@ -11,6 +11,9 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Unit тестови за JwtTokenProvider (генерирање и валидација на JWT).
+ */
 class JwtTokenProviderTest {
 
     private JwtTokenProvider provider;

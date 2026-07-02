@@ -1,3 +1,4 @@
+// API сервис: повици за рецепти.
 import { api } from "./api";
 import type {
   IssuePrescriptionRequest,

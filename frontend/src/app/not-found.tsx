@@ -1,3 +1,4 @@
+// Страница за грешка 404 (страницата не е најдена).
 "use client";
 
 import { motion } from "framer-motion";

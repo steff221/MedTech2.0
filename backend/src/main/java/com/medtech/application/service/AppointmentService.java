@@ -46,6 +46,8 @@ import java.util.Objects;
  *   <li>Status transitions out of {@link AppointmentStatus#isTerminal() terminal}
  *       states are rejected.</li>
  * </ul>
+ *
+ * Сервис: бизнис-логика за термини — закажување, презакажување, откажување и потврдување.
  */
 @Slf4j
 @Service

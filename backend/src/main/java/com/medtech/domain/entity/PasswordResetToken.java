@@ -7,6 +7,9 @@ import lombok.Setter;
 
 import java.time.Instant;
 
+/**
+ * JPA ентитет: токен за ресетирање лозинка.
+ */
 @Entity
 @Table(name = "password_reset_tokens")
 @Getter

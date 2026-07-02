@@ -12,6 +12,9 @@ import org.springframework.stereotype.Repository;
 import java.time.Instant;
 import java.util.List;
 
+/**
+ * Spring Data JPA репозиториум: пристап до записите од ревизорскиот лог.
+ */
 @Repository
 public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
 

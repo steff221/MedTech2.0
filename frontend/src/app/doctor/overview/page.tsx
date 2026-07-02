@@ -1,3 +1,4 @@
+// Страница (Next.js): преглед — дел за доктор.
 "use client";
 
 import { motion } from "framer-motion";

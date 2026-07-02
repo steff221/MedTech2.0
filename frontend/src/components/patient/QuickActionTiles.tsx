@@ -1,3 +1,4 @@
+// React компонента: брзи дејства (плочки) на контролната табла.
 "use client";
 
 import { motion } from "framer-motion";

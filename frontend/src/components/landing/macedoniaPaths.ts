@@ -1,3 +1,4 @@
+// Податоци: SVG патеки за мапата на Македонија.
 /**
  * Municipal boundary paths for North Macedonia, sourced from a MapSVG export.
  *

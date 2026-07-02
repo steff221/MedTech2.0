@@ -22,6 +22,9 @@ import java.lang.annotation.Target;
     regexp = "^(\\+?[0-9][\\s\\-]?){7,15}$",
     message = "Invalid phone number format"
 )
+/**
+ * Кастомна валидациска анотација: означува дека полето мора да биде валиден телефонски број.
+ */
 public @interface ValidPhone {
     String message() default "Invalid phone number format";
     Class<?>[] groups() default {};

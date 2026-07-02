@@ -33,6 +33,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
+/**
+ * Unit тестови за ReferralService (упати).
+ */
 @ExtendWith(MockitoExtension.class)
 class ReferralServiceTest {
 

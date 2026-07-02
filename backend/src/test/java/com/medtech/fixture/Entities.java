@@ -26,6 +26,9 @@ import java.time.LocalTime;
  * tests inject them via reflection because {@code @GeneratedValue} obviously
  * doesn't fire when we never round-trip through a real {@code EntityManager}.
  */
+/**
+ * Тест-помошник: фабрика што гради примероци ентитети за потребите на тестовите.
+ */
 public final class Entities {
 
     private Entities() {}

@@ -7,6 +7,9 @@ import org.junit.jupiter.api.Test;
  * A full {@code @SpringBootTest} context load requires a running PostgreSQL
  * and is intentionally deferred to integration-test profile in Phase 4.
  */
+/**
+ * Smoke тест: проверува дека Spring контекстот се подига без грешки.
+ */
 class MedtechApplicationSmokeTest {
 
     @Test

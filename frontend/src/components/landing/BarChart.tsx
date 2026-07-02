@@ -1,3 +1,4 @@
+// React компонента: столбест графикон на почетната страница.
 "use client";
 
 import { motion } from "framer-motion";

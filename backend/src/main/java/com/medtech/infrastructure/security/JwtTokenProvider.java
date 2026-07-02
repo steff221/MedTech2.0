@@ -27,6 +27,8 @@ import java.util.UUID;
  *   <li>{@code access}  — short-lived, sent in {@code Authorization: Bearer}</li>
  *   <li>{@code refresh} — long-lived, used at {@code /api/auth/refresh}</li>
  * </ul>
+ *
+ * Генерира и валидира JWT (access/refresh) токени.
  */
 @Slf4j
 @Component

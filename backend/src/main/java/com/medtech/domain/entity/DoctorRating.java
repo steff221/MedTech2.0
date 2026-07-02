@@ -9,6 +9,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
 
+/**
+ * JPA ентитет: оцена дадена од пациент за доктор.
+ */
 @Entity
 @Table(name = "doctor_ratings")
 @Getter

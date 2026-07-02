@@ -1,3 +1,4 @@
+// React компонента: регистрира service worker (PWA/офлајн).
 "use client";
 
 import { useEffect } from "react";

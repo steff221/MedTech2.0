@@ -1,3 +1,4 @@
+// React компонента: форма за нов упат.
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";

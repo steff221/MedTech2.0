@@ -1,3 +1,4 @@
+// Страница (Next.js): почетен дел за доктор.
 "use client";
 
 import { motion } from "framer-motion";

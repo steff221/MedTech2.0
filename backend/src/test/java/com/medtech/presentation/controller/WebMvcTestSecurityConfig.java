@@ -13,6 +13,9 @@ import org.springframework.context.annotation.Import;
  * {@code @PreAuthorize} fires) and supply mocked {@code JwtTokenProvider} +
  * {@code CorsConfigurationSource} via {@code @MockBean} on each test class.
  */
+/**
+ * Тест-конфигурација: безбедносни поставки за WebMvc слајс тестовите.
+ */
 @TestConfiguration
 @Import(GlobalExceptionHandler.class)
 public class WebMvcTestSecurityConfig {

@@ -1,3 +1,4 @@
+// React компонента: 3D/интерактивна мапа на Македонија.
 "use client";
 
 import { motion } from "framer-motion";

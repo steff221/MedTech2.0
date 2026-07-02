@@ -9,6 +9,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
 
+/**
+ * JPA ентитет: ред (outbox) за е-пораки што чекаат испраќање — гарантира испорака.
+ */
 @Entity
 @Table(name = "email_outbox")
 @Getter

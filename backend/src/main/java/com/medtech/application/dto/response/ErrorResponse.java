@@ -8,6 +8,8 @@ import java.util.List;
 
 /**
  * Standardised error payload returned by every non-2xx response.
+ *
+ * Излезен DTO: стандарден формат на одговор при грешка (код, порака, детали).
  */
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)

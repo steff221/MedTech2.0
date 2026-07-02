@@ -13,6 +13,8 @@ import java.time.LocalDate;
 /**
  * Runs daily at 00:05 and moves ACTIVE prescriptions whose end_date has passed
  * to COMPLETED status so they no longer appear as refillable in the patient portal.
+ *
+ * Закажана задача (job): автоматски ги означува истечените рецепти.
  */
 @Slf4j
 @Component

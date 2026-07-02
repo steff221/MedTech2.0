@@ -81,6 +81,11 @@ medtech:
       access-token-ttl-minutes: 15
       refresh-token-ttl-days: 7
       issuer: medtech-backend
+    encryption:
+      # Base64-encoded 256-bit (32-byte) key for at-rest PHI encryption (AES-256-GCM).
+      # No default — startup fails fast if MEDTECH_PHI_ENCRYPTION_KEY is missing.
+      # Generate with: openssl rand -base64 32
+      key: ${MEDTECH_PHI_ENCRYPTION_KEY}
     # Refresh-token cookie Secure flag: false for dev (HTTP), true in prod profile.
     cookie-secure: false
     cors:

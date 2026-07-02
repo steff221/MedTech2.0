@@ -4,6 +4,9 @@ import com.medtech.constant.ValidationMessages;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
+/**
+ * Влезен DTO: барање за најава (email и лозинка).
+ */
 public record LoginRequest(
         @NotBlank(message = ValidationMessages.EMAIL_REQUIRED)
         @Email(message = ValidationMessages.EMAIL_FORMAT)

@@ -1,3 +1,4 @@
+// React компонента: прелистувач на МКБ-10 каталог.
 "use client";
 
 import { motion } from "framer-motion";

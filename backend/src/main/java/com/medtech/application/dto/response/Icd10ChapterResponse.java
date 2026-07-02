@@ -3,6 +3,9 @@ package com.medtech.application.dto.response;
 import java.util.List;
 
 /** ICD-10 chapter summary (e.g. chapter IX "Diseases of the circulatory system"). */
+/**
+ * Излезен DTO: поглавје од МКБ-10 (ICD-10) каталогот.
+ */
 public record Icd10ChapterResponse(
         int number,
         String title,

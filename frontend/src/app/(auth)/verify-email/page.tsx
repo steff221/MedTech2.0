@@ -1,3 +1,4 @@
+// Страница (Next.js): потврда на е-пошта — дел за автентикација.
 "use client";
 
 import { CheckCircle2, XCircle } from "lucide-react";

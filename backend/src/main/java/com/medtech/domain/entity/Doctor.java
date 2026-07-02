@@ -15,6 +15,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.math.BigDecimal;
 import java.time.Instant;
 
+/**
+ * JPA ентитет: доктор со неговите специјалност и податоци.
+ */
 @Entity
 @Table(name = "doctors")
 @Getter

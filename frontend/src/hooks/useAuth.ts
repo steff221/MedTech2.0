@@ -1,3 +1,4 @@
+// React hook: пристап до автентикацијата (најава, одјава, тековен корисник).
 "use client";
 
 import { useRouter } from "next/navigation";

@@ -3,6 +3,8 @@ package com.medtech.constant;
 /**
  * Stable, machine-readable error codes returned in API error responses.
  * <p>Format: {@code <DOMAIN>_<KIND>}. Never renumber/rename — clients depend on these.
+ *
+ * Константи: стандардни кодови на грешки што се користат низ целата апликација.
  */
 public final class ErrorCode {
 

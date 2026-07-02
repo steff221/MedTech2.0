@@ -1,3 +1,4 @@
+// React компонента: горна навигација за матичниот лекар.
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";

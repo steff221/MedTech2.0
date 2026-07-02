@@ -1,3 +1,4 @@
+// Страница (Next.js): ревизорски логови — дел за администратор.
 "use client";
 
 import { useState } from "react";

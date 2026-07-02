@@ -12,6 +12,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+/**
+ * Unit тестови за Icd10CatalogService (пребарување на МКБ-10 каталог).
+ */
 class Icd10CatalogServiceTest {
 
     static Icd10CatalogService catalog;

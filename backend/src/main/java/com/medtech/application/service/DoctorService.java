@@ -25,6 +25,9 @@ import org.springframework.transaction.annotation.Transactional;
 import static com.medtech.infrastructure.config.CacheConfig.DOCTOR_BY_ID;
 import static com.medtech.infrastructure.config.CacheConfig.DOCTORS_LIST;
 
+/**
+ * Сервис: бизнис-логика за докторите — креирање, ажурирање и пребарување.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor

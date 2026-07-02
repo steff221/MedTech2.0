@@ -7,6 +7,9 @@ import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 
+/**
+ * Влезен DTO: барање за креирање нов медицински картон.
+ */
 public record CreateMedicalRecordRequest(
         @NotNull Long patientId,
         Long appointmentId,

@@ -1,3 +1,4 @@
+// Страница што се прикажува кога нема интернет (офлајн режим).
 "use client";
 
 export default function OfflinePage() {

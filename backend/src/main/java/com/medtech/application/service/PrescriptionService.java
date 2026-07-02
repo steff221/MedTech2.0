@@ -36,6 +36,8 @@ import java.time.LocalDate;
  *   <li>Refills rejected after {@code end_date}.</li>
  *   <li>Auto-expire when {@code end_date} has passed.</li>
  * </ul>
+ *
+ * Сервис: бизнис-логика за рецептите — издавање, повлекување и проверка на важност.
  */
 @Slf4j
 @Service

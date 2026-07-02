@@ -9,6 +9,9 @@ import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
 
+/**
+ * Влезен DTO: барање за издавање нов рецепт на пациент.
+ */
 public record IssuePrescriptionRequest(
         @NotNull Long patientId,
         Long medicalRecordId,

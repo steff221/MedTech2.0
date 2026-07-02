@@ -25,6 +25,8 @@ import java.util.List;
 /**
  * Converts every exception thrown from the controller stack into a stable,
  * structured {@link ErrorResponse}. Never leaks stack traces.
+ *
+ * Глобален фаќач на исклучоци — ги претвора во конзистентни HTTP одговори со грешка.
  */
 @Slf4j
 @RestControllerAdvice

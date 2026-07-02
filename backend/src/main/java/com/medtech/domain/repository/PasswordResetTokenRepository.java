@@ -10,6 +10,9 @@ import org.springframework.stereotype.Repository;
 import java.time.Instant;
 import java.util.Optional;
 
+/**
+ * Spring Data JPA репозиториум: пристап до токените за ресет на лозинка.
+ */
 @Repository
 public interface PasswordResetTokenRepository extends JpaRepository<PasswordResetToken, Long> {
 

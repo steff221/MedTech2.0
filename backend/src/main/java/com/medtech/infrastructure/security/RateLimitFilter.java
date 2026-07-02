@@ -19,6 +19,8 @@ import java.util.List;
  * Per-IP rate limiter for auth endpoints backed by Redis.
  * Limits: 10 requests / 60 seconds per IP on /api/auth/**.
  * Uses an atomic Lua script so the check-and-increment is race-free across replicas.
+ *
+ * Филтер: ограничување на бројот барања (rate limiting) за заштита од злоупотреба.
  */
 public class RateLimitFilter extends OncePerRequestFilter {
 

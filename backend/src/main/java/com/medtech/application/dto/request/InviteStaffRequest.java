@@ -7,6 +7,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+/**
+ * Влезен DTO: барање за покана на нов вработен (staff) во системот.
+ */
 public record InviteStaffRequest(
         @NotBlank(message = ValidationMessages.EMAIL_REQUIRED)
         @Email(message = ValidationMessages.EMAIL_FORMAT)

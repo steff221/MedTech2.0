@@ -1,3 +1,4 @@
+// Страница (Next.js): ресет на лозинка — дел за автентикација.
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";

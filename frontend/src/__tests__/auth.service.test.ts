@@ -1,3 +1,4 @@
+// Тестови за auth.service (автентикација).
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { authService } from "@/services/auth.service";
 import { api } from "@/services/api";

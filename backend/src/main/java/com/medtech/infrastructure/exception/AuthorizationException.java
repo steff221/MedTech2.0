@@ -3,6 +3,9 @@ package com.medtech.infrastructure.exception;
 import com.medtech.constant.ErrorCode;
 import org.springframework.http.HttpStatus;
 
+/**
+ * Исклучок: фрлен кога корисникот нема дозвола за дејството (403).
+ */
 public class AuthorizationException extends AppException {
 
     public AuthorizationException(String message) {

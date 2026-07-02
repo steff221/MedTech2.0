@@ -8,6 +8,9 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 
+/**
+ * MapStruct мапер: пресликува помеѓу ентитетот MedicalRecord (медицински картон) и неговите DTO.
+ */
 @Mapper(componentModel = "spring")
 public interface MedicalRecordMapper {
 

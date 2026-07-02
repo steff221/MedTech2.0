@@ -12,6 +12,9 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 
+/**
+ * Spring Data JPA репозиториум: пристап до записите за рецепти.
+ */
 @Repository
 public interface PrescriptionRepository extends JpaRepository<Prescription, Long> {
 

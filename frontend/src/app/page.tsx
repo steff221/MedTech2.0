@@ -1,3 +1,4 @@
+// Почетна (landing) страница на апликацијата.
 "use client";
 
 import { useRouter } from "next/navigation";

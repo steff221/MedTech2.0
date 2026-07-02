@@ -6,6 +6,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+/**
+ * Конфигурација на CORS — кои origins смеат да пристапат до API-то.
+ */
 @Configuration
 @RequiredArgsConstructor
 public class CorsConfig {

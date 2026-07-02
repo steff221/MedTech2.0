@@ -1,3 +1,4 @@
+// API клиент: централна axios/fetch инстанца со токени и пресретнувачи.
 import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { useAuthStore } from "@/store/auth.store";
 import type { ApiError, AuthResponse } from "@/types/api";

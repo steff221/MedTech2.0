@@ -13,6 +13,8 @@ import java.util.List;
 /**
  * Adapter mapping our {@link User} aggregate onto Spring Security's
  * {@link UserDetails} contract. Authority granted is {@code ROLE_<UserRole>}.
+ *
+ * Spring Security UserDetails — го претставува најавениот корисник во безбедносниот контекст.
  */
 @Getter
 public class AuthenticatedUser implements UserDetails {

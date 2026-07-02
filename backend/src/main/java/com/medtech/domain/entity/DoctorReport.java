@@ -15,6 +15,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.Instant;
 import java.time.LocalDate;
 
+/**
+ * JPA ентитет: генериран извештај за работата на доктор.
+ */
 @Entity
 @Table(name = "doctor_reports")
 @Getter

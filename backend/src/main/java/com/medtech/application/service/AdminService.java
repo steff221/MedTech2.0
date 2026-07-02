@@ -35,6 +35,9 @@ import java.util.Base64;
 import java.util.HexFormat;
 import java.util.List;
 
+/**
+ * Сервис: административни операции — управување со корисници, болници и покани на персонал.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor

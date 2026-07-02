@@ -26,6 +26,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
+/**
+ * Unit тестови за OperationService (операции).
+ */
 @ExtendWith(MockitoExtension.class)
 class OperationServiceTest {
 

@@ -8,6 +8,9 @@ import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
 
+/**
+ * Влезен DTO: барање за креирање нов упат кон друг доктор/специјалист.
+ */
 public record CreateReferralRequest(
         @NotNull Long patientId,
 

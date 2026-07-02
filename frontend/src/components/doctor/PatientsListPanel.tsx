@@ -1,3 +1,4 @@
+// React компонента: листа со пациентите на докторот.
 "use client";
 
 import { motion } from "framer-motion";

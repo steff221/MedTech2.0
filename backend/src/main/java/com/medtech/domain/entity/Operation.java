@@ -15,6 +15,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.Instant;
 import java.time.LocalDate;
 
+/**
+ * JPA ентитет: хируршка операција со статус и дијагноза.
+ */
 @Entity
 @Table(name = "operations")
 @Getter

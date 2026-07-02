@@ -1,3 +1,4 @@
+// TypeScript типови за барањата и одговорите на API-то.
 // Type definitions mirroring the Spring Boot backend DTOs.
 // Any drift here means runtime errors — keep in sync with backend/src/main/java/com/medtech/application/dto.
 

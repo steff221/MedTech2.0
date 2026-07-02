@@ -7,6 +7,8 @@ import java.util.List;
 
 /**
  * Aggregate dashboard counts. Public — no PII, only aggregates.
+ *
+ * Излезен DTO: збирни статистики за приказ на admin контролната табла.
  */
 @Builder
 public record StatsOverviewResponse(

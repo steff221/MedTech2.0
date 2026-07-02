@@ -5,6 +5,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+/**
+ * Влезен DTO: барање за поставување нова лозинка преку токен за ресет.
+ */
 public record ResetPasswordRequest(
         @NotBlank(message = "Reset token is required")
         String token,

@@ -4,6 +4,9 @@ import com.medtech.domain.entity.MedicalRecordEvent;
 
 import java.time.Instant;
 
+/**
+ * Излезен DTO: настан/измена во историјата на медицинскиот картон.
+ */
 public record MedicalRecordEventResponse(
         Long id,
         Long recordId,

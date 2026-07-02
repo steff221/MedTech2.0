@@ -22,6 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Year;
  
+/**
+ * Сервис: бизнис-логика за упатите помеѓу доктори/специјалисти.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
