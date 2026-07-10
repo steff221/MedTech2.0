@@ -42,7 +42,7 @@ export function AppointmentCard({ appointment }: AppointmentCardProps) {
   const cancelMutation = useMutation({
     mutationFn: () => appointmentService.cancel(appointment.id, "Cancelled by patient"),
     onSuccess: () => {
-      toast.success(t.appointments.cancelBtn);
+      toast.success(t.appointments.cancelSuccess);
       qc.invalidateQueries({ queryKey: ["appointments"] });
     },
     onError: (err) => toast.error(extractErrorMessage(err)),

@@ -241,6 +241,7 @@ export default function AdminPage() {
               {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-14" />)}
             </div>
           ) : (
+            <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-100 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
@@ -304,6 +305,7 @@ export default function AdminPage() {
                 )}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       </div>

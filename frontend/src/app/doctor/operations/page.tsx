@@ -93,7 +93,7 @@ function ScheduleModal({ onClose, onCreated }: ScheduleModalProps) {
       onCreated(created);
       onClose();
     } catch {
-      toast.error("Грешка при закажување. Обидете се повторно.");
+      toast.error(t.doctorOperations.scheduleError);
     } finally {
       setSubmitting(false);
     }
@@ -314,9 +314,9 @@ export default function OperationsPage() {
     setLoading(true);
     operationService.myOperations(0, 100)
       .then((p) => setOperations(p.content))
-      .catch(() => toast.error("Неуспешно вчитување на операции."))
+      .catch(() => toast.error(t.doctorOperations.loadError))
       .finally(() => setLoading(false));
-  }, []);
+  }, [t]);
 
   useEffect(() => { load(); }, [load]);
 

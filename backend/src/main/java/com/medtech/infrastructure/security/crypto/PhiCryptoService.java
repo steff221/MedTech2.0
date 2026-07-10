@@ -1,6 +1,7 @@
 package com.medtech.infrastructure.security.crypto;
 
 import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Cipher;
@@ -43,6 +44,9 @@ public class PhiCryptoService {
     private final SecureRandom secureRandom = new SecureRandom();
     private SecretKey secretKey;
 
+    // Two constructors exist (the test one below), so Spring needs this marked
+    // as the injection point explicitly.
+    @Autowired
     public PhiCryptoService(EncryptionProperties properties) {
         this.properties = properties;
     }

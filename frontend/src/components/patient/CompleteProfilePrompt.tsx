@@ -11,6 +11,7 @@ import toast from "react-hot-toast";
 import { Button } from "@/components/common/Button";
 import { Input } from "@/components/common/Input";
 import { Card } from "@/components/common/Card";
+import { useT } from "@/hooks/useT";
 import { patientService } from "@/services/patient.service";
 import { extractErrorMessage } from "@/services/api";
 import type { Gender } from "@/types/api";
@@ -31,6 +32,7 @@ const GENDERS: { value: Gender; label: string }[] = [
 ];
 
 export function CompleteProfilePrompt() {
+  const t = useT();
   const qc = useQueryClient();
   const [gender, setGender] = useState<Gender | undefined>();
   const {
@@ -48,7 +50,7 @@ export function CompleteProfilePrompt() {
         city: data.city || undefined,
       }),
     onSuccess: () => {
-      toast.success("Profile created");
+      toast.success(t.common.profileCreated);
       qc.invalidateQueries({ queryKey: ["patient", "me"] });
     },
     onError: (err) => toast.error(extractErrorMessage(err)),

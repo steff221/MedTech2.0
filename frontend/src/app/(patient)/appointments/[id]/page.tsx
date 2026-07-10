@@ -27,6 +27,7 @@ import { Button } from "@/components/common/Button";
 import { Skeleton } from "@/components/common/Skeleton";
 import { StarRating } from "@/components/common/StarRating";
 import { RateAppointmentModal } from "@/components/patient/RateAppointmentModal";
+import { useT } from "@/hooks/useT";
 import { appointmentService } from "@/services/appointment.service";
 import { extractErrorMessage } from "@/services/api";
 import { formatTime, initials } from "@/utils/format";
@@ -52,6 +53,7 @@ const STATUS_META: Record<AppointmentStatus, { label: string; icon: React.Compon
 };
 
 export default function AppointmentDetailPage() {
+  const t = useT();
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const qc = useQueryClient();
@@ -66,7 +68,7 @@ export default function AppointmentDetailPage() {
   const cancelMutation = useMutation({
     mutationFn: () => appointmentService.cancel(Number(id), "Cancelled by patient"),
     onSuccess: () => {
-      toast.success("Прегледот е откажан");
+      toast.success(t.appointments.cancelSuccess);
       qc.invalidateQueries({ queryKey: ["appointments"] });
       qc.invalidateQueries({ queryKey: ["appointment", Number(id)] });
     },
