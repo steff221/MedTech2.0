@@ -111,7 +111,7 @@ export function BookAppointmentModal({ open, onClose }: Props) {
       qc.invalidateQueries({ queryKey: ["appointments-today-waiting"] });
       handleClose();
     },
-    onError: (err) => toast.error(extractErrorMessage(err) ?? "Failed to book appointment"),
+    onError: (err) => toast.error(extractErrorMessage(err) || bt.bookError),
   });
 
   const handleClose = useCallback(() => {

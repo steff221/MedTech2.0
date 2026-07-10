@@ -79,7 +79,7 @@ export default function DoctorAvailabilityPage() {
       toast.success(at.saved);
       qc.invalidateQueries({ queryKey: ["doctor-availability"] });
     },
-    onError: (err) => toast.error(extractErrorMessage(err) ?? "Failed to save"),
+    onError: (err) => toast.error(extractErrorMessage(err) || at.saveError),
   });
 
   const toggle = (dow: number) =>

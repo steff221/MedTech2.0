@@ -11,6 +11,7 @@ import { Button } from "@/components/common/Button";
 import { Input } from "@/components/common/Input";
 import { Modal } from "@/components/common/Modal";
 import { Mkb10Autocomplete } from "./Mkb10Autocomplete";
+import { useT } from "@/hooks/useT";
 import { extractErrorMessage } from "@/services/api";
 import { medicalRecordService } from "@/services/medicalRecord.service";
 
@@ -42,6 +43,7 @@ export function MedicalRecordForm({
   patientName,
   appointmentId,
 }: MedicalRecordFormProps) {
+  const t = useT();
   const qc = useQueryClient();
   const [mkb10, setMkb10] = useState<{ code: string; label: string } | null>(null);
   const {
@@ -68,7 +70,7 @@ export function MedicalRecordForm({
         mkb10Code: mkb10?.code,
       }),
     onSuccess: () => {
-      toast.success("Medical record saved");
+      toast.success(t.doctorDrawer.recordSaved);
       qc.invalidateQueries({ queryKey: ["patient", patientId, "medical-records"] });
       handleClose();
     },

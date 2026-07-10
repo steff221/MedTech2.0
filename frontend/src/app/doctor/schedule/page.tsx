@@ -265,6 +265,7 @@ function WaitingRoom({ doctorId }: { doctorId: number }) {
       )}
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
             <tr>
@@ -365,6 +366,7 @@ function WaitingRoom({ doctorId }: { doctorId: number }) {
             })}
           </tbody>
         </table>
+        </div>
         <p className="border-t border-slate-100 bg-slate-50 px-4 py-2 text-[11px] text-slate-400">
           {t.doctorSchedule.clickToCycle}
         </p>

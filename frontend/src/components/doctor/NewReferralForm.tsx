@@ -165,7 +165,7 @@ export function NewReferralForm({ open, onClose, onCreated, existingReferrals = 
       handleClose();
     },
     onError: () => {
-      toast.error("Грешка при издавање на упат.");
+      toast.error(t.doctorReferrals.issueError);
     },
   });
 

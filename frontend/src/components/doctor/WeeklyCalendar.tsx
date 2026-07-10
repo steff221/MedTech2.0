@@ -10,6 +10,7 @@ import toast from "react-hot-toast";
 import { Button } from "@/components/common/Button";
 import { Badge, appointmentStatusTone } from "@/components/common/Badge";
 import { Modal } from "@/components/common/Modal";
+import { useT } from "@/hooks/useT";
 import { appointmentService } from "@/services/appointment.service";
 import { doctorService } from "@/services/doctor.service";
 import { extractErrorMessage } from "@/services/api";
@@ -49,6 +50,7 @@ function statusBg(status: AppointmentStatus, isVirtual: boolean): string {
 }
 
 export function WeeklyCalendar({ doctorId }: WeeklyCalendarProps) {
+  const t = useT();
   const [weekOffset, setWeekOffset] = useState(0);
   const [selected, setSelected]     = useState<AppointmentResponse | null>(null);
   const [videoUrlDraft, setVideoUrlDraft] = useState("");
@@ -107,7 +109,7 @@ export function WeeklyCalendar({ doctorId }: WeeklyCalendarProps) {
       queryClient.invalidateQueries({
         queryKey: ["appointments", "doctor", doctorId, updated.appointmentDate],
       });
-      toast.success("Видео линкот е зачуван.");
+      toast.success(t.doctorSchedule.videoSaved);
     },
     onError: (err) => toast.error(extractErrorMessage(err)),
   });

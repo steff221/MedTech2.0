@@ -35,6 +35,9 @@ pnpm-debug.log*
 .env
 .env.local
 .env.*.local
+# Backups of a real .env carry live secrets (JWT, DB, SMTP, PHI key).
+.env.bak*
+.env.*.bak
 *.pem
 *.key
 credentials*.json

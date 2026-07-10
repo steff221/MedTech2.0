@@ -163,7 +163,7 @@ export default function ReferralsPage() {
       toast.success(t.doctorReferrals.outcomeSuccess);
       setOutcomeTarget(null);
     },
-    onError: () => toast.error("Грешка при реализирање на упат."),
+    onError: () => toast.error(t.doctorReferrals.outcomeError),
   });
 
   const cancelMutation = useMutation({
@@ -173,7 +173,7 @@ export default function ReferralsPage() {
       toast.success(t.doctorReferrals.cancelSuccess);
       setCancelTarget(null);
     },
-    onError: () => toast.error("Грешка при откажување на упат."),
+    onError: () => toast.error(t.doctorReferrals.cancelError),
   });
 
   const handleCreated = () => {

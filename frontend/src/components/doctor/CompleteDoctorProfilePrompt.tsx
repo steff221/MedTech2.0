@@ -11,6 +11,7 @@ import toast from "react-hot-toast";
 import { Button } from "@/components/common/Button";
 import { Card } from "@/components/common/Card";
 import { Input } from "@/components/common/Input";
+import { useT } from "@/hooks/useT";
 import { api, extractErrorMessage } from "@/services/api";
 import { hospitalService } from "@/services/hospital.service";
 import type { HospitalResponse } from "@/types/api";
@@ -26,6 +27,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export function CompleteDoctorProfilePrompt() {
+  const t = useT();
   const qc = useQueryClient();
   const [hospitalId, setHospitalId] = useState<number | null>(null);
 
@@ -55,7 +57,7 @@ export function CompleteDoctorProfilePrompt() {
         hospitalId: data.hospitalId,
       }),
     onSuccess: () => {
-      toast.success("Doctor profile created");
+      toast.success(t.common.profileCreated);
       qc.invalidateQueries({ queryKey: ["doctor", "me"] });
     },
     onError: (err) => toast.error(extractErrorMessage(err)),

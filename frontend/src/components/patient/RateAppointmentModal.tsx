@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { Modal } from "@/components/common/Modal";
 import { Button } from "@/components/common/Button";
 import { StarRating } from "@/components/common/StarRating";
+import { useT } from "@/hooks/useT";
 import { ratingService } from "@/services/rating.service";
 import { extractErrorMessage } from "@/services/api";
 
@@ -23,6 +24,7 @@ export function RateAppointmentModal({
   open,
   onClose,
 }: RateAppointmentModalProps) {
+  const t = useT();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const qc = useQueryClient();
@@ -34,7 +36,7 @@ export function RateAppointmentModal({
         comment: comment.trim() || undefined,
       }),
     onSuccess: () => {
-      toast.success("Thank you for your feedback!");
+      toast.success(t.appointments.feedbackThanks);
       qc.invalidateQueries({ queryKey: ["appointments"] });
       onClose();
     },
