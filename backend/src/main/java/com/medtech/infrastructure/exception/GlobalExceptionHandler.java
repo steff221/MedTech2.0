@@ -15,9 +15,11 @@ import org.springframework.validation.FieldError;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.Instant;
 import java.util.List;
@@ -70,6 +72,20 @@ public class GlobalExceptionHandler {
                                                             HttpServletRequest req) {
         return build(HttpStatus.BAD_REQUEST, ErrorCode.BAD_REQUEST,
                 "Invalid value for parameter '" + ex.getName() + "'", req, null);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingParam(MissingServletRequestParameterException ex,
+                                                            HttpServletRequest req) {
+        return build(HttpStatus.BAD_REQUEST, ErrorCode.BAD_REQUEST,
+                "Missing required parameter '" + ex.getParameterName() + "'", req, null);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoResource(NoResourceFoundException ex,
+                                                          HttpServletRequest req) {
+        return build(HttpStatus.NOT_FOUND, ErrorCode.RESOURCE_NOT_FOUND,
+                "Resource not found", req, null);
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)

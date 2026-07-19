@@ -139,7 +139,8 @@ SELECT
   'MOCK_SEED'
 FROM (SELECT id, hospital_id FROM doctors ORDER BY id LIMIT 8) d
 CROSS JOIN (SELECT id FROM patients ORDER BY id LIMIT 6) p
-LIMIT 40;
+LIMIT 40
+ON CONFLICT (doctor_id, appointment_date, appointment_time) DO NOTHING;
 ALTER TABLE appointments ENABLE TRIGGER ALL;
 
 -- -----------------------------------------------------------------------------
@@ -291,7 +292,8 @@ FROM (SELECT id AS did, hospital_id AS hid FROM doctors WHERE license_number = '
        (2,  CURRENT_DATE - 1, '09:00', 20, 'COMPLETED', 'FOLLOW_UP',    'Post-illness check'),
        (3,  CURRENT_DATE - 2, '08:30', 20, 'COMPLETED', 'CHECKUP',      'Child vaccination')
      ) AS t(rn, d, t, dur, st, ty, r)
-JOIN (SELECT id, row_number() OVER (ORDER BY id) AS rn FROM patients) p ON p.rn = t.rn;
+JOIN (SELECT id, row_number() OVER (ORDER BY id) AS rn FROM patients) p ON p.rn = t.rn
+ON CONFLICT (doctor_id, appointment_date, appointment_time) DO NOTHING;
 ALTER TABLE appointments ENABLE TRIGGER ALL;
 
 -- nurse@medtech.mk / magii1002  (NURSE — lands on /nurse)
@@ -343,7 +345,8 @@ FROM (SELECT id AS did, hospital_id AS hid FROM doctors WHERE license_number = '
        (4,  CURRENT_DATE - 3, '09:40'::time, 20, 'NO_SHOW',   'FOLLOW_UP',    NULL),
        (5,  CURRENT_DATE - 4, '13:00'::time, 30, 'COMPLETED', 'CONSULTATION', 'Initial consultation')
      ) AS t(rn, d, t, dur, st, ty, r)
-JOIN (SELECT id, row_number() OVER (ORDER BY id) AS rn FROM patients) p ON p.rn = t.rn;
+JOIN (SELECT id, row_number() OVER (ORDER BY id) AS rn FROM patients) p ON p.rn = t.rn
+ON CONFLICT (doctor_id, appointment_date, appointment_time) DO NOTHING;
 ALTER TABLE appointments ENABLE TRIGGER ALL;
 
 -- =============================================================================
