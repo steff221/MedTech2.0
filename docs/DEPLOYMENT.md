@@ -10,6 +10,11 @@ is disabled, and demo/mock data never reaches the database.
 - DNS `A` records for `medtech.mk` and `www.medtech.mk` pointing at the server.
 - The repository cloned on the server (`git clone … && cd MedTech2.0`).
 
+> **No server yet?** [`DEPLOYMENT-FREE.md`](./DEPLOYMENT-FREE.md) covers hosting
+> the whole stack on a free tier (Oracle Cloud Always Free + a DuckDNS
+> subdomain), including the sizing and firewall gotchas. Rejoin this runbook at
+> §3.
+
 ## 2. Configure secrets
 
 ```bash

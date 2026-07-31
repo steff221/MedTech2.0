@@ -147,7 +147,7 @@ public class Icd10CatalogService {
             // Do not echo the submitted value back — error messages must not
             // reflect raw user input (it ends up verbatim in API responses).
             throw new ValidationException("MKB10_CODE_UNKNOWN",
-                    "The submitted MKB-10 / ICD-10 code is not in the WHO 2019 release");
+                    "Доставениот МКБ-10 / ICD-10 код не е во изданието на СЗО од 2019");
         }
     }
 }

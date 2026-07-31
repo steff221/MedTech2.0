@@ -167,7 +167,7 @@ export function NotificationBell() {
                         type="button"
                         onClick={() => markOne.mutate(n.id)}
                         className="mt-0.5 shrink-0 rounded p-0.5 text-slate-300 hover:text-emerald-600"
-                        title="Mark read"
+                        title={nt.markAllRead}
                       >
                         <CheckCheck className="h-3.5 w-3.5" />
                       </button>

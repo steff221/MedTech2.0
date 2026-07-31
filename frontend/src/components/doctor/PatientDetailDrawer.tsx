@@ -196,7 +196,7 @@ export function PatientDetailDrawer({
                     type="button"
                     onClick={onClose}
                     className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
-                    aria-label="Close"
+                    aria-label="Затвори"
                   >
                     <X className="h-5 w-5" />
                   </button>
@@ -642,7 +642,7 @@ function PrescriptionsPanel({ items, loading, patientId }: { items: Prescription
 
     const doc = win.document;
     doc.open();
-    doc.write(`<html><head><title>Рецепт — MedTech</title><style>
+    doc.write(`<html><head><title>Рецепт · MedTech</title><style>
       body{font-family:Arial,sans-serif;padding:40px;color:#1e293b}
       .header{border-bottom:2px solid #0891b2;padding-bottom:16px;margin-bottom:24px}
       .hospital{font-size:12px;color:#64748b}
@@ -660,7 +660,7 @@ function PrescriptionsPanel({ items, loading, patientId }: { items: Prescription
       </div>
       <div class="section"><div class="label">Доктор</div><div class="value">д-р ${esc(doctor?.firstName)} ${esc(doctor?.lastName)} · ${esc(doctor?.specialization)}</div></div>
       <div class="section"><div class="label">Лек</div><div class="value">${esc(p.medicationName)}</div></div>
-      <div class="section"><div class="label">Доза / Фреквенција</div><div class="value">${esc(p.dosage)} — ${esc(p.frequency)}</div></div>
+      <div class="section"><div class="label">Доза / Фреквенција</div><div class="value">${esc(p.dosage)}, ${esc(p.frequency)}</div></div>
       ${p.route ? `<div class="section"><div class="label">Начин</div><div class="value">${esc(p.route)}</div></div>` : ""}
       ${p.durationDays ? `<div class="section"><div class="label">Траење</div><div class="value">${esc(String(p.durationDays))} денови</div></div>` : ""}
       ${p.instructions ? `<div class="section"><div class="label">Инструкции</div><div class="value">${esc(p.instructions)}</div></div>` : ""}

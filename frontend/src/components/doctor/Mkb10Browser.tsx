@@ -156,7 +156,7 @@ export function Mkb10Browser() {
               ))}
               {results.length >= SEARCH_LIMIT && (
                 <p className="text-center text-xs text-slate-400">
-                  Прикажани се првите {SEARCH_LIMIT} резултати — прецизирајте го пребарувањето.
+                  Прикажани се првите {SEARCH_LIMIT} резултати. Прецизирајте го пребарувањето.
                 </p>
               )}
             </div>

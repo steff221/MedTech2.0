@@ -106,5 +106,5 @@ export function extractErrorMessage(error: unknown): string {
     return data?.message ?? error.message;
   }
   if (error instanceof Error) return error.message;
-  return "Something went wrong";
+  return "Нешто тргна наопаку";
 }

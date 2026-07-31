@@ -18,7 +18,7 @@ public record ScheduleOperationRequest(
         @NotBlank @Size(max = 255) String operationName,
         @Size(max = 10) String mkb10Code,
         @NotNull @FutureOrPresent LocalDate operationDate,
-        @Pattern(regexp = "^([01]\\d|2[0-3]):[0-5]\\d$", message = "Time must be HH:mm")
+        @Pattern(regexp = "^([01]\\d|2[0-3]):[0-5]\\d$", message = "Часот мора да биде во формат HH:mm")
         String operationTime,
         @Positive Integer durationMinutes,
         @Size(max = 50)  String operationRoom,

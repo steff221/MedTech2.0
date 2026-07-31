@@ -42,10 +42,10 @@ public class DoctorAvailabilityController {
             @Valid @RequestBody List<@Valid AvailabilitySlotRequest> slots,
             Authentication authentication) {
         if (authentication == null || !(authentication.getPrincipal() instanceof Long userId)) {
-            throw new AuthorizationException("Authentication required");
+            throw new AuthorizationException("Потребна е најава");
         }
         Long doctorId = doctorRepo.findByUserId(userId)
-                .orElseThrow(() -> ResourceNotFoundException.of("Doctor profile", userId))
+                .orElseThrow(() -> ResourceNotFoundException.of("Лекарски профил", userId))
                 .getId();
         return ResponseEntity.ok(availabilityService.save(doctorId, slots));
     }

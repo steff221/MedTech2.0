@@ -50,7 +50,7 @@ public class MedicalRecordController {
     @Operation(summary = "List all medical records written by the authenticated doctor")
     public ResponseEntity<Page<MedicalRecordResponse>> myRecords(Pageable pageable) {
         Long doctorUserId = SecurityUtils.currentUserId()
-                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+                .orElseThrow(() -> new AuthorizationException("Потребна е најава"));
         return ResponseEntity.ok(medicalRecordService.listByDoctorUserId(doctorUserId, pageable)
                 .map(mapper::toResponse));
     }
@@ -60,7 +60,7 @@ public class MedicalRecordController {
     @Operation(summary = "Doctor creates a medical record (optionally tied to an appointment)")
     public ResponseEntity<MedicalRecordResponse> create(@Valid @RequestBody CreateMedicalRecordRequest request) {
         Long doctorUserId = SecurityUtils.currentUserId()
-                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+                .orElseThrow(() -> new AuthorizationException("Потребна е најава"));
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(mapper.toResponse(medicalRecordService.create(doctorUserId, request)));
     }
@@ -81,7 +81,7 @@ public class MedicalRecordController {
     public ResponseEntity<MedicalRecordResponse> addAddendum(@PathVariable Long id,
                                                              @Valid @RequestBody AddAddendumRequest request) {
         Long doctorUserId = SecurityUtils.currentUserId()
-                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+                .orElseThrow(() -> new AuthorizationException("Потребна е најава"));
         return ResponseEntity.ok(mapper.toResponse(medicalRecordService.addAddendum(id, doctorUserId, request)));
     }
 

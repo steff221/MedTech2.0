@@ -72,7 +72,7 @@ export default function DoctorOverviewPage() {
               title={t.doctorOverview.appointmentsByHospital}
               subtitle={t.doctorOverview.last30days}
               orientation="horizontal"
-              gradient={["#10b981", "#2dd4bf"]}
+              gradient={["#1e5f63", "#558e91"]}
               data={(data?.appointmentsByHospital ?? []).map((h) => ({
                 label: h.hospital,
                 sub: h.city,
@@ -83,7 +83,7 @@ export default function DoctorOverviewPage() {
               title={t.doctorOverview.prescriptionsByDay}
               subtitle={t.doctorOverview.last7days}
               orientation="vertical"
-              gradient={["#34d399", "#22d3ee"]}
+              gradient={["#558e91", "#22d3ee"]}
               data={(data?.prescriptionsByDay ?? []).map((d) => ({
                 label: format(parseISO(d.day), "EEE"),
                 sub: format(parseISO(d.day), "d MMM"),

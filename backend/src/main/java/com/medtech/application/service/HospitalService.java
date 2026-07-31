@@ -48,6 +48,6 @@ public class HospitalService {
 
     public Hospital getById(Long id) {
         return hospitalRepository.findById(id)
-                .orElseThrow(() -> ResourceNotFoundException.of("Hospital", id));
+                .orElseThrow(() -> ResourceNotFoundException.of("Болница", id));
     }
 }

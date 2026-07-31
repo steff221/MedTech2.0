@@ -39,12 +39,12 @@ public class ReferralService {
     @Transactional
     public Referral create(Long doctorUserId, CreateReferralRequest req) {
         Doctor doctor = doctorRepository.findByUserId(doctorUserId)
-                .orElseThrow(() -> new AuthorizationException("Only DOCTOR users can issue referrals"));
+                .orElseThrow(() -> new AuthorizationException("Само корисници со улога ЛЕКАР можат да издаваат упати"));
         if (doctor.getStatus() != UserStatus.ACTIVE) {
-            throw new AuthorizationException("Doctor account is not active");
+            throw new AuthorizationException("Лекарската сметка не е активна");
         }
         Patient patient = patientRepository.findById(req.patientId())
-                .orElseThrow(() -> ResourceNotFoundException.of("Patient", req.patientId()));
+                .orElseThrow(() -> ResourceNotFoundException.of("Пациент", req.patientId()));
 
         Referral referral = new Referral();
         referral.setDoctor(doctor);
@@ -72,7 +72,7 @@ public class ReferralService {
         Referral referral = getById(referralId);
         assertIssuingDoctor(referral, doctorUserId);
         if (referral.getStatus() != ReferralStatus.ACTIVE) {
-            throw new ConflictException("Referral is not ACTIVE");
+            throw new ConflictException("Упатот не е АКТИВЕН");
         }
         referral.setStatus(ReferralStatus.COMPLETED);
         referral.setOutcomeNote(req.outcomeNote());
@@ -89,7 +89,7 @@ public class ReferralService {
             return referral;
         }
         if (referral.getStatus() == ReferralStatus.COMPLETED) {
-            throw new ConflictException("Cannot cancel a completed referral");
+            throw new ConflictException("Не може да се откаже завршен упат");
         }
         referral.setStatus(ReferralStatus.CANCELLED);
         log.info("Cancelled referral {}", referral.getReferralNumber());
@@ -98,12 +98,12 @@ public class ReferralService {
 
     public Referral getById(Long id) {
         return referralRepository.findById(id)
-                .orElseThrow(() -> ResourceNotFoundException.of("Referral", id));
+                .orElseThrow(() -> ResourceNotFoundException.of("Упат", id));
     }
 
     public Page<Referral> listByDoctor(Long doctorUserId, ReferralStatus status, Pageable pageable) {
         Doctor doctor = doctorRepository.findByUserId(doctorUserId)
-                .orElseThrow(() -> new AuthorizationException("Doctor profile not found"));
+                .orElseThrow(() -> new AuthorizationException("Лекарскиот профил не е пронајден"));
         if (status != null) {
             return referralRepository.findByDoctorIdAndStatus(doctor.getId(), status, pageable);
         }
@@ -112,13 +112,13 @@ public class ReferralService {
 
     public Page<Referral> listByPatient(Long patientId, Pageable pageable) {
         patientRepository.findById(patientId)
-                .orElseThrow(() -> ResourceNotFoundException.of("Patient", patientId));
+                .orElseThrow(() -> ResourceNotFoundException.of("Пациент", patientId));
         return referralRepository.findByPatientId(patientId, pageable);
     }
 
     private void assertIssuingDoctor(Referral referral, Long doctorUserId) {
         if (!referral.getDoctor().getUser().getId().equals(doctorUserId)) {
-            throw new AuthorizationException("Only the issuing doctor may modify this referral");
+            throw new AuthorizationException("Само лекарот што го издал упатот може да го измени");
         }
     }
 

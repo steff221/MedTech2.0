@@ -36,7 +36,7 @@ public class JwtAuthEntryPoint implements AuthenticationEntryPoint {
                 .timestamp(Instant.now())
                 .status(HttpStatus.UNAUTHORIZED.value())
                 .code(ErrorCode.AUTH_TOKEN_INVALID)
-                .message("Authentication required")
+                .message("Потребна е најава")
                 .path(request.getRequestURI())
                 .build();
         response.setStatus(HttpStatus.UNAUTHORIZED.value());

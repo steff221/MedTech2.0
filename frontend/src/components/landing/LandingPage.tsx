@@ -62,14 +62,14 @@ const FEATURES = [
   {
     icon: Video,
     title: "Виртуелни консултации",
-    desc: "Виртуелни термини со автоматски генерирани Jitsi video соби — без посебен софтвер.",
+    desc: "Виртуелни термини со автоматски генерирани Jitsi видео соби, без посебен софтвер.",
     light: { color: "text-violet-600", bg: "bg-violet-50" },
     dark:  { color: "text-violet-400", bg: "bg-violet-500/10" },
   },
   {
     icon: Bell,
-    title: "Real-time известувања",
-    desc: "SSE push известувања за пациенти и лекари — потврди, откази и потсетници моментално.",
+    title: "Известувања во реално време",
+    desc: "SSE известувања за пациенти и лекари: потврди, откази и потсетници моментално.",
     light: { color: "text-rose-600", bg: "bg-rose-50" },
     dark:  { color: "text-rose-400", bg: "bg-rose-500/10" },
   },
@@ -113,11 +113,93 @@ const ROLES = [
   },
 ];
 
-const TRUST = [
-  { value: "100%", label: "Дигитализиран процес" },
-  { value: "4",    label: "Типа корисници" },
-  { value: "24/7", label: "Достапност" },
-];
+/**
+ * The hero artifact: a referral slip as it actually exists in this system.
+ *
+ * The old hero led with a gradient headline over a fabricated trust bar
+ * ("100%", "24/7"). This leads with the thing the platform actually produces —
+ * a numbered, coded, sealed clinical document — because that is the most
+ * characteristic object in a health registry's world. Every field below is a
+ * real shape from the schema: УП-нумерација, an MKB-10 code, vitals.
+ */
+function ReferralArtifact({ isDark }: { isDark: boolean }) {
+  const rows = [
+    { k: "Пациент",   v: "Анастасија Димитрова" },
+    { k: "Установа",  v: "Универзитетска клиника" },
+    { k: "Упатен до", v: "Радиологија" },
+  ];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20, rotate: -0.4 }}
+      animate={{ opacity: 1, y: 0, rotate: -0.4 }}
+      transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
+      className={`relative w-full max-w-md border shadow-card-lg ${
+        isDark ? "border-white/10 bg-[#12242a]" : "border-slate-300 bg-white"
+      }`}
+    >
+      {/* Drape edge — the tab on a paper file. */}
+      <div aria-hidden className="absolute inset-y-0 left-0 w-1 bg-teal-600" />
+
+      <div className="p-6 pl-7">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="eyebrow">Упат</p>
+            <p
+              className={`mt-1 font-display text-xl font-semibold ${
+                isDark ? "text-white" : "text-slate-900"
+              }`}
+            >
+              Компјутерска томографија
+            </p>
+          </div>
+          {/* Signature element, animated once. */}
+          <span className="seal animate-stamp-in shrink-0">УП-2026-007</span>
+        </div>
+
+        <div
+          className={`mt-5 border-t pt-4 ${isDark ? "border-white/10" : "border-slate-200"}`}
+        >
+          <dl className="space-y-2.5 text-sm">
+            {rows.map((r) => (
+              <div key={r.k} className="flex justify-between gap-4">
+                <dt className={isDark ? "text-white/45" : "text-slate-500"}>{r.k}</dt>
+                <dd
+                  className={`text-right font-medium ${
+                    isDark ? "text-white/85" : "text-slate-800"
+                  }`}
+                >
+                  {r.v}
+                </dd>
+              </div>
+            ))}
+            <div className="flex items-center justify-between gap-4 pt-1">
+              <dt className={isDark ? "text-white/45" : "text-slate-500"}>Дијагноза</dt>
+              <dd className="flex items-center gap-2">
+                <span className="code">N20.0</span>
+                <span
+                  className={`text-xs ${isDark ? "text-white/60" : "text-slate-600"}`}
+                >
+                  Калкулус на бубрег
+                </span>
+              </dd>
+            </div>
+          </dl>
+        </div>
+
+        {/* Audit line — the immutable log is a real feature, stated plainly. */}
+        <div
+          className={`mt-5 flex items-center gap-2 border-t pt-3 font-mono text-[0.6875rem] ${
+            isDark ? "border-white/10 text-white/35" : "border-slate-200 text-slate-400"
+          }`}
+        >
+          <Lock className="h-3 w-3 shrink-0" aria-hidden />
+          <span>Заклучен запис · ревизорски лог</span>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
 
 export function LandingPage() {
   const [isDark, setIsDark] = useState(false);
@@ -209,67 +291,116 @@ export function LandingPage() {
             type="button"
             onClick={() => setIsDark((d) => !d)}
             className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${T.toggleBg}`}
-            aria-label="Toggle dark/light mode"
+            aria-label="Смени темна/светла тема"
           >
             {isDark ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
-            {isDark ? "Light" : "Dark"}
+            {isDark ? "Светла" : "Темна"}
           </button>
         </header>
 
         {/* ── Hero ────────────────────────────────────────────────────────── */}
-        <section className="mt-20 text-center">
-          <motion.div {...fadeUp(0)}>
-            <div className={`mb-4 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 ${T.liveBadge}`}>
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-              </span>
-              <span className={`text-xs font-semibold ${T.liveText}`}>
-                Во живо · {format(today, "dd MMM yyyy")}
-              </span>
-            </div>
-          </motion.div>
+        {/* Asymmetric and left-aligned: the claim on one side, the artifact it
+            produces on the other. */}
+        <section className="mt-16 grid items-center gap-12 lg:mt-24 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
+          <div>
+            <motion.p {...fadeUp(0)} className="eyebrow">
+              Национален здравствен регистар
+            </motion.p>
 
-          <motion.h1
-            {...fadeUp(0.08)}
-            className={`mx-auto mt-4 max-w-4xl text-5xl font-bold leading-tight tracking-tight sm:text-6xl lg:text-7xl ${T.heading}`}
-          >
-            Национално здравство{" "}
-            <span className={`bg-gradient-to-r bg-clip-text text-transparent ${T.heroGrad}`}>
-              во реално време
-            </span>
-          </motion.h1>
-
-          <motion.p {...fadeUp(0.16)} className={`mx-auto mt-6 max-w-2xl text-lg leading-relaxed ${T.muted}`}>
-            Платформа за дигитализирано здравство во Македонија. Закажување термини,
-            медицински досиеа, рецепти, операции и live статистики — на едно место.
-          </motion.p>
-
-          <motion.div {...fadeUp(0.22)} className="mt-10 flex flex-wrap items-center justify-center gap-4">
-            <Link
-              href="/register"
-              className="group flex items-center gap-2 rounded-full bg-emerald-500 px-8 py-3.5 text-sm font-semibold text-white shadow-xl shadow-emerald-500/25 transition-all hover:bg-emerald-600"
+            <motion.h1
+              {...fadeUp(0.06)}
+              className={`mt-4 max-w-xl text-4xl font-semibold leading-[1.08] sm:text-5xl lg:text-6xl ${T.heading}`}
             >
-              Започни бесплатно
-              <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-            </Link>
-            <Link href="/login" className={`flex items-center gap-2 rounded-full border px-8 py-3.5 text-sm font-semibold transition-all ${T.btnSecNav}`}>
-              <Lock className="h-3.5 w-3.5" /> Најави се
-            </Link>
-          </motion.div>
+              Секој преглед,
+              <br />
+              запишан{" "}
+              <span className="relative whitespace-nowrap">
+                <span className="text-brand-600">како документ</span>
+                {/* Hand-ruled underline: the annotation a clinician makes on paper. */}
+                <svg
+                  aria-hidden
+                  viewBox="0 0 200 8"
+                  preserveAspectRatio="none"
+                  className="absolute -bottom-1 left-0 h-2 w-full text-brand-600/45"
+                >
+                  <path
+                    d="M1 5.5C34 2.5 78 2 100 3.6c26 1.9 63 2.1 99 -0.6"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </span>
+            </motion.h1>
 
-          {/* Trust bar */}
-          <motion.div
-            {...fadeUp(0.3)}
-            className={`mt-14 flex flex-wrap items-center justify-center gap-8 border-y py-6 ${T.trustBorder}`}
-          >
-            {TRUST.map((t) => (
-              <div key={t.label} className="text-center">
-                <p className={`text-2xl font-bold ${T.heading}`}>{t.value}</p>
-                <p className={`mt-0.5 text-xs ${T.faint}`}>{t.label}</p>
-              </div>
-            ))}
-          </motion.div>
+            <motion.p
+              {...fadeUp(0.14)}
+              className={`mt-7 max-w-lg text-base leading-relaxed ${T.muted}`}
+            >
+              Термини, медицински досиеа, рецепти, упати и операции за клиниките во
+              Македонија. Секој запис носи свој број, MKB-10 код и ревизорски лог
+              и не може да се измени по заклучувањето.
+            </motion.p>
+
+            <motion.div {...fadeUp(0.2)} className="mt-9 flex flex-wrap items-center gap-3">
+              <Link
+                href="/register"
+                className="group flex items-center gap-2 rounded bg-brand-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
+              >
+                Отвори сметка
+                <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              </Link>
+              <Link
+                href="/login"
+                className={`flex items-center gap-2 rounded border px-6 py-3 text-sm font-semibold transition-all ${T.btnSecNav}`}
+              >
+                <Lock className="h-3.5 w-3.5" /> Најави се
+              </Link>
+            </motion.div>
+
+            {/* Live figures as a register ledger, not big-number tiles. These are
+                the real counts from /api/stats/overview — the fabricated
+                "100% / 24/7" trust bar that used to sit here was competing with
+                them for attention while saying nothing. */}
+            <motion.dl
+              {...fadeUp(0.28)}
+              className={`mt-12 grid max-w-lg grid-cols-3 border-t ${T.trustBorder}`}
+            >
+              {[
+                { label: "Пациенти", value: stats.data?.activePatients },
+                { label: "Лекари",   value: stats.data?.activeDoctors },
+                { label: "Болници",  value: nodes.length || undefined },
+              ].map((item, i) => (
+                <div
+                  key={item.label}
+                  className={`py-4 ${i > 0 ? `border-l pl-5 ${T.trustBorder}` : "pr-5"}`}
+                >
+                  <dd
+                    className={`font-mono text-2xl font-medium tabular tracking-tight ${T.heading}`}
+                  >
+                    {item.value ?? "—"}
+                  </dd>
+                  <dt className={`mt-1 text-xs ${T.faint}`}>{item.label}</dt>
+                </div>
+              ))}
+            </motion.dl>
+
+            <motion.p
+              {...fadeUp(0.32)}
+              className={`mt-3 flex items-center gap-2 font-mono text-[0.6875rem] ${T.faint}`}
+            >
+              <span className="relative flex h-1.5 w-1.5" aria-hidden>
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-70" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-600" />
+              </span>
+              Во живо · {format(today, "dd.MM.yyyy")}
+            </motion.p>
+          </div>
+
+          <div className="flex justify-center lg:justify-end">
+            <ReferralArtifact isDark={isDark} />
+          </div>
         </section>
 
         {/* ── Live KPIs ───────────────────────────────────────────────────── */}
@@ -324,7 +455,7 @@ export function LandingPage() {
                   title="Прегледи по болница"
                   subtitle="Последните 30 дена"
                   orientation="horizontal"
-                  gradient={["#10b981", "#2dd4bf"]}
+                  gradient={["#1e5f63", "#558e91"]}
                   dark={isDark}
                   data={(stats.data?.appointmentsByHospital ?? []).map((h) => ({ label: h.hospital, sub: h.city, value: h.count }))}
                 />
@@ -334,7 +465,7 @@ export function LandingPage() {
                   title="Издадени рецепти"
                   subtitle="Последните 7 дена"
                   orientation="vertical"
-                  gradient={["#34d399", "#22d3ee"]}
+                  gradient={["#558e91", "#22d3ee"]}
                   dark={isDark}
                   data={(stats.data?.prescriptionsByDay ?? []).map((d) => ({ label: format(parseISO(d.day), "EEE"), sub: format(parseISO(d.day), "MMM d"), value: d.count }))}
                 />
@@ -349,7 +480,7 @@ export function LandingPage() {
             <p className={`mb-3 text-xs font-semibold uppercase tracking-widest ${T.secLabel}`}>Функционалности</p>
             <h2 className={`text-3xl font-bold sm:text-4xl ${T.heading}`}>Се на едно место</h2>
             <p className={`mx-auto mt-4 max-w-xl text-sm leading-relaxed ${T.secSub}`}>
-              Дизајнирано за секој дел на здравствениот систем — од прием до извештај.
+              Дизајнирано за секој дел на здравствениот систем, од прием до извештај.
             </p>
           </motion.div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

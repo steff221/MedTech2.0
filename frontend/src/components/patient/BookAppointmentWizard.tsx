@@ -160,7 +160,7 @@ export function BookAppointmentWizard({ open, onClose, patientId, initialDoctor 
 
   const bookMutation = useMutation({
     mutationFn: () => {
-      if (!doctor || !date || !time) throw new Error("Incomplete selection");
+      if (!doctor || !date || !time) throw new Error("Изборот не е комплетен");
       return appointmentService.book({
         doctorId: doctor.id,
         patientId,
@@ -213,9 +213,12 @@ export function BookAppointmentWizard({ open, onClose, patientId, initialDoctor 
     const q = specSearch.toLowerCase();
     return (allDoctorsQuery.data?.content ?? []).filter((d) =>
       `${d.firstName} ${d.lastName}`.toLowerCase().includes(q) ||
-      d.specialization.toLowerCase().includes(q)
+      d.specialization.toLowerCase().includes(q) ||
+      // Specializations render through the translation map, so a search typed
+      // in the displayed language has to match the label too.
+      (t.specialties[d.specialization] ?? "").toLowerCase().includes(q)
     );
-  }, [specSearch, allDoctorsQuery.data]);
+  }, [specSearch, allDoctorsQuery.data, t]);
 
   const filteredDocs = (doctorsQuery.data?.content ?? []).filter((d) => {
     const q = docSearch.toLowerCase();
@@ -335,7 +338,7 @@ export function BookAppointmentWizard({ open, onClose, patientId, initialDoctor 
                           {initials(d.firstName, d.lastName)}
                         </div>
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-slate-900">Dr. {d.firstName} {d.lastName}</p>
+                          <p className="truncate text-sm font-semibold text-slate-900">Д-р {d.firstName} {d.lastName}</p>
                           <p className="text-xs text-brand-600">{t.specialties[d.specialization] ?? d.specialization}</p>
                           {d.hospitalName && <p className="truncate text-xs text-slate-400">{d.hospitalName}</p>}
                         </div>
@@ -388,7 +391,7 @@ export function BookAppointmentWizard({ open, onClose, patientId, initialDoctor 
                         {initials(d.firstName, d.lastName)}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="font-semibold text-slate-900">Dr. {d.firstName} {d.lastName}</p>
+                        <p className="font-semibold text-slate-900">Д-р {d.firstName} {d.lastName}</p>
                         <p className="truncate text-xs text-slate-500">
                           {t.specialties[d.specialization] ?? d.specialization}
                           {d.hospitalName ? ` · ${d.hospitalName}` : ""}
@@ -486,7 +489,7 @@ export function BookAppointmentWizard({ open, onClose, patientId, initialDoctor 
                 <div className="grid grid-cols-2 gap-y-4 text-sm">
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-brand-500">{wt.fieldDoctor}</p>
-                    <p className="mt-0.5 font-semibold text-slate-900">Dr. {doctor.firstName} {doctor.lastName}</p>
+                    <p className="mt-0.5 font-semibold text-slate-900">Д-р {doctor.firstName} {doctor.lastName}</p>
                   </div>
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-brand-500">{wt.fieldSpecialty}</p>

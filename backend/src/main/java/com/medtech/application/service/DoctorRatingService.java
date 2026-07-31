@@ -42,16 +42,16 @@ public class DoctorRatingService {
     @Transactional
     public RatingResponse submit(Long appointmentId, CreateRatingRequest req, AuthenticatedUser principal) {
         Appointment appointment = appointmentRepository.findById(appointmentId)
-                .orElseThrow(() -> ResourceNotFoundException.of("Appointment", appointmentId));
+                .orElseThrow(() -> ResourceNotFoundException.of("Термин", appointmentId));
 
         if (appointment.getStatus() != AppointmentStatus.COMPLETED) {
-            throw new ValidationException("Only COMPLETED appointments can be rated");
+            throw new ValidationException("Може да се оценуваат само ЗАВРШЕНИ термини");
         }
         if (!appointment.getPatient().getUser().getId().equals(principal.getId())) {
-            throw new ValidationException("You can only rate your own appointments");
+            throw new ValidationException("Може да ги оценувате само сопствените термини");
         }
         if (ratingRepository.existsByAppointmentId(appointmentId)) {
-            throw new ConflictException("Appointment " + appointmentId + " has already been rated");
+            throw new ConflictException("Терминот " + appointmentId + " е веќе оценет");
         }
 
         DoctorRating rating = new DoctorRating();

@@ -33,7 +33,7 @@ public class EmailService {
                                             LocalDate date,
                                             LocalTime time) {
         enqueue(toEmail,
-                "Потврда за термин — " + date + " во " + time,
+                "Потврда за термин на " + date + " во " + time,
                 """
                 Почитуван/а %s,
 
@@ -55,7 +55,7 @@ public class EmailService {
                                             LocalDate date,
                                             LocalTime time) {
         enqueue(toEmail,
-                "Откажан термин — " + date + " во " + time,
+                "Откажан термин на " + date + " во " + time,
                 """
                 Почитуван/а %s,
 
@@ -70,7 +70,7 @@ public class EmailService {
 
     public void sendInviteEmail(String toEmail, String fullName, String role, String setupLink) {
         enqueue(toEmail,
-                "Покана за MedTech — поставете ја вашата лозинка",
+                "Покана за MedTech: поставете ја вашата лозинка",
                 """
                 Почитуван/а %s,
 
@@ -89,7 +89,7 @@ public class EmailService {
 
     public void sendEmailVerification(String toEmail, String fullName, String verifyLink) {
         enqueue(toEmail,
-                "Потврдете ја вашата е-пошта — MedTech",
+                "Потврдете ја вашата е-пошта · MedTech",
                 """
                 Почитуван/а %s,
 
@@ -106,7 +106,7 @@ public class EmailService {
 
     public void sendPasswordResetEmail(String toEmail, String fullName, String resetLink) {
         enqueue(toEmail,
-                "Ресетирање на лозинка — MedTech",
+                "Ресетирање на лозинка · MedTech",
                 """
                 Почитуван/а %s,
 
@@ -115,7 +115,7 @@ public class EmailService {
 
                   %s
 
-                Ако не сте го побарале ова, игнорирајте ја оваа порака — вашата лозинка останува непроменета.
+                Ако не сте го побарале ова, игнорирајте ја оваа порака. Вашата лозинка останува непроменета.
 
                 Со почит,
                 MedTech тим

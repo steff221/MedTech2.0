@@ -14,8 +14,10 @@ import org.springframework.stereotype.Component;
  * <ul>
  *   <li>{@code DOCTOR} — allowed only when they have at least one appointment
  *       with the patient (any status). This verifies a care relationship.</li>
- *   <li>{@code NURSE} — allowed for any patient (clinical coordination role;
- *       no hospital-affiliation entity exists yet to scope further).</li>
+ *   <li>{@code NURSE} — <b>denied</b>. Nurses coordinate scheduling but have no
+ *       hospital-affiliation entity yet, so there is no way to scope PHI access
+ *       to their own ward. Blanket access to every patient in the country is the
+ *       wrong default, so it is refused until that scoping exists.</li>
  *   <li>{@code PATIENT} — allowed only for their own record.</li>
  *   <li>{@code ADMIN} — allowed for any patient.</li>
  *   <li>Anyone else — denied.</li>
@@ -32,7 +34,7 @@ public class PatientAccessGuard {
 
     public void assertCanAccessPatient(Long patientId) {
         Long currentUserId = SecurityUtils.currentUserId()
-                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+                .orElseThrow(() -> new AuthorizationException("Потребна е најава"));
 
         if (SecurityUtils.hasRole("ADMIN")) {
             return;
@@ -42,7 +44,7 @@ public class PatientAccessGuard {
             if (!appointmentRepository.hasCareRelationship(currentUserId, patientId)) {
                 throw new AuthorizationException(
                         "PATIENT_ACCESS_DENIED",
-                        "No care relationship found between this doctor and the requested patient");
+                        "Не постои однос на лекување помеѓу овој лекар и бараниот пациент");
             }
             return;
         }
@@ -52,17 +54,17 @@ public class PatientAccessGuard {
         if (SecurityUtils.hasRole("NURSE")) {
             throw new AuthorizationException(
                     "NURSE_PHI_ACCESS_DISABLED",
-                    "Nurse access to patient records is not yet enabled. Contact your administrator.");
+                    "Пристапот на медицински сестри до досиејата на пациентите сè уште не е овозможен. Контактирајте го администраторот.");
         }
 
         if (SecurityUtils.hasRole("PATIENT")) {
             Patient p = patientService.getById(patientId);
             if (!p.getUser().getId().equals(currentUserId)) {
-                throw new AuthorizationException("Patients may only access their own records");
+                throw new AuthorizationException("Пациентите можат да пристапат само до сопствените записи");
             }
             return;
         }
 
-        throw new AuthorizationException("Insufficient privileges");
+        throw new AuthorizationException("Немате доволно привилегии");
     }
 }

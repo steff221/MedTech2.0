@@ -96,7 +96,7 @@ export default function RegisterPage() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="mt-7 space-y-4">
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Ime" error={errors.firstName?.message}>
+          <Field label="Име" error={errors.firstName?.message}>
             <Input
               autoComplete="given-name"
               {...register("firstName")}

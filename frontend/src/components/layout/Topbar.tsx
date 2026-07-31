@@ -4,7 +4,6 @@
 import Link from "next/link";
 import { Bell, LogOut } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { LanguageToggle } from "@/components/common/LanguageToggle";
 import { useAuth } from "@/hooks/useAuth";
 import { useT } from "@/hooks/useT";
 import { initials } from "@/utils/format";
@@ -41,7 +40,6 @@ export function Topbar() {
             </span>
           )}
         </Link>
-        <LanguageToggle />
         {user && (
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700">
             {initials(user.firstName, user.lastName)}

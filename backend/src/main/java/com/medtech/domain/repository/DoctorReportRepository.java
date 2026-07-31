@@ -39,4 +39,8 @@ public interface DoctorReportRepository extends JpaRepository<DoctorReport, Long
     int countPrescriptions(@Param("doctorId") Long doctorId,
                            @Param("start") LocalDate start,
                            @Param("end") LocalDate end);
+
+    /** Next value for the human-readable report number (see V104). */
+    @Query(value = "SELECT nextval('doctor_report_number_seq')", nativeQuery = true)
+    long nextReportSeq();
 }

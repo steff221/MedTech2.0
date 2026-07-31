@@ -32,6 +32,17 @@ public class SseEmitterRegistry {
         emitter.onTimeout(cleanup);
         emitter.onError(ex -> cleanup.run());
 
+        // Send an opening event so the response headers are flushed straight
+        // away. Without it the client's fetch() stays pending until the first
+        // real notification (or the emitter timeout), which looks like a dead
+        // connection and triggers needless reconnect cycles.
+        try {
+            emitter.send(SseEmitter.event().name("connected").data(userId));
+        } catch (IOException | IllegalStateException ex) {
+            emitters.remove(userId, emitter);
+            log.debug("SSE handshake failed userId={}: {}", userId, ex.getMessage());
+        }
+
         log.debug("SSE registered userId={}", userId);
         return emitter;
     }

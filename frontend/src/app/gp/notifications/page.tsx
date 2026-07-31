@@ -114,7 +114,7 @@ export default function DoctorNotificationsPage() {
                     type="button"
                     onClick={() => markOne.mutate(n.id)}
                     className="mt-0.5 shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-white hover:text-emerald-600"
-                    title="Mark as read"
+                    title={t.notifications.markAllRead}
                   >
                     <CheckCheck className="h-4 w-4" />
                   </button>

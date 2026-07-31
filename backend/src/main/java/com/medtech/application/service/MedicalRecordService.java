@@ -59,19 +59,19 @@ public class MedicalRecordService {
     @Transactional
     public MedicalRecord create(Long authorUserId, CreateMedicalRecordRequest req) {
         Doctor doctor = doctorRepository.findByUserId(authorUserId)
-                .orElseThrow(() -> new AuthorizationException("Only DOCTOR users can create medical records"));
+                .orElseThrow(() -> new AuthorizationException("Само корисници со улога ЛЕКАР можат да креираат медицински записи"));
         Patient patient = patientRepository.findById(req.patientId())
-                .orElseThrow(() -> ResourceNotFoundException.of("Patient", req.patientId()));
+                .orElseThrow(() -> ResourceNotFoundException.of("Пациент", req.patientId()));
 
         Appointment appointment = null;
         if (req.appointmentId() != null) {
             appointment = appointmentRepository.findById(req.appointmentId())
-                    .orElseThrow(() -> ResourceNotFoundException.of("Appointment", req.appointmentId()));
+                    .orElseThrow(() -> ResourceNotFoundException.of("Термин", req.appointmentId()));
             if (!appointment.getDoctor().getId().equals(doctor.getId())) {
-                throw new AuthorizationException("Only the assigned doctor may create the medical record for this appointment");
+                throw new AuthorizationException("Само доделениот лекар може да го креира медицинскиот запис за овој термин");
             }
             if (!appointment.getPatient().getId().equals(patient.getId())) {
-                throw new ValidationException("Patient does not match the appointment");
+                throw new ValidationException("Пациентот не одговара на терминот");
             }
         }
 
@@ -115,9 +115,9 @@ public class MedicalRecordService {
         assertMutable(record);
 
         Doctor doctor = doctorRepository.findByUserId(authorUserId)
-                .orElseThrow(() -> new AuthorizationException("Only DOCTOR users can add addendums"));
+                .orElseThrow(() -> new AuthorizationException("Само корисници со улога ЛЕКАР можат да додаваат дополнувања"));
         if (!record.getDoctor().getId().equals(doctor.getId())) {
-            throw new AuthorizationException("Only the authoring doctor may add an addendum to this record");
+            throw new AuthorizationException("Само лекарот автор може да додаде дополнување на овој запис");
         }
 
         if (req.clinicalNotes() != null) record.setClinicalNotes(req.clinicalNotes());
@@ -133,14 +133,14 @@ public class MedicalRecordService {
 
     public List<MedicalRecordEvent> getHistory(Long recordId) {
         if (!medicalRecordRepository.existsById(recordId)) {
-            throw ResourceNotFoundException.of("MedicalRecord", recordId);
+            throw ResourceNotFoundException.of("Медицински запис", recordId);
         }
         return eventRepository.findByRecordIdOrderByCreatedAtAsc(recordId);
     }
 
     public MedicalRecord getById(Long id) {
         return medicalRecordRepository.findById(id)
-                .orElseThrow(() -> ResourceNotFoundException.of("MedicalRecord", id));
+                .orElseThrow(() -> ResourceNotFoundException.of("Медицински запис", id));
     }
 
     public Page<MedicalRecord> historyOf(Long patientId, Pageable pageable) {
@@ -149,14 +149,14 @@ public class MedicalRecordService {
 
     public Page<MedicalRecord> listByDoctorUserId(Long doctorUserId, Pageable pageable) {
         Doctor doctor = doctorRepository.findByUserId(doctorUserId)
-                .orElseThrow(() -> ResourceNotFoundException.of("Doctor profile", doctorUserId));
+                .orElseThrow(() -> ResourceNotFoundException.of("Лекарски профил", doctorUserId));
         return medicalRecordRepository.findByDoctorId(doctor.getId(), pageable);
     }
 
     public void assertMutable(MedicalRecord record) {
         if (Instant.now(clock).isAfter(record.getCreatedAt().plus(MUTABILITY_WINDOW))) {
             throw new ConflictException(ErrorCode.MEDICAL_RECORD_IMMUTABLE,
-                    "Medical record is older than " + MUTABILITY_WINDOW.toDays() + " days and is immutable");
+                    "Медицинскиот запис е постар од " + MUTABILITY_WINDOW.toDays() + " дена и не може да се менува");
         }
     }
 
@@ -177,7 +177,7 @@ public class MedicalRecordService {
         try {
             return objectMapper.writeValueAsString(snap);
         } catch (JsonProcessingException e) {
-            throw new ValidationException("Failed to serialize medical record snapshot: " + e.getMessage());
+            throw new ValidationException("Неуспешно зачувување на медицинскиот запис: " + e.getMessage());
         }
     }
 
@@ -186,7 +186,7 @@ public class MedicalRecordService {
         try {
             return objectMapper.writeValueAsString(req.vitalSigns());
         } catch (JsonProcessingException e) {
-            throw new ValidationException("Invalid vital signs payload: " + e.getOriginalMessage());
+            throw new ValidationException("Неисправни податоци за витални знаци: " + e.getOriginalMessage());
         }
     }
 }

@@ -36,16 +36,16 @@ public class DoctorAvailabilityService {
     @Transactional
     public List<AvailabilitySlotResponse> save(Long doctorId, List<AvailabilitySlotRequest> slots) {
         Doctor doctor = doctorRepo.findById(doctorId)
-                .orElseThrow(() -> ResourceNotFoundException.of("Doctor", doctorId));
+                .orElseThrow(() -> ResourceNotFoundException.of("Лекар", doctorId));
 
         for (AvailabilitySlotRequest slot : slots) {
             if (slot.active() && (slot.startTime() == null || slot.endTime() == null)) {
                 throw new ValidationException(ErrorCode.VALIDATION_FAILED,
-                        "Start and end time are required for active day " + slot.dayOfWeek());
+                        "Потребни се почетен и краен час за активниот ден " + slot.dayOfWeek());
             }
             if (slot.active() && !slot.endTime().isAfter(slot.startTime())) {
                 throw new ValidationException(ErrorCode.VALIDATION_FAILED,
-                        "End time must be after start time for day " + slot.dayOfWeek());
+                        "Крајниот час мора да биде по почетниот час за денот " + slot.dayOfWeek());
             }
         }
 

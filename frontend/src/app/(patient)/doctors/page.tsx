@@ -41,6 +41,27 @@ const SPECIALTIES = [
 
 type SortKey = "rating" | "experience" | "name";
 
+/**
+ * Text a doctor card is searchable by. Specializations and procedures are
+ * stored in English ("Urology") but rendered through the translation maps
+ * ("Урологија"), so the haystack has to carry both, otherwise typing what is
+ * on screen finds nothing.
+ */
+function doctorHaystack(d: DoctorResponse, t: ReturnType<typeof useT>): string {
+  const procedures = parseDoctorProcedures(d.subSpecialization);
+  return [
+    d.firstName,
+    d.lastName,
+    d.specialization,
+    t.specialties[d.specialization] ?? "",
+    d.subSpecialization ?? "",
+    procedures.map((p) => t.procedures[p] ?? "").join(" "),
+    d.hospitalName ?? "",
+  ]
+    .join(" ")
+    .toLowerCase();
+}
+
 export default function DoctorsPage() {
   const t = useT();
   const dp = t.doctorsPage;
@@ -73,10 +94,7 @@ export default function DoctorsPage() {
       if (selectedHospitalId !== null && d.hospitalId !== selectedHospitalId) return false;
       if (procedure && !parseDoctorProcedures(d.subSpecialization).some(
         (p) => p.toLowerCase() === procedure.toLowerCase())) return false;
-      if (q) {
-        const hay = `${d.firstName} ${d.lastName} ${d.specialization} ${d.hospitalName ?? ""}`.toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
+      if (q && !doctorHaystack(d, t).includes(q)) return false;
       return true;
     });
 
@@ -87,7 +105,7 @@ export default function DoctorsPage() {
     });
 
     return list;
-  }, [allDoctors, specialty, procedure, selectedHospitalId, search, sort]);
+  }, [allDoctors, specialty, procedure, selectedHospitalId, search, sort, t]);
 
   const matchingHospitalIds = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -96,14 +114,11 @@ export default function DoctorsPage() {
       if (specialty && d.specialization !== specialty) return;
       if (procedure && !parseDoctorProcedures(d.subSpecialization).some(
         (p) => p.toLowerCase() === procedure.toLowerCase())) return;
-      if (q) {
-        const hay = `${d.firstName} ${d.lastName} ${d.specialization} ${d.hospitalName ?? ""}`.toLowerCase();
-        if (!hay.includes(q)) return;
-      }
+      if (q && !doctorHaystack(d, t).includes(q)) return;
       if (d.hospitalId != null) ids.add(d.hospitalId);
     });
     return ids;
-  }, [allDoctors, specialty, procedure, search]);
+  }, [allDoctors, specialty, procedure, search, t]);
 
   const doctorCountByHospital = useMemo(() => {
     const m = new Map<number, number>();
@@ -165,7 +180,7 @@ export default function DoctorsPage() {
           <FilterGroup icon={MapPin} title={dp.procedureFilter}>
             {PROCEDURES.slice(0, 18).map((p) => (
               <Pill key={p} active={procedure === p} onClick={() => setProcedure(procedure === p ? null : p)}>
-                {p}
+                {t.procedures[p] ?? p}
               </Pill>
             ))}
           </FilterGroup>
@@ -328,7 +343,7 @@ function DoctorCard({
           {initials(doctor.firstName, doctor.lastName)}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold text-slate-900">Dr. {doctor.firstName} {doctor.lastName}</p>
+          <p className="truncate font-semibold text-slate-900">Д-р {doctor.firstName} {doctor.lastName}</p>
           <p className="text-xs font-medium text-brand-600">
             {t.specialties[doctor.specialization] ?? doctor.specialization}
           </p>
@@ -353,7 +368,7 @@ function DoctorCard({
             <div className="mt-2 flex flex-wrap gap-1">
               {procedures.slice(0, 4).map((p) => (
                 <Badge key={p} tone={highlightProcedure && p.toLowerCase() === highlightProcedure.toLowerCase() ? "info" : "neutral"}>
-                  {p}
+                  {t.procedures[p] ?? p}
                 </Badge>
               ))}
               {procedures.length > 4 && <span className="text-[10px] text-slate-400">+{procedures.length - 4}</span>}

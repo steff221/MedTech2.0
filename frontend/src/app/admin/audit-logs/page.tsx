@@ -65,7 +65,7 @@ export default function AuditLogsPage() {
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Ревизорски дневник</h1>
         <p className="mt-1 text-sm text-slate-500">
-          Пребарај по корисник или тип на ентитет. Без филтер — прикажани се последните записи.
+          Пребарај по корисник или тип на ентитет. Без филтер се прикажани последните записи.
         </p>
       </div>
 
@@ -80,7 +80,7 @@ export default function AuditLogsPage() {
             value={userIdInput}
             onChange={(e) => setUserIdInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && search()}
-            placeholder="npr. 42"
+            placeholder="пр. 42"
             className="w-36 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
           />
         </div>
@@ -121,7 +121,7 @@ export default function AuditLogsPage() {
             <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-4 py-3">Време</th>
-                <th className="px-4 py-3">User ID</th>
+                <th className="px-4 py-3">ID на корисник</th>
                 <th className="px-4 py-3">Акција</th>
                 <th className="px-4 py-3">Ентитет</th>
                 <th className="px-4 py-3">ID</th>

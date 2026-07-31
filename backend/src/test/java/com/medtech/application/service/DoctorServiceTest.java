@@ -70,7 +70,7 @@ class DoctorServiceTest {
 
         assertThatThrownBy(() -> service.createForUser(3L, createReq))
                 .isInstanceOf(ValidationException.class)
-                .hasMessageContaining("not a DOCTOR");
+                .hasMessageContaining("не е ЛЕКАР");
     }
 
     @Test
@@ -80,7 +80,7 @@ class DoctorServiceTest {
 
         assertThatThrownBy(() -> service.createForUser(2L, createReq))
                 .isInstanceOf(ConflictException.class)
-                .hasMessageContaining("already exists");
+                .hasMessageContaining("веќе постои");
     }
 
     @Test

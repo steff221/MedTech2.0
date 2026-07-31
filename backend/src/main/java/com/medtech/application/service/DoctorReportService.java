@@ -43,7 +43,7 @@ public class DoctorReportService {
     @Transactional
     public DoctorReportResponse generate(Long doctorId, GenerateReportRequest req) {
         Doctor doctor = doctorRepository.findById(doctorId)
-                .orElseThrow(() -> ResourceNotFoundException.of("Doctor", doctorId));
+                .orElseThrow(() -> ResourceNotFoundException.of("Лекар", doctorId));
 
         LocalDate[] range = computeRange(req);
         LocalDate start = range[0];
@@ -51,7 +51,7 @@ public class DoctorReportService {
 
         if (reportRepository.existsByDoctorIdAndPeriodStartAndPeriodEnd(doctorId, start, end)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Report for this period already exists.");
+                    "Веќе постои пријава за овој период.");
         }
 
         DoctorReport report = new DoctorReport();
@@ -65,17 +65,19 @@ public class DoctorReportService {
         report.setAppointmentCount(reportRepository.countAppointments(doctorId, start, end));
         report.setPrescriptionCount(reportRepository.countPrescriptions(doctorId, start, end));
         report.setStatus(ReportStatus.DRAFT);
+        // report_number is NOT NULL, so it has to be set before the insert —
+        // it comes from a sequence rather than the (not yet assigned) row id.
+        report.setReportNumber(buildNumber(req.periodType(), reportRepository.nextReportSeq(),
+                req.year(), req.periodUnit()));
 
-        DoctorReport saved = reportRepository.save(report);
-        saved.setReportNumber(buildNumber(req.periodType(), saved.getId(), req.year(), req.periodUnit()));
-        return toResponse(reportRepository.save(saved));
+        return toResponse(reportRepository.save(report));
     }
 
     @Transactional
     public DoctorReportResponse submit(Long reportId, Long doctorId) {
         DoctorReport report = getOwned(reportId, doctorId);
         if (report.getStatus() == ReportStatus.SUBMITTED) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Report already submitted.");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Пријавата е веќе поднесена.");
         }
         report.setStatus(ReportStatus.SUBMITTED);
         report.setSubmittedAt(Instant.now());
@@ -86,7 +88,7 @@ public class DoctorReportService {
     public void delete(Long reportId, Long doctorId) {
         DoctorReport report = getOwned(reportId, doctorId);
         if (report.getStatus() == ReportStatus.SUBMITTED) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot delete a submitted report.");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Не може да се избрише поднесена пријава.");
         }
         reportRepository.delete(report);
     }
@@ -95,9 +97,9 @@ public class DoctorReportService {
 
     private DoctorReport getOwned(Long reportId, Long doctorId) {
         DoctorReport report = reportRepository.findById(reportId)
-                .orElseThrow(() -> ResourceNotFoundException.of("DoctorReport", reportId));
+                .orElseThrow(() -> ResourceNotFoundException.of("Лекарска пријава", reportId));
         if (!report.getDoctor().getId().equals(doctorId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your report.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Пријавата не е ваша.");
         }
         return report;
     }
@@ -132,14 +134,14 @@ public class DoctorReportService {
         };
     }
 
-    private String buildNumber(ReportPeriodType type, Long id, int year, Integer unit) {
+    private String buildNumber(ReportPeriodType type, long seq, int year, Integer unit) {
         String prefix = switch (type) {
             case MONTHLY   -> "M";
             case QUARTERLY -> "Q";
             case ANNUAL    -> "A";
         };
         String suffix = (unit != null) ? String.format("-%02d", unit) : "";
-        return "IP-" + year + suffix + "-" + prefix + String.format("%03d", id);
+        return "IP-" + year + suffix + "-" + prefix + String.format("%03d", seq);
     }
 
     private DoctorReportResponse toResponse(DoctorReport r) {

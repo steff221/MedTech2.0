@@ -99,7 +99,7 @@ function AuditHistory({ recordId }: { recordId: number }) {
               <span className="font-medium text-slate-800">
                 {EVENT_LABELS[ev.eventType] ?? ev.eventType}
               </span>
-              {ev.note && <span className="text-slate-500"> — {ev.note}</span>}
+              {ev.note && <span className="text-slate-500">, {ev.note}</span>}
               <span className="ml-1.5 text-slate-400">
                 {fmtFull(ev.createdAt)} · {ev.authorName}
               </span>
@@ -201,7 +201,7 @@ function RecordCard({ record }: { record: MedicalRecordResponse }) {
           {record.doctorName && (
             <p className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
               <Stethoscope className="h-3 w-3" />
-              Dr. {record.doctorName}
+              Д-р {record.doctorName}
               {record.doctorSpecialization ? ` · ${record.doctorSpecialization}` : ""}
             </p>
           )}

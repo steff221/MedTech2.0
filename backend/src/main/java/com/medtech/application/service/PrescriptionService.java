@@ -54,22 +54,22 @@ public class PrescriptionService {
     @Transactional
     public Prescription issue(Long doctorUserId, IssuePrescriptionRequest req) {
         Doctor doctor = doctorRepository.findByUserId(doctorUserId)
-                .orElseThrow(() -> new AuthorizationException("Only DOCTOR users can issue prescriptions"));
+                .orElseThrow(() -> new AuthorizationException("Само корисници со улога ЛЕКАР можат да издаваат рецепти"));
         if (doctor.getStatus() != UserStatus.ACTIVE) {
-            throw new AuthorizationException("Doctor account is not active");
+            throw new AuthorizationException("Лекарската сметка не е активна");
         }
         Patient patient = patientRepository.findById(req.patientId())
-                .orElseThrow(() -> ResourceNotFoundException.of("Patient", req.patientId()));
+                .orElseThrow(() -> ResourceNotFoundException.of("Пациент", req.patientId()));
         MedicalRecord medicalRecord = null;
         if (req.medicalRecordId() != null) {
             medicalRecord = medicalRecordRepository.findById(req.medicalRecordId())
-                    .orElseThrow(() -> ResourceNotFoundException.of("MedicalRecord", req.medicalRecordId()));
+                    .orElseThrow(() -> ResourceNotFoundException.of("Медицински запис", req.medicalRecordId()));
             if (!medicalRecord.getPatient().getId().equals(patient.getId())) {
-                throw new ValidationException("Medical record does not belong to the specified patient");
+                throw new ValidationException("Медицинскиот запис не припаѓа на наведениот пациент");
             }
         }
         if (req.endDate() != null && req.endDate().isBefore(req.startDate())) {
-            throw new ValidationException("Prescription end date must be on or after start date");
+            throw new ValidationException("Датумот на завршување мора да биде ист или по датумот на почеток");
         }
 
         Prescription rx = new Prescription();
@@ -100,15 +100,15 @@ public class PrescriptionService {
         assertCallerCanRefill(rx, callerUserId);
 
         if (rx.getStatus() != PrescriptionStatus.ACTIVE) {
-            throw new ConflictException("Prescription is not ACTIVE; cannot refill");
+            throw new ConflictException("Рецептот не е АКТИВЕН и не може да се обнови");
         }
         if (rx.getEndDate() != null && rx.getEndDate().isBefore(LocalDate.now(clock))) {
             throw new ConflictException(ErrorCode.PRESCRIPTION_EXPIRED,
-                    "Prescription expired on " + rx.getEndDate());
+                    "Рецептот истече на " + rx.getEndDate());
         }
         if (rx.getRefillsUsed() >= rx.getRefillsAllowed()) {
             throw new ConflictException(ErrorCode.PRESCRIPTION_REFILLS_EXHAUSTED,
-                    "No refills remaining (" + rx.getRefillsUsed() + " / " + rx.getRefillsAllowed() + ")");
+                    "Нема преостанати обновувања (" + rx.getRefillsUsed() + " / " + rx.getRefillsAllowed() + ")");
         }
         rx.setRefillsUsed(rx.getRefillsUsed() + 1);
         log.info("Refilled prescription id={} ({}/{})",
@@ -130,28 +130,28 @@ public class PrescriptionService {
     /** Refill: only the prescribing doctor or the patient on the prescription. */
     private void assertCallerCanRefill(Prescription rx, Long callerUserId) {
         if (callerUserId == null) {
-            throw new AuthorizationException("Authentication required");
+            throw new AuthorizationException("Потребна е најава");
         }
         Long rxDoctorUserId = rx.getDoctor().getUser().getId();
         Long rxPatientUserId = rx.getPatient().getUser().getId();
         if (callerUserId.equals(rxDoctorUserId) || callerUserId.equals(rxPatientUserId)) {
             return;
         }
-        throw new AuthorizationException("Only the prescribing doctor or the patient may refill this prescription");
+        throw new AuthorizationException("Само лекарот што го препишал или пациентот може да го обнови рецептот");
     }
 
     private void assertCallerIsPrescribingDoctor(Prescription rx, Long callerUserId) {
         if (callerUserId == null) {
-            throw new AuthorizationException("Authentication required");
+            throw new AuthorizationException("Потребна е најава");
         }
         if (!callerUserId.equals(rx.getDoctor().getUser().getId())) {
-            throw new AuthorizationException("Only the prescribing doctor may cancel this prescription");
+            throw new AuthorizationException("Само лекарот што го препишал може да го откаже рецептот");
         }
     }
 
     public Prescription getById(Long id) {
         return prescriptionRepository.findById(id)
-                .orElseThrow(() -> ResourceNotFoundException.of("Prescription", id));
+                .orElseThrow(() -> ResourceNotFoundException.of("Рецепт", id));
     }
 
     public Page<Prescription> activeFor(Long patientId, Pageable pageable) {

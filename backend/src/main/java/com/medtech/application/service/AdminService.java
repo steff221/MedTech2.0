@@ -72,16 +72,16 @@ public class AdminService {
     public UserResponse inviteStaff(InviteStaffRequest req) {
         if (req.role() == UserRole.PATIENT) {
             throw new AppException(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST,
-                    "Cannot invite PATIENT accounts via admin panel") {};
+                    "Не може да се поканат сметки на ПАЦИЕНТ преку админ панелот") {};
         }
         if (userRepository.existsByEmailIgnoreCase(req.email())) {
-            throw new ConflictException(ErrorCode.AUTH_EMAIL_TAKEN, "Email already registered");
+            throw new ConflictException(ErrorCode.AUTH_EMAIL_TAKEN, "Е-поштата е веќе регистрирана");
         }
         boolean isDoctorRole = req.role() == UserRole.DOCTOR || req.role() == UserRole.GENERAL_PRACTITIONER;
         if (isDoctorRole) {
             if (req.hospitalId() == null || req.licenseNumber() == null || req.specialization() == null) {
                 throw new AppException(ErrorCode.VALIDATION_FAILED, HttpStatus.BAD_REQUEST,
-                        "hospitalId, licenseNumber and specialization are required for DOCTOR/GP invites") {};
+                        "hospitalId, licenseNumber и specialization се задолжителни за покани за ЛЕКАР/матичен лекар") {};
             }
         }
 
@@ -100,7 +100,7 @@ public class AdminService {
         // Auto-create Doctor profile for DOCTOR and GENERAL_PRACTITIONER roles
         if (isDoctorRole) {
             var hospital = hospitalRepository.findById(req.hospitalId())
-                    .orElseThrow(() -> ResourceNotFoundException.of("Hospital", req.hospitalId()));
+                    .orElseThrow(() -> ResourceNotFoundException.of("Болница", req.hospitalId()));
             Doctor doctor = new Doctor();
             doctor.setUser(user);
             doctor.setHospital(hospital);
@@ -131,10 +131,10 @@ public class AdminService {
     @Transactional
     public UserResponse setStatus(Long userId, UserStatus newStatus) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> ResourceNotFoundException.of("User", userId));
+                .orElseThrow(() -> ResourceNotFoundException.of("Корисник", userId));
         if (user.getRole() == UserRole.ADMIN) {
             throw new AppException(ErrorCode.AUTH_FORBIDDEN, HttpStatus.FORBIDDEN,
-                    "Cannot suspend another admin account") {};
+                    "Не може да се суспендира друга администраторска сметка") {};
         }
         user.setStatus(newStatus);
         userRepository.save(user);
@@ -145,7 +145,7 @@ public class AdminService {
     @Transactional
     public UserResponse resendInvite(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> ResourceNotFoundException.of("User", userId));
+                .orElseThrow(() -> ResourceNotFoundException.of("Корисник", userId));
 
         passwordResetTokenRepository.invalidateAllForUser(user.getId(), Instant.now());
 

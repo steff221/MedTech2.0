@@ -62,7 +62,7 @@ export function Mkb10Autocomplete({ value, onChange, label = "Diagnosis (MKB10)"
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
         <input
           type="text"
-          value={open ? query : (value ? `${value.code} — ${value.label}` : query)}
+          value={open ? query : (value ? `${value.code} · ${value.label}` : query)}
           onChange={(e) => {
             setQuery(e.target.value);
             if (!open) setOpen(true);
@@ -71,7 +71,7 @@ export function Mkb10Autocomplete({ value, onChange, label = "Diagnosis (MKB10)"
             setOpen(true);
             setQuery("");
           }}
-          placeholder="Search code or condition…"
+          placeholder="Барај код или состојба…"
           className="w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
         />
         {loading && open && (

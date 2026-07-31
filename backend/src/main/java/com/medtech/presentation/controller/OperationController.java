@@ -46,7 +46,7 @@ public class OperationController {
     @Operation(summary = "Schedule a surgical operation")
     public ResponseEntity<OperationResponse> schedule(@Valid @RequestBody ScheduleOperationRequest request) {
         Long surgeonUserId = SecurityUtils.currentUserId()
-                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+                .orElseThrow(() -> new AuthorizationException("Потребна е најава"));
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(mapper.toResponse(operationService.schedule(surgeonUserId, request)));
     }
@@ -57,7 +57,7 @@ public class OperationController {
     public ResponseEntity<OperationResponse> updateStatus(@PathVariable Long id,
                                                           @Valid @RequestBody UpdateOperationStatusRequest request) {
         Long surgeonUserId = SecurityUtils.currentUserId()
-                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+                .orElseThrow(() -> new AuthorizationException("Потребна е најава"));
         return ResponseEntity.ok(mapper.toResponse(operationService.updateStatus(id, surgeonUserId, request)));
     }
 
@@ -75,7 +75,7 @@ public class OperationController {
     @Operation(summary = "List the current doctor's operations (newest first)")
     public ResponseEntity<Page<OperationResponse>> myOperations(Pageable pageable) {
         Long userId = SecurityUtils.currentUserId()
-                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+                .orElseThrow(() -> new AuthorizationException("Потребна е најава"));
         return ResponseEntity.ok(operationService.forCurrentDoctor(userId, pageable).map(mapper::toResponse));
     }
 

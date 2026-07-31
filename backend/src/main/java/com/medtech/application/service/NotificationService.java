@@ -46,7 +46,7 @@ public class NotificationService {
     public Notification markRead(Long notificationId, Long userId) {
         Notification n = notificationRepository.findById(notificationId)
                 .filter(notif -> notif.getUser().getId().equals(userId))
-                .orElseThrow(() -> ResourceNotFoundException.of("Notification", notificationId));
+                .orElseThrow(() -> ResourceNotFoundException.of("Известување", notificationId));
         n.setRead(true);
         return notificationRepository.save(n);
     }
@@ -59,7 +59,7 @@ public class NotificationService {
     @Transactional
     public void create(Long userId, String type, String title, String body, Long referenceId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> ResourceNotFoundException.of("User", userId));
+                .orElseThrow(() -> ResourceNotFoundException.of("Корисник", userId));
         notificationRepository.save(Notification.create(user, type, title, body, referenceId));
 
         // Push SSE event AFTER commit — count is fetched post-commit so it

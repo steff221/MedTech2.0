@@ -73,7 +73,7 @@ public class PatientController {
     public ResponseEntity<org.springframework.data.domain.Page<PatientResponse>> myPatients(
             @org.springframework.data.web.PageableDefault(size = 20) Pageable pageable) {
         Long doctorUserId = SecurityUtils.currentUserId()
-                .orElseThrow(() -> new com.medtech.infrastructure.exception.AuthorizationException("Authentication required"));
+                .orElseThrow(() -> new com.medtech.infrastructure.exception.AuthorizationException("Потребна е најава"));
         Pageable capped = org.springframework.data.domain.PageRequest.of(
                 pageable.getPageNumber(),
                 Math.min(pageable.getPageSize(), 100),
@@ -96,7 +96,7 @@ public class PatientController {
     @Operation(summary = "Create the patient profile for the currently authenticated PATIENT user")
     public ResponseEntity<PatientResponse> createSelfProfile(@Valid @RequestBody CreatePatientRequest request) {
         Long userId = SecurityUtils.currentUserId()
-                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+                .orElseThrow(() -> new AuthorizationException("Потребна е најава"));
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(patientMapper.toResponse(patientService.createForUser(userId, request)));
     }
@@ -106,7 +106,7 @@ public class PatientController {
     @Operation(summary = "Return the patient profile of the current user")
     public ResponseEntity<PatientResponse> me() {
         Long userId = SecurityUtils.currentUserId()
-                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+                .orElseThrow(() -> new AuthorizationException("Потребна е најава"));
         return ResponseEntity.ok(patientMapper.toResponse(patientService.getByUserId(userId)));
     }
 
@@ -129,10 +129,10 @@ public class PatientController {
                                                   @Valid @RequestBody UpdatePatientRequest request) {
         if (SecurityUtils.hasRole("PATIENT")) {
             Long userId = SecurityUtils.currentUserId()
-                    .orElseThrow(() -> new AuthorizationException("Authentication required"));
+                    .orElseThrow(() -> new AuthorizationException("Потребна е најава"));
             Patient owned = patientService.getByUserId(userId);
             if (!owned.getId().equals(id)) {
-                throw new AuthorizationException("Patients may only update their own profile");
+                throw new AuthorizationException("Пациентите можат да го уредуваат само сопствениот профил");
             }
         }
         return ResponseEntity.ok(patientMapper.toResponse(patientService.update(id, request)));
@@ -143,7 +143,7 @@ public class PatientController {
     @Operation(summary = "Full machine-readable export of the current patient's data (GDPR Art. 15/20)")
     public ResponseEntity<PatientDataExportResponse> exportMyData(HttpServletRequest request) {
         Long userId = SecurityUtils.currentUserId()
-                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+                .orElseThrow(() -> new AuthorizationException("Потребна е најава"));
         PatientDataExportResponse export = exportService.exportForUser(userId);
         auditLogService.recordByUserId(userId, AuditAction.VIEW, "Patient", export.profile().id(),
                 "Full data export (GDPR subject access)", clientIp(request),

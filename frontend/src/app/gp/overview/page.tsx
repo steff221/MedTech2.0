@@ -72,7 +72,7 @@ export default function GPOverviewPage() {
               title={t.doctorOverview.appointmentsByHospital}
               subtitle={t.doctorOverview.last30days}
               orientation="horizontal"
-              gradient={["#0d9488", "#22d3ee"]}
+              gradient={["#1e5f63", "#22d3ee"]}
               data={(data?.appointmentsByHospital ?? []).map((h) => ({
                 label: h.hospital,
                 sub: h.city,
@@ -83,7 +83,7 @@ export default function GPOverviewPage() {
               title={t.doctorOverview.prescriptionsByDay}
               subtitle={t.doctorOverview.last7days}
               orientation="vertical"
-              gradient={["#14b8a6", "#38bdf8"]}
+              gradient={["#337477", "#38bdf8"]}
               data={(data?.prescriptionsByDay ?? []).map((d) => ({
                 label: format(parseISO(d.day), "EEE"),
                 sub: format(parseISO(d.day), "d MMM"),

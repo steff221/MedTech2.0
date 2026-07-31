@@ -1,19 +1,41 @@
 // Главен (root) layout на апликацијата — заеднички за сите страници.
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Bitter, IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import { Providers } from "./providers";
 import { ServiceWorkerRegistration } from "@/components/common/ServiceWorkerRegistration";
 import "./globals.css";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
+// Every face loads the Cyrillic subset. The interface is Macedonian first, and
+// the previous Inter setup requested "latin" only — so all Cyrillic text was
+// silently falling back to a system font.
+
+// Display: slab serif. Documentary and institutional, like a form heading.
+const bitter = Bitter({
+  subsets: ["latin", "cyrillic"],
+  variable: "--font-bitter",
+  weight: ["400", "600", "700"],
+  display: "swap",
+});
+
+// Body and UI.
+const plexSans = IBM_Plex_Sans({
+  subsets: ["latin", "cyrillic"],
+  variable: "--font-plex-sans",
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
+
+// MKB-10 codes, record numbers, vitals, timestamps.
+const plexMono = IBM_Plex_Mono({
+  subsets: ["latin", "cyrillic"],
+  variable: "--font-plex-mono",
+  weight: ["400", "500", "600"],
   display: "swap",
 });
 
 export const metadata: Metadata = {
   title: {
-    default: "MedTech — Здравствена платформа",
+    default: "MedTech · Здравствена платформа",
     template: "%s · MedTech",
   },
   description: "Закажи прегледи, следи рецепти и пристапи до медицинската историја.",
@@ -23,7 +45,7 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "MedTech",
   },
-  themeColor: "#10b981",
+  themeColor: "#10262b",
   viewport: {
     width: "device-width",
     initialScale: 1,
@@ -41,7 +63,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="mk" className={inter.variable}>
+    <html
+      lang="mk"
+      className={`${bitter.variable} ${plexSans.variable} ${plexMono.variable}`}
+    >
       <body className="font-sans">
         <ServiceWorkerRegistration />
         <Providers>{children}</Providers>

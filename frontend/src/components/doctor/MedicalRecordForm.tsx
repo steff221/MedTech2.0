@@ -16,7 +16,7 @@ import { extractErrorMessage } from "@/services/api";
 import { medicalRecordService } from "@/services/medicalRecord.service";
 
 const schema = z.object({
-  clinicalNotes: z.string().min(1, "Clinical notes required"),
+  clinicalNotes: z.string().min(1, "Клиничките белешки се задолжителни"),
   assessment: z.string().optional(),
   plan: z.string().optional(),
   bloodPressure: z.string().max(20).optional().or(z.literal("")),
@@ -44,6 +44,7 @@ export function MedicalRecordForm({
   appointmentId,
 }: MedicalRecordFormProps) {
   const t = useT();
+  const f = t.medicalRecordForm;
   const qc = useQueryClient();
   const [mkb10, setMkb10] = useState<{ code: string; label: string } | null>(null);
   const {
@@ -87,30 +88,30 @@ export function MedicalRecordForm({
     <Modal
       open={open}
       onClose={handleClose}
-      title="New medical record"
-      description={`Patient: ${patientName}`}
+      title={f.title}
+      description={`${f.patientPrefix}: ${patientName}`}
       size="lg"
       footer={
         <>
           <Button variant="secondary" onClick={handleClose}>
-            Cancel
+            {f.cancel}
           </Button>
           <Button
             onClick={handleSubmit((d) => mutation.mutate(d))}
             loading={mutation.isPending}
           >
-            Save record
+            {f.save}
           </Button>
         </>
       }
     >
       <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
         <section>
-          <SectionTitle index="S" title="Subjective" subtitle="Patient-reported symptoms and history" />
+          <SectionTitle index="S" title={f.subjectiveTitle} subtitle={f.subjectiveSubtitle} />
           <textarea
             {...register("clinicalNotes")}
             rows={4}
-            placeholder="Chief complaint, history of present illness, ROS…"
+            placeholder={f.subjectivePlaceholder}
             className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
           />
           {errors.clinicalNotes && (
@@ -119,36 +120,36 @@ export function MedicalRecordForm({
         </section>
 
         <section>
-          <SectionTitle index="O" title="Objective" subtitle="Vital signs & exam findings" />
+          <SectionTitle index="O" title={f.objectiveTitle} subtitle={f.objectiveSubtitle} />
           <div className="mt-2 grid grid-cols-2 gap-3 md:grid-cols-5">
             <Input
-              label="BP"
+              label={f.bp}
               placeholder="120/80"
               {...register("bloodPressure")}
               error={errors.bloodPressure?.message}
             />
             <Input
-              label="HR (bpm)"
+              label={f.hr}
               type="number"
               {...register("heartRate")}
               error={errors.heartRate?.message}
             />
             <Input
-              label="Temp (°C)"
+              label={f.temp}
               type="number"
               step="0.1"
               {...register("temperature")}
               error={errors.temperature?.message}
             />
             <Input
-              label="Weight (kg)"
+              label={f.weight}
               type="number"
               step="0.1"
               {...register("weight")}
               error={errors.weight?.message}
             />
             <Input
-              label="Height (cm)"
+              label={f.height}
               type="number"
               step="0.1"
               {...register("height")}
@@ -158,17 +159,17 @@ export function MedicalRecordForm({
         </section>
 
         <section>
-          <SectionTitle index="A" title="Assessment" subtitle="Diagnosis & clinical impression" />
+          <SectionTitle index="A" title={f.assessmentTitle} subtitle={f.assessmentSubtitle} />
           <div className="mt-2 grid grid-cols-1 gap-3">
             <Mkb10Autocomplete value={mkb10} onChange={setMkb10} />
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                Clinical impression
+                {f.impressionLabel}
               </label>
               <textarea
                 {...register("assessment")}
                 rows={2}
-                placeholder="Differential considerations, severity, contributing factors…"
+                placeholder={f.impressionPlaceholder}
                 className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
               />
             </div>
@@ -176,11 +177,11 @@ export function MedicalRecordForm({
         </section>
 
         <section>
-          <SectionTitle index="P" title="Plan" subtitle="Treatment, follow-up, patient education" />
+          <SectionTitle index="P" title={f.planTitle} subtitle={f.planSubtitle} />
           <textarea
             {...register("plan")}
             rows={3}
-            placeholder="Medications, lifestyle, follow-up timing, referrals…"
+            placeholder={f.planPlaceholder}
             className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
           />
         </section>

@@ -25,12 +25,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         <label
           htmlFor={inputId}
           className={cn(
-            "mb-1.5 block text-sm font-medium transition-colors duration-200",
+            // Field labels read as form captions: mono, letterspaced, small.
+            "eyebrow mb-1.5 block transition-colors duration-150",
             error
-              ? "text-rose-600"
+              ? "!text-rose-600"
               : focused
-                ? "text-brand-600"
-                : "text-slate-700",
+                ? "!text-brand-600"
+                : "!text-slate-600",
           )}
         >
           {label}
@@ -50,13 +51,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           onBlur?.(e);
         }}
         className={cn(
-          "w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400",
-          // Slightly faster than 200ms feels snappier; ring grows with a brief shadow
-          "transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-offset-0",
-          "focus:shadow-[0_0_0_4px_rgba(6,182,212,0.06)]",
+          "w-full rounded border bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400",
+          // The stray cyan focus glow is gone; the border simply inks in.
+          "transition-colors duration-150 ease-out focus:outline-none focus:ring-1 focus:ring-offset-0",
           error
-            ? "border-rose-400 focus:border-rose-500 focus:ring-rose-200/60"
-            : "border-slate-300 focus:border-brand-500 focus:ring-brand-200/60",
+            ? "border-rose-400 focus:border-rose-500 focus:ring-rose-300"
+            : "border-slate-300 focus:border-brand-600 focus:ring-brand-300",
           className,
         )}
         {...props}

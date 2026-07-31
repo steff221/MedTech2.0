@@ -41,19 +41,19 @@ public class DoctorService {
     @Transactional
     public Doctor createForUser(Long userId, CreateDoctorRequest req) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> ResourceNotFoundException.of("User", userId));
+                .orElseThrow(() -> ResourceNotFoundException.of("Корисник", userId));
         if (user.getRole() != UserRole.DOCTOR) {
-            throw new ValidationException("User " + userId + " is not a DOCTOR");
+            throw new ValidationException("Корисникот " + userId + " не е ЛЕКАР");
         }
         doctorRepository.findByUserId(userId).ifPresent(d -> {
-            throw new ConflictException("Doctor profile already exists for user " + userId);
+            throw new ConflictException("Лекарски профил веќе постои за корисникот " + userId);
         });
         doctorRepository.findByLicenseNumber(req.licenseNumber()).ifPresent(d -> {
-            throw new ConflictException("Licence number already registered: " + req.licenseNumber());
+            throw new ConflictException("Бројот на лиценца е веќе регистриран: " + req.licenseNumber());
         });
 
         Hospital hospital = hospitalRepository.findById(req.hospitalId())
-                .orElseThrow(() -> ResourceNotFoundException.of("Hospital", req.hospitalId()));
+                .orElseThrow(() -> ResourceNotFoundException.of("Болница", req.hospitalId()));
 
         Doctor doctor = new Doctor();
         doctor.setUser(user);
@@ -78,12 +78,12 @@ public class DoctorService {
     @Cacheable(value = DOCTOR_BY_ID, key = "#id")
     public Doctor getById(Long id) {
         return doctorRepository.findById(id)
-                .orElseThrow(() -> ResourceNotFoundException.of("Doctor", id));
+                .orElseThrow(() -> ResourceNotFoundException.of("Лекар", id));
     }
 
     public Doctor getByUserId(Long userId) {
         return doctorRepository.findByUserId(userId)
-                .orElseThrow(() -> ResourceNotFoundException.of("Doctor (by userId)", userId));
+                .orElseThrow(() -> ResourceNotFoundException.of("Лекар (по userId)", userId));
     }
 
     @Cacheable(value = DOCTORS_LIST, key = "{#specialization, #hospitalId, #city, #pageable.pageNumber, #pageable.pageSize}")
@@ -95,7 +95,7 @@ public class DoctorService {
     @CacheEvict(value = {DOCTORS_LIST, DOCTOR_BY_ID}, allEntries = true)
     public Doctor updateForUser(Long userId, UpdateDoctorRequest req) {
         Doctor doctor = doctorRepository.findByUserId(userId)
-                .orElseThrow(() -> ResourceNotFoundException.of("Doctor (by userId)", userId));
+                .orElseThrow(() -> ResourceNotFoundException.of("Лекар (по userId)", userId));
 
         if (req.qualification()     != null) doctor.setQualification(req.qualification());
         if (req.experienceYears()   != null) doctor.setExperienceYears(req.experienceYears());

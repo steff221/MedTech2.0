@@ -5,6 +5,7 @@ import com.medtech.infrastructure.security.JwtAuthenticationFilter;
 import com.medtech.infrastructure.security.JwtTokenProvider;
 import com.medtech.infrastructure.security.RateLimitFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -49,8 +50,11 @@ public class SecurityConfig {
      * never instantiate this filter or its {@link JwtTokenProvider} dependency.
      */
     @Bean
-    public RateLimitFilter rateLimitFilter(StringRedisTemplate redisTemplate) {
-        return new RateLimitFilter(redisTemplate);
+    public RateLimitFilter rateLimitFilter(
+            StringRedisTemplate redisTemplate,
+            @Value("${medtech.security.rate-limit.capacity:10}") int capacity,
+            @Value("${medtech.security.rate-limit.window-seconds:60}") int windowSeconds) {
+        return new RateLimitFilter(redisTemplate, capacity, windowSeconds);
     }
 
     @Bean

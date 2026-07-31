@@ -49,12 +49,12 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             <AlertTriangle className="h-5 w-5" />
           </div>
           <h2 className="text-base font-semibold text-slate-900">
-            Something went wrong on this page
+            Нешто тргна наопаку на оваа страница
           </h2>
           <p className="mt-1 text-sm text-slate-500">
             {process.env.NODE_ENV !== "production"
-              ? (this.state.error?.message ?? "Unexpected error.")
-              : "An unexpected error occurred. Please try again or go home."}
+              ? (this.state.error?.message ?? "Неочекувана грешка.")
+              : "Настана неочекувана грешка. Обидете се повторно или вратете се на почетната."}
           </p>
           <div className="mt-5 flex justify-center gap-2">
             <button
@@ -62,13 +62,13 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               onClick={this.reset}
               className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-sm font-semibold text-white hover:bg-slate-800"
             >
-              <RefreshCcw className="h-3.5 w-3.5" /> Try again
+              <RefreshCcw className="h-3.5 w-3.5" /> Обиди се повторно
             </button>
             <a
               href="/"
               className="rounded-lg border border-slate-300 px-3.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
             >
-              Home
+              Почетна
             </a>
           </div>
         </div>

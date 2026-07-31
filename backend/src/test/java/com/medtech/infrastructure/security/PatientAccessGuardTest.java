@@ -75,7 +75,7 @@ class PatientAccessGuardTest {
 
         assertThatThrownBy(() -> guard.assertCanAccessPatient(PATIENT_ID))
                 .isInstanceOf(AuthorizationException.class)
-                .hasMessageContaining("Authentication required");
+                .hasMessageContaining("Потребна е најава");
     }
 
     // ── ADMIN ─────────────────────────────────────────────────────────────────
@@ -107,7 +107,7 @@ class PatientAccessGuardTest {
 
         assertThatThrownBy(() -> guard.assertCanAccessPatient(PATIENT_ID))
                 .isInstanceOf(AuthorizationException.class)
-                .hasMessageContaining("No care relationship");
+                .hasMessageContaining("Не постои однос на лекување");
     }
 
     // ── GENERAL_PRACTITIONER (shares the clinician branch with DOCTOR) ─────────
@@ -127,7 +127,7 @@ class PatientAccessGuardTest {
 
         assertThatThrownBy(() -> guard.assertCanAccessPatient(PATIENT_ID))
                 .isInstanceOf(AuthorizationException.class)
-                .hasMessageContaining("No care relationship");
+                .hasMessageContaining("Не постои однос на лекување");
     }
 
     // ── NURSE (PHI access deliberately disabled) ───────────────────────────────
@@ -138,7 +138,7 @@ class PatientAccessGuardTest {
 
         assertThatThrownBy(() -> guard.assertCanAccessPatient(PATIENT_ID))
                 .isInstanceOf(AuthorizationException.class)
-                .hasMessageContaining("not yet enabled");
+                .hasMessageContaining("сè уште не е овозможен");
 
         // The deny must short-circuit before any care-relationship lookup.
         verify(appointmentRepository, never()).hasCareRelationship(Mockito.anyLong(), Mockito.anyLong());
@@ -165,7 +165,7 @@ class PatientAccessGuardTest {
 
         assertThatThrownBy(() -> guard.assertCanAccessPatient(PATIENT_ID))
                 .isInstanceOf(AuthorizationException.class)
-                .hasMessageContaining("their own records");
+                .hasMessageContaining("сопствените записи");
     }
 
     // ── any other authenticated role ───────────────────────────────────────────
@@ -175,6 +175,6 @@ class PatientAccessGuardTest {
         // No role granted (default stub returns false for every hasRole check).
         assertThatThrownBy(() -> guard.assertCanAccessPatient(PATIENT_ID))
                 .isInstanceOf(AuthorizationException.class)
-                .hasMessageContaining("Insufficient privileges");
+                .hasMessageContaining("Немате доволно привилегии");
     }
 }

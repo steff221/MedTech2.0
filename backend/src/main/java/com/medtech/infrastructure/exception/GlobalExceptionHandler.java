@@ -64,28 +64,28 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleNotReadable(HttpMessageNotReadableException ex,
                                                            HttpServletRequest req) {
         return build(HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION_FAILED,
-                "Malformed or unreadable request body", req, null);
+                "Неисправно или нечитливо тело на барањето", req, null);
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex,
                                                             HttpServletRequest req) {
         return build(HttpStatus.BAD_REQUEST, ErrorCode.BAD_REQUEST,
-                "Invalid value for parameter '" + ex.getName() + "'", req, null);
+                "Неисправна вредност за параметарот '" + ex.getName() + "'", req, null);
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<ErrorResponse> handleMissingParam(MissingServletRequestParameterException ex,
                                                             HttpServletRequest req) {
         return build(HttpStatus.BAD_REQUEST, ErrorCode.BAD_REQUEST,
-                "Missing required parameter '" + ex.getParameterName() + "'", req, null);
+                "Недостасува задолжителниот параметар '" + ex.getParameterName() + "'", req, null);
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<ErrorResponse> handleNoResource(NoResourceFoundException ex,
                                                           HttpServletRequest req) {
         return build(HttpStatus.NOT_FOUND, ErrorCode.RESOURCE_NOT_FOUND,
-                "Resource not found", req, null);
+                "Ресурсот не е пронајден", req, null);
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
@@ -99,26 +99,26 @@ public class GlobalExceptionHandler {
                                                              HttpServletRequest req) {
         log.warn("Data integrity violation at {}: {}", req.getRequestURI(), ex.getMostSpecificCause().getMessage());
         return build(HttpStatus.CONFLICT, ErrorCode.CONFLICT,
-                "Data integrity violation", req, null);
+                "Нарушен интегритет на податоците", req, null);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex, HttpServletRequest req) {
         return build(HttpStatus.FORBIDDEN, ErrorCode.AUTH_FORBIDDEN,
-                "Access denied", req, null);
+                "Пристапот е одбиен", req, null);
     }
 
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ErrorResponse> handleAuth(AuthenticationException ex, HttpServletRequest req) {
         return build(HttpStatus.UNAUTHORIZED, ErrorCode.AUTH_TOKEN_INVALID,
-                "Authentication required", req, null);
+                "Потребна е најава", req, null);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleAny(Exception ex, HttpServletRequest req) {
         log.error("Unhandled exception at {}", req.getRequestURI(), ex);
         return build(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.INTERNAL_ERROR,
-                "An unexpected error occurred", req, null);
+                "Настана неочекувана грешка", req, null);
     }
 
     private static ResponseEntity<ErrorResponse> build(HttpStatus status,

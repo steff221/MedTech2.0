@@ -80,7 +80,7 @@ function InviteModal({ onClose }: { onClose: () => void }) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600">Ime</label>
+              <label className="mb-1 block text-xs font-medium text-slate-600">Име</label>
               <input className={input} value={form.firstName}
                 onChange={(e) => set("firstName", e.target.value)} required />
             </div>
@@ -121,7 +121,7 @@ function InviteModal({ onClose }: { onClose: () => void }) {
                   value={form.hospitalId ?? ""}
                   onChange={(e) => set("hospitalId", e.target.value ? Number(e.target.value) : undefined)}
                   required>
-                  <option value="">— Изберете болница —</option>
+                  <option value="">Изберете болница</option>
                   {hospitals.data?.map((h) => (
                     <option key={h.id} value={h.id}>{h.name}, {h.city}</option>
                   ))}
@@ -224,7 +224,7 @@ export default function AdminPage() {
             <option value="">Сите болници</option>
             {hospitals.data?.map((h) => (
               <option key={h.id} value={h.id}>
-                {h.name} — {h.city}
+                {h.name}, {h.city}
               </option>
             ))}
           </select>

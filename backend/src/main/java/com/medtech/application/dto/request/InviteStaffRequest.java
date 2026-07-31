@@ -26,7 +26,7 @@ public record InviteStaffRequest(
         @Size(max = 20)
         String phoneNumber,
 
-        @NotNull(message = "Role is required (DOCTOR or NURSE)")
+        @NotNull(message = "Улогата е задолжителна (DOCTOR или NURSE)")
         UserRole role,
 
         // Doctor-specific — required when role = DOCTOR

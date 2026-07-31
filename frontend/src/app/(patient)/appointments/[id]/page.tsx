@@ -66,7 +66,7 @@ export default function AppointmentDetailPage() {
   });
 
   const cancelMutation = useMutation({
-    mutationFn: () => appointmentService.cancel(Number(id), "Cancelled by patient"),
+    mutationFn: () => appointmentService.cancel(Number(id), "Откажано од пациентот"),
     onSuccess: () => {
       toast.success(t.appointments.cancelSuccess);
       qc.invalidateQueries({ queryKey: ["appointments"] });

@@ -17,7 +17,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ValidEgn {
-    String message() default "Invalid EGN/EMBG — must be exactly 13 digits";
+    String message() default "Неисправен ЕМБГ: мора да има точно 13 цифри";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 }

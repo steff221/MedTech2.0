@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mvn -B test -Dtest=AuthControllerTest)",
+      "Bash(xargs basename -a)"
+    ]
+  }
+}

@@ -72,7 +72,7 @@ export function useAuth() {
       try {
         const res = await authService.register(body);
         setAuth(res.user, res.accessToken);
-        toast.success("Account created. Welcome to MedTech.");
+        toast.success("Профилот е креиран. Добредојдовте во MedTech.");
         router.push(homeFor(res.user.role));
         return res;
       } catch (err) {

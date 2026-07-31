@@ -121,9 +121,9 @@ public class AppointmentController {
     public ResponseEntity<AppointmentResponse> complete(@PathVariable Long id) {
         Appointment appt = appointmentService.getById(id);
         Long currentUserId = SecurityUtils.currentUserId()
-                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+                .orElseThrow(() -> new AuthorizationException("Потребна е најава"));
         if (!appt.getDoctor().getUser().getId().equals(currentUserId)) {
-            throw new AuthorizationException("You are not the assigned doctor for this appointment");
+            throw new AuthorizationException("Вие не сте доделениот лекар за овој термин");
         }
         return ResponseEntity.ok(mapper.toResponse(appointmentService.complete(id)));
     }
@@ -134,11 +134,11 @@ public class AppointmentController {
     public ResponseEntity<AppointmentResponse> markNoShow(@PathVariable Long id) {
         Appointment appt = appointmentService.getById(id);
         Long currentUserId = SecurityUtils.currentUserId()
-                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+                .orElseThrow(() -> new AuthorizationException("Потребна е најава"));
         boolean isDoctor = appt.getDoctor().getUser().getId().equals(currentUserId);
         boolean isNurse  = SecurityUtils.hasRole("NURSE");
         if (!isDoctor && !isNurse) {
-            throw new AuthorizationException("You are not the assigned doctor for this appointment");
+            throw new AuthorizationException("Вие не сте доделениот лекар за овој термин");
         }
         return ResponseEntity.ok(mapper.toResponse(appointmentService.markNoShow(id)));
     }
@@ -150,9 +150,9 @@ public class AppointmentController {
                                                            @Valid @RequestBody SetVideoUrlRequest request) {
         Appointment appt = appointmentService.getById(id);
         Long currentUserId = SecurityUtils.currentUserId()
-                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+                .orElseThrow(() -> new AuthorizationException("Потребна е најава"));
         if (!appt.getDoctor().getUser().getId().equals(currentUserId)) {
-            throw new AuthorizationException("You are not the assigned doctor for this appointment");
+            throw new AuthorizationException("Вие не сте доделениот лекар за овој термин");
         }
         return ResponseEntity.ok(mapper.toResponse(appointmentService.setVideoCallUrl(id, request.videoCallUrl())));
     }
@@ -172,22 +172,22 @@ public class AppointmentController {
     private void assertCanActOnAppointment(Appointment appt) {
         if (SecurityUtils.hasRole("ADMIN") || SecurityUtils.hasRole("NURSE")) return;
         Long currentUserId = SecurityUtils.currentUserId()
-                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+                .orElseThrow(() -> new AuthorizationException("Потребна е најава"));
         boolean isPatient = appt.getPatient().getUser().getId().equals(currentUserId);
         boolean isDoctor  = appt.getDoctor().getUser().getId().equals(currentUserId);
         if (!isPatient && !isDoctor) {
-            throw new AuthorizationException("You are not authorized to modify this appointment");
+            throw new AuthorizationException("Немате дозвола да го измените овој термин");
         }
     }
 
     private void assertCanCancelAppointment(Appointment appt) {
         if (SecurityUtils.hasRole("ADMIN") || SecurityUtils.hasRole("NURSE")) return;
         Long currentUserId = SecurityUtils.currentUserId()
-                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+                .orElseThrow(() -> new AuthorizationException("Потребна е најава"));
         boolean isPatient = appt.getPatient().getUser().getId().equals(currentUserId);
         boolean isDoctor  = appt.getDoctor().getUser().getId().equals(currentUserId);
         if (!isPatient && !isDoctor) {
-            throw new AuthorizationException("You are not authorized to cancel this appointment");
+            throw new AuthorizationException("Немате дозвола да го откажете овој термин");
         }
     }
 }

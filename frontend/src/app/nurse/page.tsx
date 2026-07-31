@@ -64,7 +64,7 @@ function VitalsTab() {
     const win = window.open("", "_blank", "width=700,height=600");
     if (!win) return;
     win.document.write(`<!DOCTYPE html><html><head>
-      <meta charset="utf-8"/><title>Витали — ${selectedPatient.firstName} ${selectedPatient.lastName}</title>
+      <meta charset="utf-8"/><title>Витали · ${selectedPatient.firstName} ${selectedPatient.lastName}</title>
       <style>
         body{font-family:Arial,sans-serif;padding:40px;color:#1e293b;max-width:600px;margin:0 auto}
         h1{font-size:20px;margin-bottom:4px}
@@ -460,7 +460,7 @@ export default function NurseDashboard() {
             >
               <option value="">{n.allHospitals}</option>
               {hospitals.data?.map((h) => (
-                <option key={h.id} value={h.id}>{h.name} — {h.city}</option>
+                <option key={h.id} value={h.id}>{h.name}, {h.city}</option>
               ))}
             </select>
             <div className="relative">
@@ -523,7 +523,7 @@ export default function NurseDashboard() {
           <div className="flex items-center gap-3 border-b border-slate-100 px-6 py-4">
             <Calendar className="h-5 w-5 text-emerald-500" />
             <h2 className="text-base font-semibold text-slate-800">
-              {n.todayTitle} — {format(new Date(), "dd.MM.yyyy")}
+              {n.todayTitle}, {format(new Date(), "dd.MM.yyyy")}
             </h2>
             {todayAppts.data && (
               <span className="ml-auto rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">

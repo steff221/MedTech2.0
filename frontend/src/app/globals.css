@@ -3,14 +3,17 @@
 @tailwind utilities;
 
 /* ── Design tokens ───────────────────────────────────────────────────────── */
+/* "The clinical record" — surgical drape teal, carmine seals, cool paper. */
 :root {
-  --bg:         #f8fafc;
+  --bg:         #eceeec; /* cool clinical paper, deliberately not warm cream */
   --surface:    #ffffff;
-  --text:       #0f172a;
-  --text-muted: #64748b;
-  --border:     #e2e8f0;
-  --brand:      #10b981;
-  --brand-dark: #059669;
+  --text:       #10262b; /* ink: near-black with a teal cast */
+  --text-muted: #6b7a7c;
+  --border:     #d3dada;
+  --brand:      #8e2436; /* carmine */
+  --brand-dark: #741c2c;
+  --drape:      #1e5f63; /* structural chrome */
+  --brass:      #c08a3e; /* marginalia */
 }
 
 /* ── Base ────────────────────────────────────────────────────────────────── */
@@ -26,17 +29,30 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Headings take the slab face. Set here so all 48 routes inherit it without
+   touching each page's markup. */
+h1, h2, h3, h4 {
+  font-family: var(--font-bitter), Georgia, serif;
+  letter-spacing: -0.008em;
+}
+
+/* Tabular figures wherever numbers matter — counts, vitals, dates stop
+   shifting width as they update. */
+table, .tabular {
+  font-variant-numeric: tabular-nums;
+}
+
 /* ── Selection ───────────────────────────────────────────────────────────── */
 ::selection {
-  background: rgba(16, 185, 129, 0.18);
-  color: #065f46;
+  background: rgba(142, 36, 54, 0.16);
+  color: #421018;
 }
 
 /* ── Focus ring ──────────────────────────────────────────────────────────── */
 *:focus-visible {
   outline: 2px solid var(--brand);
   outline-offset: 2px;
-  border-radius: 6px;
+  border-radius: 3px;
 }
 
 /* ── Custom scrollbar (webkit) ───────────────────────────────────────────── */
@@ -48,20 +64,20 @@ html, body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #b2bdbe;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #8a9899;
 }
 
 /* ── Skeleton shimmer ────────────────────────────────────────────────────── */
 .skeleton {
   background: linear-gradient(
     90deg,
-    rgba(226, 232, 240, 0.5) 0%,
-    rgba(241, 245, 249, 0.95) 50%,
-    rgba(226, 232, 240, 0.5) 100%
+    rgba(211, 218, 218, 0.35) 0%,
+    rgba(244, 246, 246, 0.85) 50%,
+    rgba(211, 218, 218, 0.35) 100%
   );
   background-size: 200% 100%;
   animation: shimmer 1.6s ease-in-out infinite;
@@ -72,24 +88,23 @@ html, body {
   100% { background-position:  200% 0; }
 }
 
-/* ── Glass utilities ─────────────────────────────────────────────────────── */
+/* ── Panels ──────────────────────────────────────────────────────────────── */
+/* Was frosted glass. Now an opaque paper panel with a hairline — the blur cost
+   legibility over the map and read as generic. Class names kept so existing
+   call sites stay valid. */
 .glass {
-  background: rgba(255, 255, 255, 0.70);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.40);
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid var(--border);
 }
 
 .glass-dark {
-  background: rgba(15, 23, 42, 0.55);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(16, 38, 43, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.10);
 }
 
 /* ── Page entry animation ────────────────────────────────────────────────── */
 @keyframes page-enter {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0);   }
 }
 
@@ -97,12 +112,89 @@ html, body {
   animation: page-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* ── Gradient text ───────────────────────────────────────────────────────── */
+/* ── Emphasis ────────────────────────────────────────────────────────────── */
+/* Formerly a tri-colour gradient wash. Flat carmine reads institutional rather
+   than promotional, and stays legible at small sizes. */
 .gradient-text {
-  background: linear-gradient(135deg, #059669, #10b981, #14b8a6);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--brand);
+}
+
+/* ── The seal ────────────────────────────────────────────────────────────── */
+/* Signature element. Wraps a record's own identifier — УП-2026-007,
+   IP-2026-07-M001 — as a stamped mark. Real data, not ornament. */
+.seal {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.5rem;
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brand);
+  border: 1px solid rgba(142, 36, 54, 0.42);
+  border-radius: 2px;
+  background: rgba(142, 36, 54, 0.045);
+  transform: rotate(-2.2deg);
+  box-shadow: inset 0 0 0 1px rgba(142, 36, 54, 0.10);
+}
+
+/* Double rule on the leading edge, like a rubber stamp's inked border. */
+.seal::before {
+  content: "";
+  width: 1px;
+  align-self: stretch;
+  background: rgba(142, 36, 54, 0.42);
+  box-shadow: 2px 0 0 rgba(142, 36, 54, 0.42);
+  margin-right: 0.25rem;
+}
+
+/* ── Coded tokens ────────────────────────────────────────────────────────── */
+/* MKB-10 codes and other controlled vocabulary. The taxonomy is genuinely
+   alphanumeric, so monospace here is information, not styling. */
+.code {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  padding: 0.0625rem 0.3125rem;
+  border-radius: 2px;
+  background: #e8ecec;
+  color: #184d50;
+  border: 1px solid #d3dada;
+}
+
+/* ── Record rail ─────────────────────────────────────────────────────────── */
+/* Thin edge marker on record surfaces — the tabbed divider of a paper file. */
+.rail {
+  position: relative;
+  padding-left: 1rem;
+}
+
+.rail::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.125rem;
+  bottom: 0.125rem;
+  width: 3px;
+  border-radius: 1px;
+  background: var(--drape);
+}
+
+.rail-carmine::before { background: var(--brand); }
+.rail-brass::before   { background: var(--brass); }
+
+/* ── Eyebrow ─────────────────────────────────────────────────────────────── */
+/* Small-caps label for section headers — the field name on a form. */
+.eyebrow {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
 }
 
 /* ── Noise texture overlay (for banner) ──────────────────────────────────── */
@@ -113,4 +205,16 @@ html, body {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
   pointer-events: none;
   border-radius: inherit;
+}
+
+/* ── Reduced motion ──────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  /* The seal keeps its resting angle, it just stops flying in. */
+  .seal { transform: rotate(-2.2deg); }
 }

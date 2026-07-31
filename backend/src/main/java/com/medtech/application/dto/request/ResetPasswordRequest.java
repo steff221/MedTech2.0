@@ -9,11 +9,11 @@ import jakarta.validation.constraints.Size;
  * Влезен DTO: барање за поставување нова лозинка преку токен за ресет.
  */
 public record ResetPasswordRequest(
-        @NotBlank(message = "Reset token is required")
+        @NotBlank(message = "Токенот за ресетирање е задолжителен")
         String token,
 
         @NotBlank(message = ValidationMessages.PASSWORD_REQUIRED)
-        @Size(min = 12, message = "Password must be at least 12 characters")
+        @Size(min = 12, message = "Лозинката мора да има најмалку 12 знаци")
         @Pattern(
             regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^\\w\\s]).+$",
             message = ValidationMessages.PASSWORD_STRENGTH

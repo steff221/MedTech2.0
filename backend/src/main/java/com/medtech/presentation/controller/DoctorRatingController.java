@@ -35,7 +35,7 @@ public class DoctorRatingController {
             @PathVariable Long appointmentId,
             @Valid @RequestBody CreateRatingRequest request,
             @AuthenticationPrincipal AuthenticatedUser principal) {
-        if (principal == null) throw new AuthorizationException("Authentication required");
+        if (principal == null) throw new AuthorizationException("Потребна е најава");
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ratingService.submit(appointmentId, request, principal));
     }

@@ -22,7 +22,6 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type ComponentType, useState } from "react";
-import { LanguageToggle } from "@/components/common/LanguageToggle";
 import { NotificationBell } from "@/components/layout/NotificationBell";
 import { useAuth } from "@/hooks/useAuth";
 import { useDoctorProfile } from "@/hooks/useDoctor";
@@ -68,7 +67,6 @@ export function DoctorTopNav() {
           </Link>
 
           <div className="flex items-center gap-3">
-            <LanguageToggle size="sm" />
             <NotificationBell />
 
             {user && (
@@ -79,7 +77,7 @@ export function DoctorTopNav() {
                   </div>
                   <div className="text-right">
                     <p className="text-[11px] font-semibold text-slate-800">
-                      Dr. {user.firstName} {user.lastName}
+                      Д-р {user.firstName} {user.lastName}
                     </p>
                     {doctor && (
                       <p className="-mt-0.5 text-[10px] text-slate-500">{doctor.specialization}</p>
@@ -100,7 +98,7 @@ export function DoctorTopNav() {
               type="button"
               onClick={() => setMobileOpen((v) => !v)}
               className="flex h-8 w-8 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 lg:hidden"
-              aria-label="Menu"
+              aria-label="Мени"
             >
               {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
@@ -196,7 +194,7 @@ export function DoctorTopNav() {
                       {initials(user.firstName, user.lastName)}
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-slate-800">Dr. {user.firstName} {user.lastName}</p>
+                      <p className="text-sm font-semibold text-slate-800">Д-р {user.firstName} {user.lastName}</p>
                       {doctor && <p className="text-xs text-slate-500">{doctor.specialization}</p>}
                     </div>
                   </div>

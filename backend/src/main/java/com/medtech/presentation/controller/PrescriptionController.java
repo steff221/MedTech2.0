@@ -48,7 +48,7 @@ public class PrescriptionController {
     @Operation(summary = "Doctor issues a new prescription")
     public ResponseEntity<PrescriptionResponse> issue(@Valid @RequestBody IssuePrescriptionRequest request) {
         Long doctorUserId = SecurityUtils.currentUserId()
-                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+                .orElseThrow(() -> new AuthorizationException("Потребна е најава"));
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(mapper.toResponse(prescriptionService.issue(doctorUserId, request)));
     }
@@ -67,7 +67,7 @@ public class PrescriptionController {
     @Operation(summary = "Increment refills_used (rejected when allowance exhausted or expired)")
     public ResponseEntity<PrescriptionResponse> refill(@PathVariable Long id) {
         Long callerUserId = SecurityUtils.currentUserId()
-                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+                .orElseThrow(() -> new AuthorizationException("Потребна е најава"));
         return ResponseEntity.ok(mapper.toResponse(prescriptionService.refill(id, callerUserId)));
     }
 
@@ -76,7 +76,7 @@ public class PrescriptionController {
     @Operation(summary = "Cancel a prescription (soft delete via status change)")
     public ResponseEntity<PrescriptionResponse> cancel(@PathVariable Long id) {
         Long callerUserId = SecurityUtils.currentUserId()
-                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+                .orElseThrow(() -> new AuthorizationException("Потребна е најава"));
         return ResponseEntity.ok(mapper.toResponse(prescriptionService.cancel(id, callerUserId)));
     }
 

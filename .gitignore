@@ -38,6 +38,10 @@ pnpm-debug.log*
 # Backups of a real .env carry live secrets (JWT, DB, SMTP, PHI key).
 .env.bak*
 .env.*.bak
+# Any populated env file, whatever the suffix (.env.production, .env.staging…).
+# The bare ".env" rule above does not cover these, and they hold live secrets.
+.env.*
+!.env.example
 *.pem
 *.key
 credentials*.json

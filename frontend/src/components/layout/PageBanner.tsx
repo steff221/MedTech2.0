@@ -18,56 +18,37 @@ export function PageBanner({ title, breadcrumb, actions }: PageBannerProps) {
 
   return (
     <>
-      {/* ── Hero gradient strip ───────────────────────────────────────────── */}
+      {/* ── Header bar ────────────────────────────────────────────────────── */}
+      {/* Was a four-stop emerald gradient with an ambient mesh and a grid
+          overlay. Now one flat block of drape ink with a carmine rule along the
+          bottom — the header of an official form rather than a marketing hero.
+          The colour is hardcoded here rather than tokenised because it must
+          match --drape exactly across every portal. */}
       <motion.div
-        initial={{ opacity: 0, y: -12 }}
+        initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        className="relative overflow-hidden"
-        style={{
-          background:
-            "linear-gradient(110deg, #047857 0%, #059669 35%, #10b981 65%, #14b8a6 100%)",
-        }}
+        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+        className="relative overflow-hidden bg-teal-700"
       >
-        {/* Ambient mesh overlay */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(ellipse at 20% 50%, rgba(255,255,255,0.08) 0%, transparent 60%), " +
-              "radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.06) 0%, transparent 50%)",
-          }}
-        />
-
-        {/* Subtle grid pattern */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-[0.04]"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), " +
-              "linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
-            backgroundSize: "32px 32px",
-          }}
-        />
+        {/* Carmine rule: the inked edge of a stamped document. */}
+        <div aria-hidden className="absolute inset-x-0 bottom-0 h-0.5 bg-brand-600" />
 
         <div className="relative mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-6 py-4">
           <div className="flex items-center gap-3 min-w-0">
-            {/* Hospital pill */}
-            <span className="hidden shrink-0 items-center rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium text-white/90 backdrop-blur-sm ring-1 ring-white/20 sm:inline-flex">
+            {/* Institution — squared off, mono, like a facility code. */}
+            <span className="hidden shrink-0 items-center rounded-sm bg-white/10 px-2 py-0.5 font-mono text-[0.6875rem] uppercase tracking-wider text-white/85 ring-1 ring-white/15 sm:inline-flex">
               {hospital}
             </span>
 
             {/* Divider */}
-            <span className="hidden text-white/30 sm:block" aria-hidden>·</span>
+            <span className="hidden text-white/25 sm:block" aria-hidden>·</span>
 
             {/* Page title */}
             <motion.h1
-              initial={{ opacity: 0, x: -8 }}
+              initial={{ opacity: 0, x: -6 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1, duration: 0.35 }}
-              className="truncate text-lg font-bold tracking-tight text-white sm:text-xl"
+              transition={{ delay: 0.08, duration: 0.3 }}
+              className="truncate font-display text-lg font-semibold tracking-tight text-white sm:text-xl"
             >
               {title}
             </motion.h1>

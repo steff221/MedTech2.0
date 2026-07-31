@@ -90,6 +90,12 @@ medtech:
       key: ${MEDTECH_PHI_ENCRYPTION_KEY}
     # Refresh-token cookie Secure flag: false for dev (HTTP), true in prod profile.
     cookie-secure: false
+    # Per-IP budget for /api/auth/** (login + refresh + logout all count).
+    # Raise it where one operator legitimately signs in and out of several
+    # portals inside a minute, e.g. a demo or training environment.
+    rate-limit:
+      capacity: ${MEDTECH_SECURITY_RATELIMIT_CAPACITY:10}
+      window-seconds: ${MEDTECH_SECURITY_RATELIMIT_WINDOWSECONDS:60}
     cors:
       allowed-origins:
         - http://localhost:3000

@@ -37,6 +37,12 @@ export const PROCEDURES = [
   "Ultrasound",
   "Colposcopy",
   "Prenatal Care",
+  "Cystoscopy",
+  "Endourology",
+  "Urologic Oncology",
+  "Minimally Invasive Surgery",
+  "Prostate Biopsy",
+  "Lithotripsy",
 ] as const;
 
 export type Procedure = (typeof PROCEDURES)[number];

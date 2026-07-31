@@ -253,8 +253,8 @@ export default function DashboardPage() {
   });
 
   const referrals = useQuery({
-    queryKey: ["referrals", "my"],
-    queryFn: () => referralService.myReferrals(undefined, 0, 50),
+    queryKey: ["referrals", "patient", profile.data?.id],
+    queryFn: () => referralService.patientReferrals(profile.data!.id, 0, 50),
     enabled: !!profile.data?.id,
   });
 

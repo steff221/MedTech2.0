@@ -80,7 +80,7 @@ class OperationServiceTest {
 
         assertThatThrownBy(() -> service.updateStatus(5L, 999L, req))
                 .isInstanceOf(AuthorizationException.class)
-                .hasMessageContaining("assigned");
+                .hasMessageContaining("доделен");
 
         assertThat(operation.getStatus()).isEqualTo(OperationStatus.SCHEDULED);
     }

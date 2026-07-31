@@ -19,6 +19,6 @@ public class AuthorizationException extends AppException {
     /** 401 Unauthorized — credentials rejected. */
     public static AppException invalidCredentials() {
         return new AppException(ErrorCode.AUTH_INVALID_CREDENTIALS, HttpStatus.UNAUTHORIZED,
-                "Invalid email or password") {};
+                "Погрешна е-пошта или лозинка") {};
     }
 }

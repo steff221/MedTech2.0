@@ -36,13 +36,13 @@ public class PatientService {
     @Transactional
     public Patient createForUser(Long userId, CreatePatientRequest req) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> ResourceNotFoundException.of("User", userId));
+                .orElseThrow(() -> ResourceNotFoundException.of("Корисник", userId));
 
         if (user.getRole() != UserRole.PATIENT) {
-            throw new ValidationException("User " + userId + " is not a PATIENT");
+            throw new ValidationException("Корисникот " + userId + " не е ПАЦИЕНТ");
         }
         if (patientRepository.existsByUserId(userId)) {
-            throw new ConflictException("Patient profile already exists for user " + userId);
+            throw new ConflictException("Профил на пациент веќе постои за корисникот " + userId);
         }
 
         Patient patient = new Patient();
@@ -68,7 +68,7 @@ public class PatientService {
 
     public Patient getById(Long id) {
         return patientRepository.findById(id)
-                .orElseThrow(() -> ResourceNotFoundException.of("Patient", id));
+                .orElseThrow(() -> ResourceNotFoundException.of("Пациент", id));
     }
 
     public Page<Patient> search(String q, Long hospitalId, Pageable pageable) {
@@ -81,7 +81,7 @@ public class PatientService {
 
     public Patient getByUserId(Long userId) {
         return patientRepository.findByUserId(userId)
-                .orElseThrow(() -> ResourceNotFoundException.of("Patient (by userId)", userId));
+                .orElseThrow(() -> ResourceNotFoundException.of("Пациент (по userId)", userId));
     }
 
     public Page<Patient> findByDoctorUserId(Long doctorUserId, Pageable pageable) {

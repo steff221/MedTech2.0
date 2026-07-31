@@ -18,7 +18,7 @@ public record MKB10Code(String value) {
     public MKB10Code {
         Objects.requireNonNull(value, "MKB-10 code must not be null");
         if (!PATTERN.matcher(value).matches()) {
-            throw new IllegalArgumentException("Invalid MKB-10 code: " + value);
+            throw new IllegalArgumentException("Неисправен МКБ-10 код: " + value);
         }
     }
 

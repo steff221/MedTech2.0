@@ -91,7 +91,7 @@ public class DoctorController {
     @Operation(summary = "Create the doctor profile for the currently authenticated DOCTOR user")
     public ResponseEntity<DoctorResponse> createSelfProfile(@Valid @RequestBody CreateDoctorRequest request) {
         Long userId = SecurityUtils.currentUserId()
-                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+                .orElseThrow(() -> new AuthorizationException("Потребна е најава"));
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(mapper.toResponse(doctorService.createForUser(userId, request)));
     }
@@ -101,7 +101,7 @@ public class DoctorController {
     @Operation(summary = "Return the doctor profile of the currently authenticated DOCTOR user")
     public ResponseEntity<DoctorResponse> me() {
         Long userId = SecurityUtils.currentUserId()
-                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+                .orElseThrow(() -> new AuthorizationException("Потребна е најава"));
         return ResponseEntity.ok(mapper.toResponse(doctorService.getByUserId(userId)));
     }
 
@@ -110,7 +110,7 @@ public class DoctorController {
     @Operation(summary = "Update mutable fields of the authenticated doctor's profile")
     public ResponseEntity<DoctorResponse> updateSelfProfile(@Valid @RequestBody UpdateDoctorRequest request) {
         Long userId = SecurityUtils.currentUserId()
-                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+                .orElseThrow(() -> new AuthorizationException("Потребна е најава"));
         return ResponseEntity.ok(mapper.toResponse(doctorService.updateForUser(userId, request)));
     }
 }

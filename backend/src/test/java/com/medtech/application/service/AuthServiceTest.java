@@ -128,7 +128,7 @@ class AuthServiceTest {
 
         assertThatThrownBy(() -> authService.login(new LoginRequest(user.getEmail(), "correct-password")))
                 .isInstanceOf(AppException.class)
-                .hasMessageContaining("locked");
+                .hasMessageContaining("заклучена");
         verify(passwordEncoder, never()).matches(any(), any());
     }
 

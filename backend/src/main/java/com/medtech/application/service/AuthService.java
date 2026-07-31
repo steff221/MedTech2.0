@@ -90,11 +90,11 @@ public class AuthService {
     public AuthResponse register(RegisterRequest req) {
         if (req.role() != com.medtech.domain.vo.UserRole.PATIENT) {
             throw new AppException(ErrorCode.AUTH_FORBIDDEN, HttpStatus.FORBIDDEN,
-                    "Self-registration is only allowed for PATIENT accounts") {};
+                    "Самостојна регистрација е дозволена само за сметки на ПАЦИЕНТ") {};
         }
 
         if (userRepository.existsByEmailIgnoreCase(req.email())) {
-            throw new ConflictException(ErrorCode.AUTH_EMAIL_TAKEN, "Email already registered");
+            throw new ConflictException(ErrorCode.AUTH_EMAIL_TAKEN, "Е-поштата е веќе регистрирана");
         }
 
         User user = new User();
@@ -123,14 +123,14 @@ public class AuthService {
 
         if (user.getStatus() != UserStatus.ACTIVE) {
             throw new AppException(ErrorCode.AUTH_ACCOUNT_INACTIVE, HttpStatus.UNAUTHORIZED,
-                    "Account is not active") {};
+                    "Сметката не е активна") {};
         }
         // Lockout must gate ALL attempts — checking it only on a wrong password
         // would let an attacker keep brute-forcing during the lockout window and
         // log straight in the moment the password is guessed.
         if (user.isLocked()) {
             throw new AppException(ErrorCode.AUTH_ACCOUNT_LOCKED, HttpStatus.UNAUTHORIZED,
-                    "Account is temporarily locked. Try again later.") {};
+                    "Сметката е привремено заклучена. Обидете се подоцна.") {};
         }
         if (!passwordEncoder.matches(req.password(), user.getPasswordHash())) {
             int attempted = user.getFailedLoginCount() + 1;
@@ -141,8 +141,8 @@ public class AuthService {
                 log.warn("Locked user {} until {} after {} failed attempts",
                         user.getId(), until, attempted);
                 throw new AppException(ErrorCode.AUTH_ACCOUNT_LOCKED, HttpStatus.UNAUTHORIZED,
-                        "Too many failed attempts. Account locked for "
-                                + LOCKOUT_WINDOW.toMinutes() + " minutes.") {};
+                        "Премногу неуспешни обиди. Сметката е заклучена "
+                                + LOCKOUT_WINDOW.toMinutes() + " минути.") {};
             }
             throw AuthorizationException.invalidCredentials();
         }
@@ -158,24 +158,24 @@ public class AuthService {
     public AuthResponse refresh(RefreshTokenRequest req) {
         Claims claims = tokenProvider.parse(req.refreshToken())
                 .orElseThrow(() -> new AppException(ErrorCode.AUTH_TOKEN_INVALID,
-                        HttpStatus.UNAUTHORIZED, "Refresh token is invalid or expired") {});
+                        HttpStatus.UNAUTHORIZED, "Токенот за освежување е неважечки или истечен") {});
 
         if (!tokenProvider.isRefreshToken(claims)) {
             throw new AppException(ErrorCode.AUTH_TOKEN_INVALID, HttpStatus.UNAUTHORIZED,
-                    "Provided token is not a refresh token") {};
+                    "Доставениот токен не е токен за освежување") {};
         }
 
         String hash = hashToken(req.refreshToken());
         RefreshToken stored = refreshTokenRepository.findByTokenHash(hash)
                 .orElseThrow(() -> new AppException(ErrorCode.AUTH_TOKEN_INVALID,
-                        HttpStatus.UNAUTHORIZED, "Refresh token not recognised") {});
+                        HttpStatus.UNAUTHORIZED, "Токенот за освежување не е препознаен") {});
 
         if (stored.isRevoked()) {
             // Possible token reuse — revoke all tokens for this user as a safety measure.
             refreshTokenRepository.revokeAllForUser(stored.getUser().getId(), Instant.now());
             log.warn("Refresh token reuse detected for user {}", stored.getUser().getId());
             throw new AppException(ErrorCode.AUTH_TOKEN_INVALID, HttpStatus.UNAUTHORIZED,
-                    "Refresh token already used") {};
+                    "Токенот за освежување е веќе искористен") {};
         }
 
         // Rotate: revoke the presented token, issue a fresh pair.
@@ -188,16 +188,16 @@ public class AuthService {
         } catch (ObjectOptimisticLockingFailureException ex) {
             log.warn("Concurrent refresh token rotation rejected for token hash {}", hash);
             throw new AppException(ErrorCode.AUTH_TOKEN_INVALID, HttpStatus.UNAUTHORIZED,
-                    "Refresh token is being used concurrently — please retry") {};
+                    "Токенот за освежување се користи истовремено. Обидете се повторно") {};
         }
 
         long userId = Long.parseLong(Objects.requireNonNull(claims.getSubject(), "JWT subject missing"));
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> ResourceNotFoundException.of("User", userId));
+                .orElseThrow(() -> ResourceNotFoundException.of("Корисник", userId));
 
         if (user.getStatus() != UserStatus.ACTIVE) {
             throw new AppException(ErrorCode.AUTH_ACCOUNT_INACTIVE, HttpStatus.UNAUTHORIZED,
-                    "Account is not active") {};
+                    "Сметката не е активна") {};
         }
         return buildAuthResponse(user);
     }
@@ -247,11 +247,11 @@ public class AuthService {
         String hash = hashToken(req.token());
         PasswordResetToken prt = passwordResetTokenRepository.findByTokenHash(hash)
                 .orElseThrow(() -> new AppException(ErrorCode.AUTH_RESET_TOKEN_INVALID,
-                        HttpStatus.BAD_REQUEST, "Invalid or expired reset token") {});
+                        HttpStatus.BAD_REQUEST, "Неважечки или истечен токен за ресетирање") {});
 
         if (prt.isUsed() || prt.getExpiresAt().isBefore(Instant.now())) {
             throw new AppException(ErrorCode.AUTH_RESET_TOKEN_INVALID,
-                    HttpStatus.BAD_REQUEST, "Reset token has expired or already been used") {};
+                    HttpStatus.BAD_REQUEST, "Токенот за ресетирање истече или е веќе искористен") {};
         }
 
         User user = prt.getUser();
@@ -311,11 +311,11 @@ public class AuthService {
         String hash = hashToken(plainToken);
         EmailVerificationToken evt = emailVerificationTokenRepository.findByTokenHash(hash)
                 .orElseThrow(() -> new AppException(ErrorCode.AUTH_RESET_TOKEN_INVALID,
-                        HttpStatus.BAD_REQUEST, "Verification link is invalid or expired") {});
+                        HttpStatus.BAD_REQUEST, "Линкот за потврда е неважечки или истечен") {});
 
         if (evt.isUsed() || evt.getExpiresAt().isBefore(Instant.now())) {
             throw new AppException(ErrorCode.AUTH_RESET_TOKEN_INVALID,
-                    HttpStatus.BAD_REQUEST, "Verification link has expired") {};
+                    HttpStatus.BAD_REQUEST, "Линкот за потврда истече") {};
         }
 
         User user = evt.getUser();

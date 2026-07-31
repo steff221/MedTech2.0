@@ -17,7 +17,7 @@ import { extractErrorMessage } from "@/services/api";
 import type { Gender } from "@/types/api";
 
 const schema = z.object({
-  dateOfBirth: z.string().min(1, "Required"),
+  dateOfBirth: z.string().min(1, "Задолжително поле"),
   gender: z.enum(["M", "F", "O"]).optional(),
   address: z.string().max(500).optional(),
   city: z.string().max(100).optional(),
@@ -25,14 +25,15 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-const GENDERS: { value: Gender; label: string }[] = [
-  { value: "M", label: "Male" },
-  { value: "F", label: "Female" },
-  { value: "O", label: "Other" },
+const GENDERS: { value: Gender; labelKey: "genderM" | "genderF" | "genderO" }[] = [
+  { value: "M", labelKey: "genderM" },
+  { value: "F", labelKey: "genderF" },
+  { value: "O", labelKey: "genderO" },
 ];
 
 export function CompleteProfilePrompt() {
   const t = useT();
+  const pp = t.profilePrompt;
   const qc = useQueryClient();
   const [gender, setGender] = useState<Gender | undefined>();
   const {
@@ -63,9 +64,9 @@ export function CompleteProfilePrompt() {
       transition={{ duration: 0.4 }}
     >
       <Card>
-        <h2 className="text-lg font-semibold text-slate-900">Finish setting up your profile</h2>
+        <h2 className="text-lg font-semibold text-slate-900">{pp.patientTitle}</h2>
         <p className="mt-1 text-sm text-slate-500">
-          We need a few more details before you can book your first appointment.
+          {pp.patientSubtitle}
         </p>
 
         <form
@@ -73,13 +74,13 @@ export function CompleteProfilePrompt() {
           className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2"
         >
           <Input
-            label="Date of birth"
+            label={pp.dateOfBirth}
             type="date"
             {...register("dateOfBirth")}
             error={errors.dateOfBirth?.message}
           />
           <div>
-            <p className="mb-1.5 block text-sm font-medium text-slate-700">Gender</p>
+            <p className="mb-1.5 block text-sm font-medium text-slate-700">{pp.gender}</p>
             <div className="flex gap-2">
               {GENDERS.map((g) => (
                 <button
@@ -92,20 +93,20 @@ export function CompleteProfilePrompt() {
                       : "border-slate-300 text-slate-700 hover:bg-slate-50"
                   }`}
                 >
-                  {g.label}
+                  {pp[g.labelKey]}
                 </button>
               ))}
             </div>
           </div>
-          <Input label="City (optional)" {...register("city")} error={errors.city?.message} />
+          <Input label={pp.city} {...register("city")} error={errors.city?.message} />
           <Input
-            label="Address (optional)"
+            label={pp.address}
             {...register("address")}
             error={errors.address?.message}
           />
           <div className="md:col-span-2">
             <Button type="submit" loading={mutation.isPending}>
-              Save and continue
+              {pp.saveContinue}
             </Button>
           </div>
         </form>

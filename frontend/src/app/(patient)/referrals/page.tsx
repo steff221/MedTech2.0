@@ -33,10 +33,10 @@ function printReferral(r: ReferralResponse, typeLabel: string) {
   win.document.write(`
     <html>
       <head>
-        <title>Упат — MedTech</title>
+        <title>Упат · MedTech</title>
         <style>
           body { font-family: Arial, sans-serif; padding: 40px; color: #1e293b; }
-          .header { border-bottom: 2px solid #10b981; padding-bottom: 16px; margin-bottom: 24px; }
+          .header { border-bottom: 2px solid #1e5f63; padding-bottom: 16px; margin-bottom: 24px; }
           .hospital { font-size: 12px; color: #64748b; }
           .title { font-size: 22px; font-weight: bold; margin-top: 8px; }
           .ref-number { font-size: 13px; color: #64748b; margin-top: 4px; font-family: monospace; }
@@ -317,7 +317,7 @@ function ReferralCard({
 
           <p className="mt-0.5 text-sm text-slate-500">
             <span className="font-mono text-xs">{r.referralNumber}</span>
-            {r.doctorName && <> · Dr. {r.doctorName}</>}
+            {r.doctorName && <> · Д-р {r.doctorName}</>}
           </p>
 
           <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-600">

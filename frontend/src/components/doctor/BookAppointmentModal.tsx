@@ -94,7 +94,7 @@ export function BookAppointmentModal({ open, onClose }: Props) {
 
   const book = useMutation({
     mutationFn: (data: FormData) => {
-      if (!selectedPatient || !doctor) throw new Error("Missing patient or doctor");
+      if (!selectedPatient || !doctor) throw new Error("Недостасува пациент или доктор");
       return appointmentService.book({
         doctorId: doctor.id,
         patientId: selectedPatient.id,

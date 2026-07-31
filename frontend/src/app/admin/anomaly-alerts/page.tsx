@@ -48,7 +48,7 @@ export default function AnomalyAlertsPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Аномалии и безбедносни предупредувања</h1>
           <p className="mt-1 text-sm text-slate-500">
-            Автоматски детектирани аномалии — освежува на секои 60 секунди.
+            Автоматски детектирани аномалии. Се освежуваат на секои 60 секунди.
           </p>
         </div>
         <button

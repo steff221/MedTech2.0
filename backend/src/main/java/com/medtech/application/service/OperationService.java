@@ -38,11 +38,11 @@ public class OperationService {
     @Transactional
     public Operation schedule(Long surgeonUserId, ScheduleOperationRequest req) {
         Doctor surgeon = doctorRepository.findByUserId(surgeonUserId)
-                .orElseThrow(() -> new AuthorizationException("Only DOCTOR users can schedule operations"));
+                .orElseThrow(() -> new AuthorizationException("Само корисници со улога ЛЕКАР можат да закажуваат операции"));
         Patient patient = patientRepository.findById(req.patientId())
-                .orElseThrow(() -> ResourceNotFoundException.of("Patient", req.patientId()));
+                .orElseThrow(() -> ResourceNotFoundException.of("Пациент", req.patientId()));
         Hospital hospital = hospitalRepository.findById(req.hospitalId())
-                .orElseThrow(() -> ResourceNotFoundException.of("Hospital", req.hospitalId()));
+                .orElseThrow(() -> ResourceNotFoundException.of("Болница", req.hospitalId()));
 
         Operation op = new Operation();
         op.setPatient(patient);
@@ -74,7 +74,7 @@ public class OperationService {
         if (!op.getDoctor().getUser().getId().equals(surgeonUserId)) {
             throw new AuthorizationException(
                     "OPERATION_ACCESS_DENIED",
-                    "Only the surgeon assigned to this operation may update it");
+                    "Само хирургот доделен на оваа операција може да ја измени");
         }
         op.setStatus(req.status());
         if (req.complications() != null)        op.setComplications(req.complications());
@@ -86,12 +86,12 @@ public class OperationService {
 
     public Operation getById(Long id) {
         return operationRepository.findById(id)
-                .orElseThrow(() -> ResourceNotFoundException.of("Operation", id));
+                .orElseThrow(() -> ResourceNotFoundException.of("Операција", id));
     }
 
     public Page<Operation> forCurrentDoctor(Long userId, Pageable pageable) {
         Doctor doctor = doctorRepository.findByUserId(userId)
-                .orElseThrow(() -> new AuthorizationException("Only DOCTOR users can view their operations"));
+                .orElseThrow(() -> new AuthorizationException("Само корисници со улога ЛЕКАР можат да ги гледаат своите операции"));
         return operationRepository.findByDoctorIdOrderByOperationDateDesc(doctor.getId(), pageable);
     }
 

@@ -78,18 +78,18 @@ export function SickLeaveModal({ open, onClose, patientName, patientDob }: SickL
       return;
     }
 
-    win.document.write(`<!DOCTYPE html><html><head><title>Болничко — ${esc(patientName)}</title>
+    win.document.write(`<!DOCTYPE html><html><head><title>Болничко · ${esc(patientName)}</title>
 <style>
   body { font-family: Arial, sans-serif; padding: 48px; color: #1e293b; max-width: 700px; margin: auto; }
-  .top { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #10b981; padding-bottom: 16px; margin-bottom: 32px; }
-  .brand { font-size: 20px; font-weight: bold; color: #10b981; } .brand-sub { font-size: 11px; color: #64748b; }
+  .top { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #1e5f63; padding-bottom: 16px; margin-bottom: 32px; }
+  .brand { font-size: 20px; font-weight: bold; color: #1e5f63; } .brand-sub { font-size: 11px; color: #64748b; }
   .date-stamp { font-size: 12px; color: #64748b; text-align: right; }
   h1 { text-align: center; font-size: 18px; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 32px; color: #0f172a; }
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
   .full { grid-column: 1/-1; }
   .lbl { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
   .val { font-size: 14px; font-weight: 500; border-bottom: 1px solid #cbd5e1; padding-bottom: 6px; min-height: 28px; }
-  .days-chip { display: inline-block; background: #ecfdf5; border: 1px solid #6ee7b7; color: #065f46; font-weight: bold; padding: 3px 12px; border-radius: 999px; font-size: 13px; margin-left: 8px; }
+  .days-chip { display: inline-block; background: #eff5f5; border: 1px solid #86b3b5; color: #065f46; font-weight: bold; padding: 3px 12px; border-radius: 999px; font-size: 13px; margin-left: 8px; }
   .sigs { display: flex; justify-content: space-between; margin-top: 56px; }
   .sig { width: 200px; } .sig-line { border-bottom: 1px solid #334155; margin-bottom: 6px; margin-top: 36px; }
   .sig-lbl { font-size: 10px; color: #94a3b8; }
@@ -104,7 +104,7 @@ export function SickLeaveModal({ open, onClose, patientName, patientDob }: SickL
 <div class="grid">
   <div><div class="lbl">Пациент</div><div class="val">${esc(patientName)}</div></div>
   <div><div class="lbl">Датум на раѓање</div><div class="val">${patientDob ? patientDob.split("-").reverse().join(".") : "—"}</div></div>
-  <div><div class="lbl">Период на боледување</div><div class="val">${fromFmt} — ${toFmt} <span class="days-chip">${days} ${days === 1 ? "ден" : "дена"}</span></div></div>
+  <div><div class="lbl">Период на боледување</div><div class="val">${fromFmt} до ${toFmt} <span class="days-chip">${days} ${days === 1 ? "ден" : "дена"}</span></div></div>
   <div><div class="lbl">Лекар</div><div class="val">${esc(doctorName)}</div></div>
   <div class="full"><div class="lbl">Дијагноза / причина${mkb10Code ? ` (${esc(mkb10Code)})` : ""}</div><div class="val">${esc(data.reason)}</div></div>
   ${data.notes ? `<div class="full"><div class="lbl">Напомена за работодавач</div><div class="val">${esc(data.notes)}</div></div>` : ""}

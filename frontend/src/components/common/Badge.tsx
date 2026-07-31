@@ -39,11 +39,13 @@ const toneStyles: Record<Tone, { bg: string; text: string; dot: string; ring: st
     dot:  "bg-rose-500",
     ring: "ring-rose-200/60",
   },
+  // Informational sits on drape, not brand. Carmine is now the institutional
+  // mark, and a status chip must never be mistaken for it.
   info: {
-    bg:   "bg-brand-50",
-    text: "text-brand-700",
-    dot:  "bg-brand-500",
-    ring: "ring-brand-200/60",
+    bg:   "bg-teal-50",
+    text: "text-teal-700",
+    dot:  "bg-teal-600",
+    ring: "ring-teal-200/60",
   },
 };
 
@@ -51,12 +53,13 @@ export function Badge({ tone = "neutral", dot = false, children, className }: Ba
   const s = toneStyles[tone];
   return (
     <motion.span
-      initial={{ scale: 0.82, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 420, damping: 24 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.18, ease: "easeOut" }}
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5",
-        "text-xs font-semibold",
+        // Squared off and letterspaced: a field value on a form, not a pill.
+        "inline-flex items-center gap-1.5 rounded-sm px-2 py-0.5",
+        "text-[0.6875rem] font-semibold uppercase tracking-wider",
         "ring-1",
         s.bg, s.text, s.ring,
         className,

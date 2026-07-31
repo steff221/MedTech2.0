@@ -29,8 +29,8 @@ import { cn } from "@/utils/cn";
 import type { AppointmentResponse } from "@/types/api";
 
 const FLAGGED_PATIENTS = [
-  { id: 1002, name: "Александар Стојановски", level: "critical" as const, reason: "HbA1c 9.2% — лоша гликемиска контрола",          lastSeen: "18 апр" },
-  { id: 1005, name: "Сања Велкоска",          level: "critical" as const, reason: "СТ депресија V4-V6 — суспектна нестабилна ангина", lastSeen: "5 мај"  },
+  { id: 1002, name: "Александар Стојановски", level: "critical" as const, reason: "HbA1c 9.2%, лоша гликемиска контрола",          lastSeen: "18 апр" },
+  { id: 1005, name: "Сања Велкоска",          level: "critical" as const, reason: "СТ депресија V4-V6, суспектна нестабилна ангина", lastSeen: "5 мај"  },
   { id: 1004, name: "Борче Димовски",         level: "warning"  as const, reason: "Гладен шеќер 8.4 mmol/L, BMI 35.7",                lastSeen: "1 мар"  },
   { id: 1008, name: "Методи Стефановски",     level: "warning"  as const, reason: "SpO2 94% на воздух, ХОББ GOLD ст.2",               lastSeen: "10 мај" },
 ];
@@ -104,8 +104,9 @@ export default function DoctorHomePage() {
   const dh = t.doctorHome;
 
   const todayAppts = useQuery({
-    queryKey: ["appointments-today"],
-    queryFn: () => appointmentService.today(),
+    queryKey: ["appointments-today", doctor?.id],
+    queryFn: () => appointmentService.todayForDoctor(doctor!.id),
+    enabled: !!doctor,
     refetchInterval: 60_000,
   });
 
@@ -173,7 +174,7 @@ export default function DoctorHomePage() {
                 {greet()} · {format(new Date(), "EEEE, dd MMM yyyy")}
               </p>
               <h2 className="text-xl font-bold text-slate-900">
-                Dr. {doctor?.firstName ?? ""} {doctor?.lastName ?? ""}
+                Д-р {doctor?.firstName ?? ""} {doctor?.lastName ?? ""}
               </h2>
               {doctor && (
                 <p className="text-sm text-slate-500">

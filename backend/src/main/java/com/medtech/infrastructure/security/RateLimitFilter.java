@@ -17,15 +17,21 @@ import java.util.List;
 
 /**
  * Per-IP rate limiter for auth endpoints backed by Redis.
- * Limits: 10 requests / 60 seconds per IP on /api/auth/**.
- * Uses an atomic Lua script so the check-and-increment is race-free across replicas.
+ *
+ * <p>Applies to every {@code /api/auth/**} call — login, refresh and logout all
+ * consume budget — so the capacity has to cover legitimate bursts such as an
+ * operator signing in and out of several portals in quick succession. Tune with
+ * {@code medtech.security.rate-limit.capacity} / {@code .window-seconds};
+ * the defaults are 10 requests per 60 seconds.
+ *
+ * <p>Uses an atomic Lua script so the check-and-increment is race-free across replicas.
  *
  * Филтер: ограничување на бројот барања (rate limiting) за заштита од злоупотреба.
  */
 public class RateLimitFilter extends OncePerRequestFilter {
 
-    private static final int CAPACITY = 10;
-    private static final int WINDOW_SECONDS = 60;
+    private final int capacity;
+    private final int windowSeconds;
 
     // Atomic increment + conditional TTL: returns current count after increment.
     private static final RedisScript<Long> RATE_SCRIPT;
@@ -41,8 +47,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
     private final StringRedisTemplate redis;
 
-    public RateLimitFilter(StringRedisTemplate redis) {
+    public RateLimitFilter(StringRedisTemplate redis, int capacity, int windowSeconds) {
         this.redis = redis;
+        this.capacity = capacity;
+        this.windowSeconds = windowSeconds;
     }
 
     @Override
@@ -55,9 +63,9 @@ public class RateLimitFilter extends OncePerRequestFilter {
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain chain) throws ServletException, IOException {
         String key = "rl:auth:" + resolveClientIp(request);
-        Long count = redis.execute(RATE_SCRIPT, List.of(key), String.valueOf(WINDOW_SECONDS));
+        Long count = redis.execute(RATE_SCRIPT, List.of(key), String.valueOf(windowSeconds));
 
-        if (count != null && count <= CAPACITY) {
+        if (count != null && count <= capacity) {
             chain.doFilter(request, response);
         } else {
             response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());

@@ -71,7 +71,7 @@ export default function DoctorPrescriptionsPage() {
     win.document.write(`
       <html>
         <head>
-          <title>Рецепт — MedTech</title>
+          <title>Рецепт · MedTech</title>
           <style>
             body { font-family: Arial, sans-serif; padding: 40px; color: #1e293b; }
             .header { border-bottom: 2px solid #0891b2; padding-bottom: 16px; margin-bottom: 24px; }
@@ -101,7 +101,7 @@ export default function DoctorPrescriptionsPage() {
           </div>
           <div class="section">
             <div class="label">Доза / Фреквенција</div>
-            <div class="value">${selected.dosage} — ${selected.frequency}</div>
+            <div class="value">${selected.dosage}, ${selected.frequency}</div>
           </div>
           ${selected.route ? `<div class="section"><div class="label">Начин на примање</div><div class="value">${selected.route}</div></div>` : ""}
           ${selected.durationDays ? `<div class="section"><div class="label">Траење</div><div class="value">${selected.durationDays} денови</div></div>` : ""}

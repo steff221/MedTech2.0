@@ -40,7 +40,7 @@ export function AppointmentCard({ appointment }: AppointmentCardProps) {
     "bg-amber-400";
 
   const cancelMutation = useMutation({
-    mutationFn: () => appointmentService.cancel(appointment.id, "Cancelled by patient"),
+    mutationFn: () => appointmentService.cancel(appointment.id, "Откажано од пациентот"),
     onSuccess: () => {
       toast.success(t.appointments.cancelSuccess);
       qc.invalidateQueries({ queryKey: ["appointments"] });
@@ -163,7 +163,7 @@ export function AppointmentCard({ appointment }: AppointmentCardProps) {
                     </button>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-slate-500">Your rating:</span>
+                      <span className="text-xs text-slate-500">{t.appointments.yourRating}</span>
                       <StarRating
                         value={appointment.ratingValue ?? 0}
                         readonly

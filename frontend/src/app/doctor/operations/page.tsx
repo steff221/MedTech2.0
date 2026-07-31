@@ -170,7 +170,7 @@ function ScheduleModal({ onClose, onCreated }: ScheduleModalProps) {
               onChange={(e) => setHospitalId(e.target.value ? Number(e.target.value) : "")}
               className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
             >
-              <option value="">— избери болница —</option>
+              <option value="">Избери болница</option>
               {hospitals.map((h) => <option key={h.id} value={h.id}>{h.name} ({h.city})</option>)}
             </select>
           </div>
@@ -375,7 +375,7 @@ export default function OperationsPage() {
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t.doctorOperations.filterDoctor}</p>
               <p className="mt-1 text-sm font-bold text-slate-900">
-                {user ? `Dr. ${user.firstName} ${user.lastName}` : "—"}
+                {user ? `Д-р ${user.firstName} ${user.lastName}` : "—"}
               </p>
             </div>
 

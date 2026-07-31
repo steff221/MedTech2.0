@@ -68,13 +68,13 @@ public class AppointmentService {
     public Appointment book(BookAppointmentRequest req) {
         if (req.appointmentDate().isBefore(LocalDate.now(clock))) {
             throw new ValidationException(ErrorCode.APPOINTMENT_IN_PAST,
-                    "Appointment date cannot be in the past");
+                    "Датумот на терминот не може да биде во минатото");
         }
 
         Patient patient = patientRepository.findById(Objects.requireNonNull(req.patientId()))
-                .orElseThrow(() -> ResourceNotFoundException.of("Patient", req.patientId()));
+                .orElseThrow(() -> ResourceNotFoundException.of("Пациент", req.patientId()));
         Doctor doctor = doctorRepository.findById(Objects.requireNonNull(req.doctorId()))
-                .orElseThrow(() -> ResourceNotFoundException.of("Doctor", req.doctorId()));
+                .orElseThrow(() -> ResourceNotFoundException.of("Лекар", req.doctorId()));
 
         // Validate against doctor's configured working hours (if any have been set).
         List<DoctorAvailability> slots = availabilityRepository.findByDoctorId(doctor.getId());
@@ -85,12 +85,12 @@ public class AppointmentService {
                     .findFirst()
                     .orElseThrow(() -> new ValidationException(
                             ErrorCode.APPOINTMENT_OUTSIDE_AVAILABILITY,
-                            "Doctor is not available on " + req.appointmentDate().getDayOfWeek()));
+                            "Лекарот не е достапен во " + dayNameMk(req.appointmentDate().getDayOfWeek())));
             LocalTime apptTime = req.appointmentTime();
             if (apptTime.isBefore(slot.getStartTime()) || !apptTime.isBefore(slot.getEndTime())) {
                 throw new ValidationException(
                         ErrorCode.APPOINTMENT_OUTSIDE_AVAILABILITY,
-                        "Appointment time " + apptTime + " is outside working hours ("
+                        "Часот на терминот " + apptTime + " е надвор од работното време ("
                                 + slot.getStartTime() + "–" + slot.getEndTime() + ")");
             }
         }
@@ -102,7 +102,7 @@ public class AppointmentService {
                 List.of(AppointmentStatus.SCHEDULED, AppointmentStatus.RESCHEDULED));
         if (!conflicts.isEmpty()) {
             throw new ConflictException(ErrorCode.APPOINTMENT_CONFLICT,
-                    "Doctor already has an appointment at " + req.appointmentDate()
+                    "Лекарот веќе има термин на " + req.appointmentDate()
                             + " " + req.appointmentTime());
         }
 
@@ -111,7 +111,7 @@ public class AppointmentService {
                 List.of(AppointmentStatus.SCHEDULED, AppointmentStatus.RESCHEDULED));
         if (!patientConflicts.isEmpty()) {
             throw new ConflictException(ErrorCode.APPOINTMENT_CONFLICT,
-                    "You already have an appointment at " + req.appointmentDate()
+                    "Веќе имате термин на " + req.appointmentDate()
                             + " " + req.appointmentTime());
         }
 
@@ -149,7 +149,7 @@ public class AppointmentService {
             Long doctorUserId = doctor.getUser().getId();
             notificationService.create(doctorUserId, "APPOINTMENT_REMINDER",
                     "Нов термин закажан",
-                    patientName + " — " + saved.getAppointmentDate() + " во " + saved.getAppointmentTime(),
+                    patientName + ", " + saved.getAppointmentDate() + " во " + saved.getAppointmentTime(),
                     saved.getId());
         } catch (Exception ex) {
             log.warn("Doctor booking notification failed for appointment id={}: {}", saved.getId(), ex.getMessage());
@@ -170,7 +170,7 @@ public class AppointmentService {
         conflicts.removeIf(c -> c.getId().equals(appt.getId()));
         if (!conflicts.isEmpty()) {
             throw new ConflictException(ErrorCode.APPOINTMENT_CONFLICT,
-                    "Doctor already booked at the requested slot");
+                    "Лекарот е веќе зафатен во бараниот термин");
         }
 
         var patientConflicts = appointmentRepository.lockPatientConflicting(
@@ -179,7 +179,7 @@ public class AppointmentService {
         patientConflicts.removeIf(c -> c.getId().equals(appt.getId()));
         if (!patientConflicts.isEmpty()) {
             throw new ConflictException(ErrorCode.APPOINTMENT_CONFLICT,
-                    "You already have an appointment at the requested slot");
+                    "Веќе имате закажано во бараниот термин");
         }
 
         appt.setAppointmentDate(req.newDate());
@@ -199,7 +199,7 @@ public class AppointmentService {
         long hoursUntil = ChronoUnit.HOURS.between(LocalDateTime.now(clock), startsAt);
         if (hoursUntil < props.cancellationWindowHours()) {
             throw new ValidationException(ErrorCode.APPOINTMENT_CANCEL_WINDOW,
-                    "Cannot cancel within " + props.cancellationWindowHours() + " hours of the appointment");
+                    "Не може да се откаже помалку од " + props.cancellationWindowHours() + " часа пред терминот");
         }
 
         appt.setStatus(AppointmentStatus.CANCELLED);
@@ -217,7 +217,7 @@ public class AppointmentService {
                 + " " + appt.getDoctor().getUser().getLastName();
         notificationService.create(patientUserId, "CANCELLED",
                 "Термин откажан",
-                doctorName + " — " + appt.getAppointmentDate() + " во " + appt.getAppointmentTime(),
+                doctorName + ", " + appt.getAppointmentDate() + " во " + appt.getAppointmentTime(),
                 appt.getId());
 
         return appt;
@@ -234,7 +234,7 @@ public class AppointmentService {
                 + " " + appt.getDoctor().getUser().getLastName();
         notificationService.create(patientUserId, "COMPLETED",
                 "Термин завршен",
-                doctorName + " — " + appt.getAppointmentDate() + " во " + appt.getAppointmentTime(),
+                doctorName + ", " + appt.getAppointmentDate() + " во " + appt.getAppointmentTime(),
                 appt.getId());
 
         return appt;
@@ -258,7 +258,7 @@ public class AppointmentService {
 
     public Appointment getById(Long id) {
         return appointmentRepository.findById(Objects.requireNonNull(id))
-                .orElseThrow(() -> ResourceNotFoundException.of("Appointment", id));
+                .orElseThrow(() -> ResourceNotFoundException.of("Термин", id));
     }
 
     public Page<Appointment> listForPatient(Long patientId, Pageable pageable) {
@@ -277,9 +277,22 @@ public class AppointmentService {
         return appointmentRepository.findAllByAppointmentDate(date);
     }
 
+    /** Македонско име на денот — исклучоците се читаат од корисникот. */
+    private static String dayNameMk(java.time.DayOfWeek day) {
+        return switch (day) {
+            case MONDAY    -> "понеделник";
+            case TUESDAY   -> "вторник";
+            case WEDNESDAY -> "среда";
+            case THURSDAY  -> "четврток";
+            case FRIDAY    -> "петок";
+            case SATURDAY  -> "сабота";
+            case SUNDAY    -> "недела";
+        };
+    }
+
     private static void rejectIfTerminal(Appointment appt) {
         if (appt.getStatus().isTerminal()) {
-            throw new ConflictException("Appointment is already " + appt.getStatus());
+            throw new ConflictException("Терминот е веќе " + appt.getStatus());
         }
     }
 }

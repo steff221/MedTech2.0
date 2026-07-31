@@ -54,7 +54,7 @@ public enum BloodType {
         return Arrays.stream(values())
                 .filter(bt -> bt.apiName.equals(value) || bt.name().equals(value))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Unknown blood type: " + value));
+                .orElseThrow(() -> new IllegalArgumentException("Непозната крвна група: " + value));
     }
 
     public static Optional<BloodType> fromDbValue(String raw) {
@@ -66,6 +66,6 @@ public enum BloodType {
 
     public static BloodType requireFromDbValue(String raw) {
         return fromDbValue(raw).orElseThrow(
-                () -> new IllegalArgumentException("Unknown blood type: " + raw));
+                () -> new IllegalArgumentException("Непозната крвна група: " + raw));
     }
 }

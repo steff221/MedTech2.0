@@ -70,7 +70,7 @@ export function RateAppointmentModal({
             onChange={(e) => setComment(e.target.value)}
             maxLength={1000}
             rows={4}
-            placeholder="Share what went well or what could be improved…"
+            placeholder="Споделете што беше добро или што може да се подобри…"
             className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 resize-none"
           />
           <p className="mt-1 text-right text-xs text-slate-400">{comment.length}/1000</p>

@@ -100,6 +100,6 @@ public class ReferralController {
 
     private Long currentUserId() {
         return SecurityUtils.currentUserId()
-                .orElseThrow(() -> new AuthorizationException("Authentication required"));
+                .orElseThrow(() -> new AuthorizationException("Потребна е најава"));
     }
 }

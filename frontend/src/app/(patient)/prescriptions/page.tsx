@@ -179,7 +179,7 @@ function PrescriptionRow({
           </p>
           {rx.doctorName && (
             <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
-              <Stethoscope className="h-3 w-3" /> Dr. {rx.doctorName}
+              <Stethoscope className="h-3 w-3" /> Д-р {rx.doctorName}
             </p>
           )}
 

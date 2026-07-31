@@ -17,17 +17,18 @@ import { hospitalService } from "@/services/hospital.service";
 import type { HospitalResponse } from "@/types/api";
 
 const schema = z.object({
-  licenseNumber: z.string().min(1, "Required").max(100),
-  specialization: z.string().min(1, "Required").max(100),
+  licenseNumber: z.string().min(1, "Задолжително поле").max(100),
+  specialization: z.string().min(1, "Задолжително поле").max(100),
   experienceYears: z.coerce.number().int().min(0).max(80).optional(),
   qualification: z.string().max(255).optional(),
-  hospitalId: z.coerce.number().int().positive("Pick a hospital"),
+  hospitalId: z.coerce.number().int().positive("Изберете болница"),
 });
 
 type FormData = z.infer<typeof schema>;
 
 export function CompleteDoctorProfilePrompt() {
   const t = useT();
+  const pp = t.profilePrompt;
   const qc = useQueryClient();
   const [hospitalId, setHospitalId] = useState<number | null>(null);
 
@@ -70,9 +71,9 @@ export function CompleteDoctorProfilePrompt() {
       transition={{ duration: 0.4 }}
     >
       <Card>
-        <h2 className="text-lg font-semibold text-slate-900">Set up your clinician profile</h2>
+        <h2 className="text-lg font-semibold text-slate-900">{pp.doctorTitle}</h2>
         <p className="mt-1 text-sm text-slate-500">
-          A few details before we can show your schedule.
+          {pp.doctorSubtitle}
         </p>
 
         <form
@@ -80,25 +81,25 @@ export function CompleteDoctorProfilePrompt() {
           className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2"
         >
           <Input
-            label="Licence number"
+            label={pp.licenseNumber}
             placeholder="DR-0042"
             {...register("licenseNumber")}
             error={errors.licenseNumber?.message}
           />
           <Input
-            label="Specialization"
-            placeholder="Cardiology"
+            label={pp.specialization}
+            placeholder={pp.specializationHint}
             {...register("specialization")}
             error={errors.specialization?.message}
           />
           <Input
-            label="Qualification (optional)"
+            label={pp.qualification}
             placeholder="MD, MSc"
             {...register("qualification")}
             error={errors.qualification?.message}
           />
           <Input
-            label="Experience (years)"
+            label={pp.experienceYears}
             type="number"
             min={0}
             {...register("experienceYears")}
@@ -106,9 +107,9 @@ export function CompleteDoctorProfilePrompt() {
           />
 
           <div className="md:col-span-2">
-            <p className="mb-1.5 block text-sm font-medium text-slate-700">Hospital</p>
+            <p className="mb-1.5 block text-sm font-medium text-slate-700">{pp.hospital}</p>
             {hospitals.isLoading ? (
-              <p className="text-sm text-slate-500">Loading hospitals…</p>
+              <p className="text-sm text-slate-500">{pp.loadingHospitals}</p>
             ) : (
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {hospitals.data?.map((h: HospitalResponse) => (
@@ -135,7 +136,7 @@ export function CompleteDoctorProfilePrompt() {
 
           <div className="md:col-span-2">
             <Button type="submit" loading={mutation.isPending}>
-              Save and continue
+              {pp.saveContinue}
             </Button>
           </div>
         </form>

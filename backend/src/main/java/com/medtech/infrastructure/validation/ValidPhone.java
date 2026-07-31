@@ -20,13 +20,13 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Pattern(
     regexp = "^(\\+?[0-9][\\s\\-]?){7,15}$",
-    message = "Invalid phone number format"
+    message = "Неисправен формат на телефонски број"
 )
 /**
  * Кастомна валидациска анотација: означува дека полето мора да биде валиден телефонски број.
  */
 public @interface ValidPhone {
-    String message() default "Invalid phone number format";
+    String message() default "Неисправен формат на телефонски број";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 }

@@ -13,6 +13,6 @@ public class ResourceNotFoundException extends AppException {
     }
 
     public static ResourceNotFoundException of(String resource, Object id) {
-        return new ResourceNotFoundException(resource + " not found: " + id);
+        return new ResourceNotFoundException("Не е пронајдено: " + resource + " " + id);
     }
 }

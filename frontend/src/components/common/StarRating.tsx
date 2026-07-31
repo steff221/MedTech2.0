@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { Star } from "lucide-react";
 import { cn } from "@/utils/cn";
+import { useT } from "@/hooks/useT";
 
 interface StarRatingProps {
   value: number;
@@ -12,14 +13,6 @@ interface StarRatingProps {
   size?: "sm" | "md" | "lg";
   showLabel?: boolean;
 }
-
-const LABELS: Record<number, string> = {
-  1: "Poor",
-  2: "Fair",
-  3: "Good",
-  4: "Very good",
-  5: "Excellent",
-};
 
 const SIZE_CLS = { sm: "h-4 w-4", md: "h-5 w-5", lg: "h-7 w-7" };
 
@@ -30,6 +23,7 @@ export function StarRating({
   size = "md",
   showLabel = false,
 }: StarRatingProps) {
+  const t = useT();
   const [hovered, setHovered] = useState(0);
   const active = hovered || value;
 
@@ -48,7 +42,7 @@ export function StarRating({
             !readonly && "cursor-pointer hover:scale-110",
             readonly && "cursor-default",
           )}
-          aria-label={`${star} star${star !== 1 ? "s" : ""}`}
+          aria-label={`${star} ${t.starRating.starsAria}`}
         >
           <Star
             className={cn(
@@ -63,7 +57,7 @@ export function StarRating({
       ))}
       {showLabel && active > 0 && (
         <span className="ml-1 text-sm font-medium text-slate-600">
-          {LABELS[active]}
+          {t.starRating.labels[active]}
         </span>
       )}
     </div>

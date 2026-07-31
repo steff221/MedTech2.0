@@ -71,44 +71,44 @@ export function MacedoniaMapMesh({ nodes, dark = false }: MacedoniaMapMeshProps)
       <defs>
         {/* Map fill */}
         <linearGradient id="mkFill" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#10b981" stopOpacity="0.18" />
-          <stop offset="100%" stopColor="#059669" stopOpacity="0.10" />
+          <stop offset="0%" stopColor="#1e5f63" stopOpacity="0.18" />
+          <stop offset="100%" stopColor="#184d50" stopOpacity="0.10" />
         </linearGradient>
 
         {/* Node outer ambient glow — large, soft */}
         <radialGradient id="glowOuter" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#34d399" stopOpacity="0.55" />
-          <stop offset="45%" stopColor="#10b981" stopOpacity="0.2" />
-          <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+          <stop offset="0%" stopColor="#558e91" stopOpacity="0.55" />
+          <stop offset="45%" stopColor="#1e5f63" stopOpacity="0.2" />
+          <stop offset="100%" stopColor="#1e5f63" stopOpacity="0" />
         </radialGradient>
 
         {/* Node inner glow — tighter, brighter */}
         <radialGradient id="glowInner" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#6ee7b7" stopOpacity="0.9" />
-          <stop offset="60%" stopColor="#34d399" stopOpacity="0.35" />
-          <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+          <stop offset="0%" stopColor="#86b3b5" stopOpacity="0.9" />
+          <stop offset="60%" stopColor="#558e91" stopOpacity="0.35" />
+          <stop offset="100%" stopColor="#1e5f63" stopOpacity="0" />
         </radialGradient>
 
         {/* Packet comet glow */}
         <radialGradient id="packetGlow" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
-          <stop offset="35%" stopColor="#6ee7b7" stopOpacity="0.85" />
-          <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+          <stop offset="35%" stopColor="#86b3b5" stopOpacity="0.85" />
+          <stop offset="100%" stopColor="#1e5f63" stopOpacity="0" />
         </radialGradient>
 
         {/* Packet comet tail — larger, dimmer */}
         <radialGradient id="packetTail" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#34d399" stopOpacity="0.5" />
-          <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+          <stop offset="0%" stopColor="#558e91" stopOpacity="0.5" />
+          <stop offset="100%" stopColor="#1e5f63" stopOpacity="0" />
         </radialGradient>
 
         {/* One-time scan sweep gradient */}
         <linearGradient id="scanSweep" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#10b981" stopOpacity="0" />
-          <stop offset="40%" stopColor="#34d399" stopOpacity="0.08" />
-          <stop offset="50%" stopColor="#6ee7b7" stopOpacity="0.18" />
-          <stop offset="60%" stopColor="#34d399" stopOpacity="0.08" />
-          <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+          <stop offset="0%" stopColor="#1e5f63" stopOpacity="0" />
+          <stop offset="40%" stopColor="#558e91" stopOpacity="0.08" />
+          <stop offset="50%" stopColor="#86b3b5" stopOpacity="0.18" />
+          <stop offset="60%" stopColor="#558e91" stopOpacity="0.08" />
+          <stop offset="100%" stopColor="#1e5f63" stopOpacity="0" />
         </linearGradient>
 
         {/* Filters */}
@@ -145,7 +145,7 @@ export function MacedoniaMapMesh({ nodes, dark = false }: MacedoniaMapMeshProps)
             key={m.id}
             d={m.d}
             fill="url(#mkFill)"
-            stroke="#10b981"
+            stroke="#1e5f63"
             strokeWidth={0.7}
             strokeOpacity={0.55}
             strokeLinejoin="round"
@@ -180,7 +180,7 @@ export function MacedoniaMapMesh({ nodes, dark = false }: MacedoniaMapMeshProps)
             y1={e.from.y}
             x2={e.to.x}
             y2={e.to.y}
-            stroke="#34d399"
+            stroke="#558e91"
             strokeWidth={0.9}
             initial={{ pathLength: 0, strokeOpacity: 0 }}
             animate={{ pathLength: 1, strokeOpacity: 0.28 }}
@@ -310,8 +310,8 @@ export function MacedoniaMapMesh({ nodes, dark = false }: MacedoniaMapMeshProps)
               cx={n.x}
               cy={n.y}
               r={r}
-              fill="#10b981"
-              stroke="#d1fae5"
+              fill="#1e5f63"
+              stroke="#dae8e8"
               strokeWidth={0.7}
               filter="url(#crisp)"
               initial={{ scale: 0, opacity: 0 }}
@@ -328,7 +328,7 @@ export function MacedoniaMapMesh({ nodes, dark = false }: MacedoniaMapMeshProps)
               cx={n.x - r * 0.28}
               cy={n.y - r * 0.28}
               r={r * 0.35}
-              fill="#ecfdf5"
+              fill="#eff5f5"
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.65 }}
               transition={{ duration: 0.35, delay: delay + 0.18 }}
@@ -339,7 +339,7 @@ export function MacedoniaMapMesh({ nodes, dark = false }: MacedoniaMapMeshProps)
               <motion.text
                 x={n.x + r + 6}
                 y={n.y + 3.5}
-                fill={dark ? "#6ee7b7" : "#065f46"}
+                fill={dark ? "#86b3b5" : "#065f46"}
                 fontSize={9}
                 fontWeight={500}
                 letterSpacing={0.3}

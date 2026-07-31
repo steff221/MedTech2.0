@@ -64,7 +64,7 @@ public class DoctorReportController {
     private Long currentDoctorId() {
         Long userId = SecurityUtils.currentUserId().orElseThrow();
         return doctorRepository.findByUserId(userId)
-                .orElseThrow(() -> ResourceNotFoundException.of("Doctor profile", userId))
+                .orElseThrow(() -> ResourceNotFoundException.of("Лекарски профил", userId))
                 .getId();
     }
 }
