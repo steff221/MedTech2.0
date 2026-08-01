@@ -30,6 +30,7 @@ import { medicalRecordService } from "@/services/medicalRecord.service";
 import { usePatientProfile } from "@/hooks/usePatient";
 import { useT } from "@/hooks/useT";
 import { cn } from "@/utils/cn";
+import { esc } from "@/utils/html";
 import type { MedicalRecordResponse } from "@/types/api";
 
 // bmiTier resolved at runtime inside component using translation keys
@@ -93,8 +94,8 @@ function AuditHistory({ recordId }: { recordId: number }) {
       </p>
       <ol className="space-y-1.5">
         {data.map((ev) => (
-          <li key={ev.id} className="flex items-start gap-2 text-xs text-slate-600">
-            <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400" />
+          <li key={ev.id} className="marker flex items-start gap-2 text-xs text-slate-600">
+            
             <span>
               <span className="font-medium text-slate-800">
                 {EVENT_LABELS[ev.eventType] ?? ev.eventType}
@@ -160,7 +161,7 @@ function RecordCard({ record }: { record: MedicalRecordResponse }) {
     const w = window.open("", "_blank", "width=800,height=600");
     if (!w) return;
     w.document.write(`
-      <html><head><title>Здравствен запис #${record.id}</title>
+      <html><head><title>Здравствен запис #${esc(record.id)}</title>
       <style>
         body { font-family: sans-serif; padding: 2rem; color: #1e293b; }
         h1 { font-size: 1.4rem; margin-bottom: 0.25rem; }
@@ -172,12 +173,12 @@ function RecordCard({ record }: { record: MedicalRecordResponse }) {
         .section h3 { font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; margin-bottom: 0.25rem; }
         .section p { font-size: 0.9rem; white-space: pre-wrap; }
       </style></head><body>
-      <h1>${record.diagnosis ?? "Здравствен запис"} ${record.mkb10Code ? `(${record.mkb10Code})` : ""}</h1>
-      <p class="meta">Дата: ${fmt(record.createdAt)} &nbsp;|&nbsp; Лекар: ${record.doctorName ?? "—"} ${record.doctorSpecialization ? `· ${record.doctorSpecialization}` : ""}</p>
-      ${vitals.length ? `<table><tr>${vitals.map((v) => `<th>${v.label}</th>`).join("")}</tr><tr>${vitals.map((v) => `<td>${v.value}</td>`).join("")}</tr></table>` : ""}
-      ${record.clinicalNotes ? `<div class="section"><h3>Клинички белешки</h3><p>${record.clinicalNotes}</p></div>` : ""}
-      ${record.assessment ? `<div class="section"><h3>Проценка</h3><p>${record.assessment}</p></div>` : ""}
-      ${record.plan ? `<div class="section"><h3>Третман / план</h3><p>${record.plan}</p></div>` : ""}
+      <h1>${esc(record.diagnosis ?? "Здравствен запис")} ${record.mkb10Code ? `(${esc(record.mkb10Code)})` : ""}</h1>
+      <p class="meta">Дата: ${esc(fmt(record.createdAt))} &nbsp;|&nbsp; Лекар: ${esc(record.doctorName ?? "—")} ${record.doctorSpecialization ? `· ${esc(record.doctorSpecialization)}` : ""}</p>
+      ${vitals.length ? `<table><tr>${vitals.map((v) => `<th>${esc(v.label)}</th>`).join("")}</tr><tr>${vitals.map((v) => `<td>${esc(v.value)}</td>`).join("")}</tr></table>` : ""}
+      ${record.clinicalNotes ? `<div class="section"><h3>Клинички белешки</h3><p>${esc(record.clinicalNotes)}</p></div>` : ""}
+      ${record.assessment ? `<div class="section"><h3>Проценка</h3><p>${esc(record.assessment)}</p></div>` : ""}
+      ${record.plan ? `<div class="section"><h3>Третман / план</h3><p>${esc(record.plan)}</p></div>` : ""}
       </body></html>
     `);
     w.document.close();
@@ -202,7 +203,7 @@ function RecordCard({ record }: { record: MedicalRecordResponse }) {
             <p className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
               <Stethoscope className="h-3 w-3" />
               Д-р {record.doctorName}
-              {record.doctorSpecialization ? ` · ${record.doctorSpecialization}` : ""}
+              {record.doctorSpecialization ? ` · ${esc(record.doctorSpecialization)}` : ""}
             </p>
           )}
         </div>
@@ -384,9 +385,7 @@ export default function HealthRecordsPage() {
                   transition={{ duration: 0.3, delay: i * 0.05 }}
                   className="relative"
                 >
-                  <span className="absolute -left-[33px] top-2 flex h-4 w-4 items-center justify-center rounded-full border-2 border-brand-500 bg-white">
-                    <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />
-                  </span>
+                  <span aria-hidden className="absolute -left-[33px] top-2.5 h-2 w-2 border border-brand-600 bg-brand-600" />
                   <RecordCard record={r} />
                 </motion.li>
               ))}

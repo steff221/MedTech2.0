@@ -15,13 +15,14 @@ import { useDoctorPatients, type DoctorPatientSummary } from "@/hooks/useDoctorP
 import { prescriptionService } from "@/services/prescription.service";
 import { useT } from "@/hooks/useT";
 import { cn } from "@/utils/cn";
+import { esc } from "@/utils/html";
 import type { PrescriptionResponse, PrescriptionStatus } from "@/types/api";
 
 const STATUS_COLORS: Record<PrescriptionStatus, string> = {
-  ACTIVE:    "bg-emerald-100 text-emerald-700",
-  COMPLETED: "bg-slate-100 text-slate-600",
-  CANCELLED: "bg-rose-100 text-rose-600",
-  SUSPENDED: "bg-amber-100 text-amber-700",
+  ACTIVE:    "chip-ok",
+  COMPLETED: "chip-mute",
+  CANCELLED: "chip-alert",
+  SUSPENDED: "chip-wait",
 };
 
 export default function DoctorPrescriptionsPage() {
@@ -88,27 +89,27 @@ export default function DoctorPrescriptionsPage() {
         </head>
         <body>
           <div class="header">
-            <div class="hospital">MedTech Здравствен Систем · ${doctor.data?.hospitalName ?? "Болница"}</div>
+            <div class="hospital">MedTech Здравствен Систем · ${esc(doctor.data?.hospitalName ?? "Болница")}</div>
             <div class="title">МЕДИЦИНСКИ РЕЦЕПТ</div>
           </div>
           <div class="section">
             <div class="label">Доктор</div>
-            <div class="value">д-р ${doctor.data?.firstName ?? ""} ${doctor.data?.lastName ?? ""} · ${doctor.data?.specialization ?? ""}</div>
+            <div class="value">д-р ${esc(doctor.data?.firstName ?? "")} ${esc(doctor.data?.lastName ?? "")} · ${esc(doctor.data?.specialization ?? "")}</div>
           </div>
           <div class="section">
             <div class="label">Лек</div>
-            <div class="value">${selected.medicationName}</div>
+            <div class="value">${esc(selected.medicationName)}</div>
           </div>
           <div class="section">
             <div class="label">Доза / Фреквенција</div>
-            <div class="value">${selected.dosage}, ${selected.frequency}</div>
+            <div class="value">${esc(selected.dosage)}, ${esc(selected.frequency)}</div>
           </div>
-          ${selected.route ? `<div class="section"><div class="label">Начин на примање</div><div class="value">${selected.route}</div></div>` : ""}
-          ${selected.durationDays ? `<div class="section"><div class="label">Траење</div><div class="value">${selected.durationDays} денови</div></div>` : ""}
-          ${selected.instructions ? `<div class="section"><div class="label">Инструкции</div><div class="value">${selected.instructions}</div></div>` : ""}
+          ${selected.route ? `<div class="section"><div class="label">Начин на примање</div><div class="value">${esc(selected.route)}</div></div>` : ""}
+          ${selected.durationDays ? `<div class="section"><div class="label">Траење</div><div class="value">${esc(selected.durationDays)} денови</div></div>` : ""}
+          ${selected.instructions ? `<div class="section"><div class="label">Инструкции</div><div class="value">${esc(selected.instructions)}</div></div>` : ""}
           <div class="section">
             <div class="label">Датум на издавање</div>
-            <div class="value">${format(parseISO(selected.startDate), "d MMMM yyyy")}</div>
+            <div class="value">${esc(format(parseISO(selected.startDate), "d MMMM yyyy"))}</div>
           </div>
           <div style="margin-top:40px;">
             <div class="label">Потпис на доктор</div>
@@ -116,7 +117,7 @@ export default function DoctorPrescriptionsPage() {
           </div>
           <div class="footer">
             <span>Издадено преку MedTech платформата</span>
-            <span>Рецепт #${selected.id}</span>
+            <span>Рецепт #${esc(selected.id)}</span>
           </div>
           <script>window.onload = () => { window.print(); window.close(); }</script>
         </body>
@@ -215,7 +216,7 @@ export default function DoctorPrescriptionsPage() {
                       )}
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-2">
-                      <span className={cn("rounded-full px-2.5 py-0.5 text-xs font-medium", STATUS_COLORS[rx.status])}>
+                      <span className={cn("chip", STATUS_COLORS[rx.status])}>
                         {STATUS_LABELS[rx.status]}
                       </span>
                       <span className="text-xs text-slate-400">

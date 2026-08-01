@@ -7,12 +7,14 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { Badge } from "@/components/common/Badge";
+import { FilterChips } from "@/components/common/FilterChips";
 import { Button } from "@/components/common/Button";
 import { Card } from "@/components/common/Card";
 import { PageBanner } from "@/components/layout/PageBanner";
 import { Skeleton } from "@/components/common/Skeleton";
 import { useT } from "@/hooks/useT";
 import { cn } from "@/utils/cn";
+import { esc } from "@/utils/html";
 import { reportService, type GenerateReportRequest } from "@/services/report.service";
 import type { DoctorReportResponse, ReportPeriodType } from "@/types/api";
 
@@ -121,7 +123,7 @@ function GenerateModal({ onClose, onCreated }: { onClose: () => void; onCreated:
             type="button"
             onClick={submit}
             disabled={mutation.isPending}
-            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+            className="btn-push px-4 py-2 text-sm disabled:opacity-60"
           >
             {mutation.isPending ? ir.generatingBtn : ir.generateBtn}
           </button>
@@ -240,24 +242,13 @@ export default function IndividualReportsPage() {
         <Card>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div>
-              <p className="mb-1.5 text-sm font-medium text-slate-700">{ir.filterTypeLabel}</p>
-              <div className="flex flex-wrap gap-1.5">
-                {PERIOD_TYPES.map(({ value, label }) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => setTypeFilter(value)}
-                    className={cn(
-                      "rounded-full border px-2.5 py-1 text-xs font-medium transition-all",
-                      typeFilter === value
-                        ? "border-emerald-500 bg-emerald-500 text-white"
-                        : "border-slate-200 bg-white text-slate-700 hover:border-emerald-300",
-                    )}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
+              <FilterChips
+                label={ir.filterTypeLabel}
+                value={typeFilter}
+                onChange={setTypeFilter}
+                options={PERIOD_TYPES.map(({ value, label }) => ({ value, label }))}
+                className="!contents"
+              />
             </div>
             <div>
               <p className="mb-1.5 text-sm font-medium text-slate-700">{ir.filterYearLabel}</p>
@@ -340,7 +331,7 @@ function printReport(r: DoctorReportResponse, typeLabel: string, statusSubmitted
   if (!win) return;
   win.document.write(`<!DOCTYPE html><html><head>
     <meta charset="utf-8"/>
-    <title>Пријава ${r.reportNumber}</title>
+    <title>Пријава ${esc(r.reportNumber)}</title>
     <style>
       body{font-family:Arial,sans-serif;padding:40px;color:#1e293b;max-width:700px;margin:0 auto}
       h1{font-size:22px;margin-bottom:4px}
@@ -354,20 +345,20 @@ function printReport(r: DoctorReportResponse, typeLabel: string, statusSubmitted
     </style>
   </head><body>
     <h1>Индивидуална лекарска пријава</h1>
-    <p class="sub">${typeLabel} пријава · ${r.reportNumber} · ${r.periodLabel}</p>
+    <p class="sub">${esc(typeLabel)} пријава · ${esc(r.reportNumber)} · ${esc(r.periodLabel)}</p>
     <table>
       <thead><tr><th>Параметар</th><th>Вредност</th></tr></thead>
       <tbody>
-        <tr><td class="row-label">Период</td><td>${r.periodStart} – ${r.periodEnd}</td></tr>
-        <tr><td class="row-label">Број на пациенти</td><td>${r.patientCount}</td></tr>
-        <tr><td class="row-label">Број на дијагнози</td><td>${r.diagnosisCount}</td></tr>
-        <tr><td class="row-label">Број на термини</td><td>${r.appointmentCount}</td></tr>
-        <tr><td class="row-label">Број на рецепти</td><td>${r.prescriptionCount}</td></tr>
-        <tr><td class="row-label">Статус</td><td>${r.status === "SUBMITTED" ? statusSubmitted : statusDraft}</td></tr>
-        ${r.submittedAt ? `<tr><td class="row-label">Поднесена на</td><td>${format(parseISO(r.submittedAt), "dd.MM.yyyy HH:mm")}</td></tr>` : ""}
+        <tr><td class="row-label">Период</td><td>${esc(r.periodStart)} – ${esc(r.periodEnd)}</td></tr>
+        <tr><td class="row-label">Број на пациенти</td><td>${esc(r.patientCount)}</td></tr>
+        <tr><td class="row-label">Број на дијагнози</td><td>${esc(r.diagnosisCount)}</td></tr>
+        <tr><td class="row-label">Број на термини</td><td>${esc(r.appointmentCount)}</td></tr>
+        <tr><td class="row-label">Број на рецепти</td><td>${esc(r.prescriptionCount)}</td></tr>
+        <tr><td class="row-label">Статус</td><td>${esc(r.status === "SUBMITTED" ? statusSubmitted : statusDraft)}</td></tr>
+        ${r.submittedAt ? `<tr><td class="row-label">Поднесена на</td><td>${esc(format(parseISO(r.submittedAt), "dd.MM.yyyy HH:mm"))}</td></tr>` : ""}
       </tbody>
     </table>
-    <div class="footer">MedTech 2.0 · Генерирано: ${format(new Date(), "dd.MM.yyyy HH:mm")}</div>
+    <div class="footer">MedTech 2.0 · Генерирано: ${esc(format(new Date(), "dd.MM.yyyy HH:mm"))}</div>
     <script>window.onload=()=>{window.print();window.close()}</script>
   </body></html>`);
   win.document.close();

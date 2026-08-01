@@ -5,13 +5,14 @@ import { motion } from "framer-motion";
 import { Calendar, ClipboardList, Clock, FileText, Printer } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { differenceInDays, format, parseISO } from "date-fns";
+import { differenceInCalendarDays, format, parseISO } from "date-fns";
 import { Badge } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
 import { Card } from "@/components/common/Card";
 import { EmptyState } from "@/components/common/EmptyState";
 import { Skeleton } from "@/components/common/Skeleton";
 import { cn } from "@/utils/cn";
+import { esc } from "@/utils/html";
 import { referralService } from "@/services/referral.service";
 import { usePatientProfile } from "@/hooks/usePatient";
 import { useT } from "@/hooks/useT";
@@ -55,43 +56,43 @@ function printReferral(r: ReferralResponse, typeLabel: string) {
         <div class="header">
           <div class="hospital">MedTech Здравствен Систем</div>
           <div class="title">МЕДИЦИНСКИ УПАТ</div>
-          <div class="ref-number">Бр. ${r.referralNumber}</div>
+          <div class="ref-number">Бр. ${esc(r.referralNumber)}</div>
         </div>
         <div class="grid">
           <div class="section">
             <div class="label">Пациент</div>
-            <div class="value">${r.patientName}</div>
+            <div class="value">${esc(r.patientName)}</div>
           </div>
           <div class="section">
             <div class="label">Се упатува кон</div>
-            <div class="value">${r.referredTo}</div>
+            <div class="value">${esc(r.referredTo)}</div>
           </div>
           <div class="section">
             <div class="label">Тип на упат</div>
-            <div class="value">${typeLabel}</div>
+            <div class="value">${esc(typeLabel)}</div>
           </div>
           <div class="section">
             <div class="label">МКБ10</div>
-            <div class="value">${r.mkb10Code ?? "/"}</div>
+            <div class="value">${esc(r.mkb10Code ?? "/")}</div>
           </div>
           <div class="section">
             <div class="label">Издаден на</div>
-            <div class="value">${issued}</div>
+            <div class="value">${esc(issued)}</div>
           </div>
           <div class="section">
             <div class="label">Закажано за</div>
-            <div class="value">${scheduled}</div>
+            <div class="value">${esc(scheduled)}</div>
           </div>
-          ${r.doctorName ? `<div class="section"><div class="label">Доктор</div><div class="value">д-р ${r.doctorName}</div></div>` : ""}
+          ${r.doctorName ? `<div class="section"><div class="label">Доктор</div><div class="value">д-р ${esc(r.doctorName)}</div></div>` : ""}
         </div>
-        ${r.description ? `<div class="desc"><div class="label">Причина / опис</div><div class="value" style="margin-top:6px;">${r.description}</div></div>` : ""}
+        ${r.description ? `<div class="desc"><div class="label">Причина / опис</div><div class="value" style="margin-top:6px;">${esc(r.description)}</div></div>` : ""}
         <div style="margin-top:40px;">
           <div class="label">Потпис на доктор</div>
           <div class="signature-line"></div>
         </div>
         <div class="footer">
           <span>Издадено преку MedTech платформата</span>
-          <span>${r.referralNumber}</span>
+          <span>${esc(r.referralNumber)}</span>
         </div>
         <script>window.onload = () => { window.print(); window.close(); }</script>
       </body>
@@ -114,11 +115,10 @@ export default function PatientReferralsPage() {
   ];
 
   const TYPE_LABELS: Record<ReferralType, string> = {
-    GENERAL_MEDICINE: rt.typeGeneral,
-    SPECIALIST:       rt.typeSpecialist,
-    LABORATORY:       rt.typeLab,
-    DIAGNOSTICS:      rt.typeDiag,
-    HOSPITAL:         rt.typeHospital,
+    SPECIALIST_EXAM: rt.typeSpecialist,
+    LABORATORY:      rt.typeLab,
+    RADIOLOGY:       rt.typeRadiology,
+    HOSPITAL:        rt.typeHospital,
   };
 
   const STATUS_LABELS: Record<ReferralStatus, string> = {
@@ -154,10 +154,10 @@ export default function PatientReferralsPage() {
   }, [all]);
 
   function getDaysBadge(isoDate: string) {
-    const days = differenceInDays(parseISO(isoDate), new Date());
-    if (days === 0)  return <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">{rt.daysToday}</span>;
-    if (days < 0)    return <span className="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-600">{rt.daysOverdue}</span>;
-    if (days <= 7)   return <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">{rt.daysIn} {days} {rt.daysSuffix}</span>;
+    const days = differenceInCalendarDays(parseISO(isoDate), new Date());
+    if (days === 0)  return <span className="chip chip-wait">{rt.daysToday}</span>;
+    if (days < 0)    return <span className="chip chip-alert">{rt.daysOverdue}</span>;
+    if (days <= 7)   return <span className="chip chip-ok">{rt.daysIn} {days} {rt.daysSuffix}</span>;
     return null;
   }
 
@@ -309,7 +309,7 @@ function ReferralCard({
           <div className="flex flex-wrap items-baseline gap-2">
             <h3 className="text-lg font-bold text-slate-900">{r.referredTo}</h3>
             <Badge tone={statusTone(r.status)}>{statusLabel}</Badge>
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+            <span className="chip chip-mute">
               {typeLabel}
             </span>
             {daysBadge}

@@ -7,6 +7,7 @@ import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import { Button } from "@/components/common/Button";
+import { esc } from "@/utils/html";
 import { Input } from "@/components/common/Input";
 import { Modal } from "@/components/common/Modal";
 import { Mkb10Autocomplete } from "@/components/doctor/Mkb10Autocomplete";
@@ -62,9 +63,7 @@ export function SickLeaveModal({ open, onClose, patientName, patientDob }: SickL
     return diff > 0 ? diff : 1;
   };
 
-  const esc = (s: string | null | undefined) =>
-    (s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-
+  
   const onSubmit = (data: FormData) => {
     const doctorName = user ? `д-р ${user.firstName} ${user.lastName}` : "Доктор";
     const fromFmt = data.fromDate.split("-").reverse().join(".");

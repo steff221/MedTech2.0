@@ -20,6 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { Skeleton } from "@/components/common/Skeleton";
+import { esc } from "@/utils/html";
 import { doctorService } from "@/services/doctor.service";
 import { patientService } from "@/services/patient.service";
 import { appointmentService } from "@/services/appointment.service";
@@ -30,12 +31,13 @@ import { format, parseISO } from "date-fns";
 
 type Tab = "patients" | "today" | "doctors" | "vitals";
 
+// State is carried by the chip's inked rule, not by a fill — see `.chip`.
 const STATUS_STYLES: Record<string, string> = {
-  SCHEDULED:   "bg-blue-50 text-blue-700",
-  COMPLETED:   "bg-emerald-50 text-emerald-700",
-  CANCELLED:   "bg-red-50 text-red-700",
-  NO_SHOW:     "bg-amber-50 text-amber-700",
-  RESCHEDULED: "bg-purple-50 text-purple-700",
+  SCHEDULED:   "chip-info",
+  COMPLETED:   "chip-ok",
+  CANCELLED:   "chip-alert",
+  NO_SHOW:     "chip-wait",
+  RESCHEDULED: "chip-mute",
 };
 
 // ── Vitals entry panel ────────────────────────────────────────────────────────
@@ -64,7 +66,7 @@ function VitalsTab() {
     const win = window.open("", "_blank", "width=700,height=600");
     if (!win) return;
     win.document.write(`<!DOCTYPE html><html><head>
-      <meta charset="utf-8"/><title>Витали · ${selectedPatient.firstName} ${selectedPatient.lastName}</title>
+      <meta charset="utf-8"/><title>Витали · ${esc(selectedPatient.firstName)} ${esc(selectedPatient.lastName)}</title>
       <style>
         body{font-family:Arial,sans-serif;padding:40px;color:#1e293b;max-width:600px;margin:0 auto}
         h1{font-size:20px;margin-bottom:4px}
@@ -78,21 +80,21 @@ function VitalsTab() {
       </style>
     </head><body>
       <h1>Лист на витали</h1>
-      <p class="sub">Пациент: <strong>${selectedPatient.firstName} ${selectedPatient.lastName}</strong> &nbsp;·&nbsp; ${now}</p>
+      <p class="sub">Пациент: <strong>${esc(selectedPatient.firstName)} ${esc(selectedPatient.lastName)}</strong> &nbsp;·&nbsp; ${esc(now)}</p>
       <table>
         <thead><tr><th>Параметар</th><th>Вредност</th><th>Референтни вредности</th></tr></thead>
         <tbody>
-          ${form.bloodPressure ? `<tr><td class="label">${n.bloodPressure}</td><td>${form.bloodPressure} mmHg</td><td>90/60 – 120/80 mmHg</td></tr>` : ""}
-          ${form.heartRate ? `<tr><td class="label">${n.pulse}</td><td>${form.heartRate} bpm</td><td>60 – 100 bpm</td></tr>` : ""}
-          ${form.temperature ? `<tr><td class="label">${n.temperature}</td><td>${form.temperature} °C</td><td>36.1 – 37.2 °C</td></tr>` : ""}
-          ${form.weight ? `<tr><td class="label">${n.weight}</td><td>${form.weight} kg</td><td>—</td></tr>` : ""}
-          ${form.height ? `<tr><td class="label">${n.height}</td><td>${form.height} cm</td><td>—</td></tr>` : ""}
-          ${form.notes ? `<tr><td class="label">${n.notes}</td><td colspan="2">${form.notes}</td></tr>` : ""}
+          ${form.bloodPressure ? `<tr><td class="label">${esc(n.bloodPressure)}</td><td>${esc(form.bloodPressure)} mmHg</td><td>90/60 – 120/80 mmHg</td></tr>` : ""}
+          ${form.heartRate ? `<tr><td class="label">${esc(n.pulse)}</td><td>${esc(form.heartRate)} bpm</td><td>60 – 100 bpm</td></tr>` : ""}
+          ${form.temperature ? `<tr><td class="label">${esc(n.temperature)}</td><td>${esc(form.temperature)} °C</td><td>36.1 – 37.2 °C</td></tr>` : ""}
+          ${form.weight ? `<tr><td class="label">${esc(n.weight)}</td><td>${esc(form.weight)} kg</td><td>—</td></tr>` : ""}
+          ${form.height ? `<tr><td class="label">${esc(n.height)}</td><td>${esc(form.height)} cm</td><td>—</td></tr>` : ""}
+          ${form.notes ? `<tr><td class="label">${esc(n.notes)}</td><td colspan="2">${esc(form.notes)}</td></tr>` : ""}
         </tbody>
       </table>
       <div class="footer">
         <span>Медицинска сестра: ________________________</span>
-        <span>МедТех 2.0 &nbsp;·&nbsp; ${now}</span>
+        <span>МедТех 2.0 &nbsp;·&nbsp; ${esc(now)}</span>
       </div>
       <script>window.onload=()=>{window.print();window.close()}</script>
     </body></html>`);
@@ -163,7 +165,7 @@ function VitalsTab() {
                   onClick={() => setSelectedPatient(p)}
                   className="flex w-full items-center gap-3 rounded-lg px-2 py-3 text-left transition-colors hover:bg-slate-50"
                 >
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100">
+                  <div className="tile h-8 w-8">
                     <User className="h-4 w-4 text-emerald-600" />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -209,7 +211,7 @@ function VitalsTab() {
               type="button"
               disabled={!hasAnyValue}
               onClick={printVitals}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+              className="btn-push flex w-full items-center justify-center gap-2 py-2.5 text-sm disabled:opacity-50"
             >
               <Printer className="h-4 w-4" /> {n.printVitalsBtn}
             </button>
@@ -241,7 +243,7 @@ function PatientPanel({ patient, onClose }: { patient: PatientResponse; onClose:
     <div className="flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100">
+          <div className="tile h-10 w-10">
             <User className="h-5 w-5 text-emerald-600" />
           </div>
           <div>
@@ -340,7 +342,7 @@ function PatientPanel({ patient, onClose }: { patient: PatientResponse; onClose:
                       {format(parseISO(a.appointmentDate), "dd.MM.yyyy")} · {a.appointmentTime}
                     </p>
                   </div>
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[a.status] ?? "bg-slate-100 text-slate-600"}`}>
+                  <span className={`chip ${esc(STATUS_STYLES[a.status] ?? "chip-mute")}`}>
                     {STATUS_LABEL[a.status] ?? a.status}
                   </span>
                 </div>
@@ -370,11 +372,11 @@ function AppointmentRow({ a, statusLabel }: { a: AppointmentResponse; statusLabe
       <div className="flex-1 min-w-0">
         <p className="truncate text-sm font-medium text-slate-800">{a.patientName}</p>
         <p className="truncate text-xs text-slate-500">
-          {a.doctorName}{a.doctorSpecialization ? ` · ${a.doctorSpecialization}` : ""}
+          {a.doctorName}{a.doctorSpecialization ? ` · ${esc(a.doctorSpecialization)}` : ""}
         </p>
       </div>
       {a.hospitalName && <p className="hidden text-xs text-slate-400 md:block">{a.hospitalName}</p>}
-      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[a.status] ?? "bg-slate-100 text-slate-600"}`}>
+      <span className={`chip ${esc(STATUS_STYLES[a.status] ?? "chip-mute")}`}>
         {statusLabel[a.status] ?? a.status}
       </span>
     </div>
@@ -437,11 +439,11 @@ export default function NurseDashboard() {
           <button
             key={tb.id}
             onClick={() => setTab(tb.id)}
-            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${esc(
               tab === tb.id
                 ? "bg-emerald-500 text-white shadow-sm"
                 : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
-            }`}
+            )}`}
           >
             {tb.label}
           </button>
@@ -484,7 +486,7 @@ export default function NurseDashboard() {
                   onClick={() => setSelectedPatient(p)}
                   className="flex w-full items-center gap-3 py-3 text-left hover:bg-slate-50 transition-colors rounded-lg px-2"
                 >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-100">
+                  <div className="tile h-9 w-9">
                     <User className="h-4 w-4 text-emerald-600" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -526,7 +528,7 @@ export default function NurseDashboard() {
               {n.todayTitle}, {format(new Date(), "dd.MM.yyyy")}
             </h2>
             {todayAppts.data && (
-              <span className="ml-auto rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+              <span className="chip chip-ok ml-auto">
                 {todayAppts.data.length} {n.total}
               </span>
             )}
@@ -561,7 +563,7 @@ export default function NurseDashboard() {
             <div className="divide-y divide-slate-100">
               {doctors.data?.content.slice(0, 20).map((doc) => (
                 <div key={doc.id} className="flex items-center gap-4 py-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100">
+                  <div className="tile h-9 w-9">
                     <User className="h-4 w-4 text-emerald-600" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -569,7 +571,7 @@ export default function NurseDashboard() {
                       д-р {doc.firstName} {doc.lastName}
                     </p>
                     <p className="text-xs text-slate-500">
-                      {doc.specialization}{doc.hospitalName ? ` · ${doc.hospitalName}` : ""}
+                      {t.specialties[doc.specialization] ?? doc.specialization}{doc.hospitalName ? ` · ${esc(doc.hospitalName)}` : ""}
                     </p>
                   </div>
                   <span className="text-xs text-slate-400">{doc.officeNumber ?? "—"}</span>
