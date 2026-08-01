@@ -55,7 +55,7 @@ class ReferralServiceTest {
         patient = Entities.patient(10L, Entities.user(1L, UserRole.PATIENT));
 
         service = new ReferralService(referralRepository, doctorRepository, patientRepository,
-                new Icd10CatalogService());
+                new Icd10CatalogService(), new FzomFormResolver());
 
         lenient().when(doctorRepository.findByUserId(doctor.getUser().getId()))
                 .thenReturn(Optional.of(doctor));
@@ -113,7 +113,7 @@ class ReferralServiceTest {
 
     @Test
     void complete_setsCompletedStatusAndOutcome() {
-        Referral ref = Entities.referral(5L, doctor, patient, ReferralType.SPECIALIST, ReferralStatus.ACTIVE);
+        Referral ref = Entities.referral(5L, doctor, patient, ReferralType.SPECIALIST_EXAM, ReferralStatus.ACTIVE);
         when(referralRepository.findById(5L)).thenReturn(Optional.of(ref));
 
         var req = new CompleteReferralRequest(LocalDate.now(), "Patient recovered");
@@ -134,7 +134,7 @@ class ReferralServiceTest {
 
     @Test
     void complete_rejectsNonActiveReferral() {
-        Referral ref = Entities.referral(7L, doctor, patient, ReferralType.DIAGNOSTICS, ReferralStatus.COMPLETED);
+        Referral ref = Entities.referral(7L, doctor, patient, ReferralType.RADIOLOGY, ReferralStatus.COMPLETED);
         when(referralRepository.findById(7L)).thenReturn(Optional.of(ref));
 
         assertThatThrownBy(() -> service.complete(7L, doctor.getUser().getId(), new CompleteReferralRequest(LocalDate.now(), null)))
@@ -146,28 +146,79 @@ class ReferralServiceTest {
         Referral ref = Entities.referral(8L, doctor, patient, ReferralType.HOSPITAL, ReferralStatus.ACTIVE);
         when(referralRepository.findById(8L)).thenReturn(Optional.of(ref));
 
-        Referral result = service.cancel(8L, doctor.getUser().getId());
+        Referral result = service.cancel(8L, doctor.getUser().getId(), "Пациентот се откажа");
 
         assertThat(result.getStatus()).isEqualTo(ReferralStatus.CANCELLED);
     }
 
     @Test
+    void cancel_requiresAReason() {
+        Referral ref = Entities.referral(11L, doctor, patient, ReferralType.HOSPITAL, ReferralStatus.ACTIVE);
+        when(referralRepository.findById(11L)).thenReturn(Optional.of(ref));
+
+        // The number stays reserved, so a void with no stated reason would
+        // leave no answer to "what happened to this document?".
+        assertThatThrownBy(() -> service.cancel(11L, doctor.getUser().getId(), "  "))
+                .isInstanceOf(ConflictException.class);
+    }
+
+    @Test
+    void cancel_recordsReasonAndTimestamp() {
+        Referral ref = Entities.referral(12L, doctor, patient, ReferralType.HOSPITAL, ReferralStatus.ACTIVE);
+        when(referralRepository.findById(12L)).thenReturn(Optional.of(ref));
+
+        Referral result = service.cancel(12L, doctor.getUser().getId(), "Пациентот се откажа");
+
+        assertThat(result.getCancellationReason()).isEqualTo("Пациентот се откажа");
+        assertThat(result.getCancelledAt()).isNotNull();
+        // The referral number is never released back to the sequence.
+        assertThat(result.getReferralNumber()).isEqualTo(ref.getReferralNumber());
+    }
+
+    @Test
+    void create_rejectsFormMissingARequiredBox() {
+        // СУ declares SPECIALTY as required; issuing without it would print a
+        // form with an empty Специјалност box.
+        var req = new CreateReferralRequest(
+                patient.getId(), ReferralType.SPECIALIST_EXAM, "ЈЗУ Клиничка болница",
+                "I21.0", "Chest pain", LocalDate.now().plusDays(10),
+                null, null, null, null, (short) 1);
+
+        assertThatThrownBy(() -> service.create(doctor.getUser().getId(), req))
+                .isInstanceOf(ConflictException.class)
+                .hasMessageContaining("Специјалност");
+    }
+
+    @Test
+    void create_resolvesFzomFormCodeFromIssuerRole() {
+        Referral result = service.create(doctor.getUser().getId(), basicCreateReq());
+
+        // Specialist exam has no -1/-2 variant, so both roles yield СУ.
+        assertThat(result.getFzomFormCode()).isEqualTo("СУ");
+    }
+
+    @Test
     void cancel_rejectsCompletedReferral() {
-        Referral ref = Entities.referral(9L, doctor, patient, ReferralType.GENERAL_MEDICINE, ReferralStatus.COMPLETED);
+        Referral ref = Entities.referral(9L, doctor, patient, ReferralType.SPECIALIST_EXAM, ReferralStatus.COMPLETED);
         when(referralRepository.findById(9L)).thenReturn(Optional.of(ref));
 
-        assertThatThrownBy(() -> service.cancel(9L, doctor.getUser().getId()))
+        assertThatThrownBy(() -> service.cancel(9L, doctor.getUser().getId(), "Погрешно издаден"))
                 .isInstanceOf(ConflictException.class);
     }
 
     private CreateReferralRequest basicCreateReq() {
         return new CreateReferralRequest(
                 patient.getId(),
-                ReferralType.SPECIALIST,
+                ReferralType.SPECIALIST_EXAM,
                 "Cardiology Dept",
                 "I21.0",
                 "Chest pain evaluation",
-                LocalDate.now().plusDays(10)
+                LocalDate.now().plusDays(10),
+                null,           // wardUnit
+                null,           // medicalJournalNo
+                "Кардиологија", // referredSpecialty — required by СУ
+                null,           // serviceDetail
+                (short) 1       // УПАТ ЗА: специјалист
         );
     }
 }

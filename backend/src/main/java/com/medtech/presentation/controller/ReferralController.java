@@ -1,6 +1,7 @@
 package com.medtech.presentation.controller;
 
 import com.medtech.application.dto.mapper.ReferralMapper;
+import com.medtech.application.dto.request.CancelReferralRequest;
 import com.medtech.application.dto.request.CompleteReferralRequest;
 import com.medtech.application.dto.request.CreateReferralRequest;
 import com.medtech.application.dto.response.ReferralResponse;
@@ -68,10 +69,20 @@ public class ReferralController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize(Roles.CLINICIAN)
-    @Operation(summary = "Cancel a referral (soft delete via status change)")
-    public ResponseEntity<ReferralResponse> cancel(@PathVariable Long id) {
+    @Operation(summary = "Cancel a referral (void: number stays reserved, reason required)")
+    public ResponseEntity<ReferralResponse> cancel(
+            @PathVariable Long id,
+            @Valid @RequestBody CancelReferralRequest request) {
         return ResponseEntity.ok(
-                mapper.toResponse(referralService.cancel(id, currentUserId())));
+                mapper.toResponse(referralService.cancel(id, currentUserId(), request.reason())));
+    }
+
+    @PutMapping("/{id}/printed")
+    @PreAuthorize(Roles.CLINICIAN)
+    @Operation(summary = "Record that the referral document was printed")
+    public ResponseEntity<ReferralResponse> markPrinted(@PathVariable Long id) {
+        return ResponseEntity.ok(
+                mapper.toResponse(referralService.markPrinted(id, currentUserId())));
     }
 
     @GetMapping("/my")

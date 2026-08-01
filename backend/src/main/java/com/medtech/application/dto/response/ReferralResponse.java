@@ -26,5 +26,16 @@ public record ReferralResponse(
         ReferralStatus status,
         String outcomeNote,
         LocalDate outcomeDate,
+        /** Resolved ФЗОМ form: СУ, ЛУ-1, ЛУ-2, РДУ-1, РДУ-2, БУ. */
+        String fzomFormCode,
+        String referredSpecialty,
+        String serviceDetail,
+        Short formSubtype,
+        String wardUnit,
+        String medicalJournalNo,
+        String cancellationReason,
+        Instant cancelledAt,
+        /** Non-null once a paper copy has been produced. */
+        Instant printedAt,
         Instant createdAt
 ) {}

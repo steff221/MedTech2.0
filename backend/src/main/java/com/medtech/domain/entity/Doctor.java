@@ -42,6 +42,15 @@ public class Doctor {
     @Column(name = "license_number", nullable = false, unique = true, length = 100)
     private String licenseNumber;
 
+    /**
+     * Факсимил — the doctor's Fund-issued stamp number, printed beside the
+     * signature on every ФЗОМ form. Distinct from {@code licenseNumber}: the
+     * licence identifies the doctor professionally, the facsimile identifies
+     * them to the Fund.
+     */
+    @Column(name = "facsimile_number", length = 20)
+    private String facsimileNumber;
+
     @Column(nullable = false, length = 255)
     private String specialization;
 

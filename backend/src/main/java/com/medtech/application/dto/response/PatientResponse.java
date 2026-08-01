@@ -23,6 +23,10 @@ public record PatientResponse(
         String allergies,
         String chronicConditions,
         String insuranceProvider,
+        /** ЕМБГ — printed on every ФЗОМ form. */
+        String embg,
+        /** ЕЗБО — printed on every ФЗОМ form. */
+        String ezbo,
         String insuranceNumber,
         String emergencyContact,
         String emergencyPhone,

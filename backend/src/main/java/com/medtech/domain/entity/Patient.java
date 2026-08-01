@@ -61,6 +61,20 @@ public class Patient {
     @Column(name = "chronic_conditions", columnDefinition = "text")
     private String chronicConditions;
 
+    /**
+     * ЕМБГ — единствен матичен број. Identifies the patient on every ФЗОМ
+     * form. PHI, so encrypted at rest like the other sensitive columns; the
+     * ciphertext is far longer than 13 digits, hence TEXT (see V102).
+     */
+    @Convert(converter = PhiStringConverter.class)
+    @Column(columnDefinition = "text")
+    private String embg;
+
+    /** ЕЗБО — единствен здравствен број на осигуреникот. Also PHI. */
+    @Convert(converter = PhiStringConverter.class)
+    @Column(columnDefinition = "text")
+    private String ezbo;
+
     @Column(name = "insurance_provider", length = 255)
     private String insuranceProvider;
 

@@ -16,6 +16,8 @@ public record DoctorResponse(
         String firstName,
         String lastName,
         String licenseNumber,
+        /** Факсимил — printed beside the signature on every ФЗОМ form. */
+        String facsimileNumber,
         String specialization,
         String subSpecialization,
         String qualification,
