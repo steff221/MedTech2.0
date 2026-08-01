@@ -39,6 +39,17 @@ export function Modal({
   const panelRef = useRef<HTMLDivElement>(null);
   const lastActive = useRef<HTMLElement | null>(null);
 
+  // `onClose` is an inline arrow at every call site, so its identity changes on
+  // each parent render. Depending on it directly made the focus-trap effect
+  // tear down and re-run on every keystroke inside the dialog: the cleanup
+  // restored focus to the element that opened the modal, so a field would
+  // accept exactly one character and then lose focus. Holding it in a ref keeps
+  // the handler current while the effect depends only on `open`.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
+
   useEffect(() => {
     if (!open) return;
     lastActive.current = document.activeElement as HTMLElement | null;
@@ -47,7 +58,7 @@ export function Modal({
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (e.key !== "Tab" || !panelRef.current) return;
@@ -76,7 +87,7 @@ export function Modal({
       document.body.style.overflow = "";
       lastActive.current?.focus();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   return (
     <AnimatePresence>
