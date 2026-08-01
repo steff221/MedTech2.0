@@ -3,17 +3,14 @@
 @tailwind utilities;
 
 /* ── Design tokens ───────────────────────────────────────────────────────── */
-/* "The clinical record" — surgical drape teal, carmine seals, cool paper. */
 :root {
-  --bg:         #eceeec; /* cool clinical paper, deliberately not warm cream */
+  --bg:         #f8fafc;
   --surface:    #ffffff;
-  --text:       #10262b; /* ink: near-black with a teal cast */
-  --text-muted: #6b7a7c;
-  --border:     #d3dada;
-  --brand:      #8e2436; /* carmine */
-  --brand-dark: #741c2c;
-  --drape:      #1e5f63; /* structural chrome */
-  --brass:      #c08a3e; /* marginalia */
+  --text:       #0f172a;
+  --text-muted: #64748b;
+  --border:     #e2e8f0;
+  --brand:      #10b981;
+  --brand-dark: #059669;
 }
 
 /* ── Base ────────────────────────────────────────────────────────────────── */
@@ -29,30 +26,17 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Headings take the slab face. Set here so all 48 routes inherit it without
-   touching each page's markup. */
-h1, h2, h3, h4 {
-  font-family: var(--font-bitter), Georgia, serif;
-  letter-spacing: -0.008em;
-}
-
-/* Tabular figures wherever numbers matter — counts, vitals, dates stop
-   shifting width as they update. */
-table, .tabular {
-  font-variant-numeric: tabular-nums;
-}
-
 /* ── Selection ───────────────────────────────────────────────────────────── */
 ::selection {
-  background: rgba(142, 36, 54, 0.16);
-  color: #421018;
+  background: rgba(16, 185, 129, 0.18);
+  color: #065f46;
 }
 
 /* ── Focus ring ──────────────────────────────────────────────────────────── */
 *:focus-visible {
   outline: 2px solid var(--brand);
   outline-offset: 2px;
-  border-radius: 3px;
+  border-radius: 6px;
 }
 
 /* ── Custom scrollbar (webkit) ───────────────────────────────────────────── */
@@ -64,20 +48,20 @@ table, .tabular {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #b2bdbe;
+  background: #cbd5e1;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #8a9899;
+  background: #94a3b8;
 }
 
 /* ── Skeleton shimmer ────────────────────────────────────────────────────── */
 .skeleton {
   background: linear-gradient(
     90deg,
-    rgba(211, 218, 218, 0.35) 0%,
-    rgba(244, 246, 246, 0.85) 50%,
-    rgba(211, 218, 218, 0.35) 100%
+    rgba(226, 232, 240, 0.5) 0%,
+    rgba(241, 245, 249, 0.95) 50%,
+    rgba(226, 232, 240, 0.5) 100%
   );
   background-size: 200% 100%;
   animation: shimmer 1.6s ease-in-out infinite;
@@ -88,23 +72,24 @@ table, .tabular {
   100% { background-position:  200% 0; }
 }
 
-/* ── Panels ──────────────────────────────────────────────────────────────── */
-/* Was frosted glass. Now an opaque paper panel with a hairline — the blur cost
-   legibility over the map and read as generic. Class names kept so existing
-   call sites stay valid. */
+/* ── Glass utilities ─────────────────────────────────────────────────────── */
 .glass {
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.70);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.40);
 }
 
 .glass-dark {
-  background: rgba(16, 38, 43, 0.88);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 /* ── Page entry animation ────────────────────────────────────────────────── */
 @keyframes page-enter {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0);   }
 }
 
@@ -112,89 +97,12 @@ table, .tabular {
   animation: page-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* ── Emphasis ────────────────────────────────────────────────────────────── */
-/* Formerly a tri-colour gradient wash. Flat carmine reads institutional rather
-   than promotional, and stays legible at small sizes. */
+/* ── Gradient text ───────────────────────────────────────────────────────── */
 .gradient-text {
-  color: var(--brand);
-}
-
-/* ── The seal ────────────────────────────────────────────────────────────── */
-/* Signature element. Wraps a record's own identifier — УП-2026-007,
-   IP-2026-07-M001 — as a stamped mark. Real data, not ornament. */
-.seal {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.25rem 0.5rem;
-  font-family: var(--font-plex-mono), ui-monospace, monospace;
-  font-size: 0.6875rem;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--brand);
-  border: 1px solid rgba(142, 36, 54, 0.42);
-  border-radius: 2px;
-  background: rgba(142, 36, 54, 0.045);
-  transform: rotate(-2.2deg);
-  box-shadow: inset 0 0 0 1px rgba(142, 36, 54, 0.10);
-}
-
-/* Double rule on the leading edge, like a rubber stamp's inked border. */
-.seal::before {
-  content: "";
-  width: 1px;
-  align-self: stretch;
-  background: rgba(142, 36, 54, 0.42);
-  box-shadow: 2px 0 0 rgba(142, 36, 54, 0.42);
-  margin-right: 0.25rem;
-}
-
-/* ── Coded tokens ────────────────────────────────────────────────────────── */
-/* MKB-10 codes and other controlled vocabulary. The taxonomy is genuinely
-   alphanumeric, so monospace here is information, not styling. */
-.code {
-  font-family: var(--font-plex-mono), ui-monospace, monospace;
-  font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  padding: 0.0625rem 0.3125rem;
-  border-radius: 2px;
-  background: #e8ecec;
-  color: #184d50;
-  border: 1px solid #d3dada;
-}
-
-/* ── Record rail ─────────────────────────────────────────────────────────── */
-/* Thin edge marker on record surfaces — the tabbed divider of a paper file. */
-.rail {
-  position: relative;
-  padding-left: 1rem;
-}
-
-.rail::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0.125rem;
-  bottom: 0.125rem;
-  width: 3px;
-  border-radius: 1px;
-  background: var(--drape);
-}
-
-.rail-carmine::before { background: var(--brand); }
-.rail-brass::before   { background: var(--brass); }
-
-/* ── Eyebrow ─────────────────────────────────────────────────────────────── */
-/* Small-caps label for section headers — the field name on a form. */
-.eyebrow {
-  font-family: var(--font-plex-mono), ui-monospace, monospace;
-  font-size: 0.6875rem;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  background: linear-gradient(135deg, #059669, #10b981, #14b8a6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 /* ── Noise texture overlay (for banner) ──────────────────────────────────── */
@@ -207,14 +115,298 @@ table, .tabular {
   border-radius: inherit;
 }
 
-/* ── Reduced motion ──────────────────────────────────────────────────────── */
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-  /* The seal keeps its resting angle, it just stops flying in. */
-  .seal { transform: rotate(-2.2deg); }
+/* ── Chips: one status idiom ─────────────────────────────────────────────── */
+/* Replaces the tinted ovals. A status is a field value, so it is set square,
+   and its state is carried by an inked rule down the leading edge rather than
+   by a coloured lozenge — which keeps a column of mixed statuses readable
+   without five pastel pills competing with the record text beside them.
+   Colours are the app's own emerald / amber / rose / sky. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.125rem 0.4375rem;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--chip-rule, #94a3b8);
+  border-radius: 4px;
+  background: var(--surface);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--chip-ink, var(--text-muted));
+  white-space: nowrap;
+}
+
+.chip-ok    { --chip-rule: #10b981; --chip-ink: #047857; }
+.chip-wait  { --chip-rule: #f59e0b; --chip-ink: #b45309; }
+.chip-alert { --chip-rule: #f43f5e; --chip-ink: #be123c; }
+.chip-info  { --chip-rule: #0ea5e9; --chip-ink: #0369a1; }
+.chip-mute  { --chip-rule: #cbd5e1; --chip-ink: #64748b; }
+
+/* On a dark header bar the light fill would punch a hole, so the chip
+   inverts: same geometry, borrowed contrast. */
+.chip-onink {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
+  --chip-ink: #ffffff;
+  --chip-rule: rgba(255, 255, 255, 0.6);
+}
+
+/* ── Identity tile ───────────────────────────────────────────────────────── */
+/* Was a circle of initials, repeated ~30 times across the app. Squaring it
+   settles the avatar into the row it belongs to instead of floating in it. */
+.tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  border-radius: 8px;
+  background: #f1f5f9;
+  font-weight: 700;
+  color: #475569;
+}
+
+.tile-icon { color: #10b981; }
+
+/* ── List marker ─────────────────────────────────────────────────────────── */
+/* Replaces bullet dots: a short leader rule, aligned to the item's first line. */
+.marker::before {
+  content: "";
+  display: block;
+  flex: none;
+  width: 0.5rem;
+  height: 1px;
+  margin-top: 0.5rem;
+  background: var(--text-muted);
+  opacity: 0.5;
+}
+
+/* ── Text inputs ─────────────────────────────────────────────────────────── */
+/* Applied globally rather than only through the Input component, because a
+   large share of the app's fields are raw <input> elements in page markup.
+   Width is deliberately left to the container: the source rule carried a fixed
+   13em, which would break the search bars and the multi-column forms that
+   expect their field to fill the cell. Everything else is as specified. */
+input:not([type]),
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+input[type="number"],
+input[type="date"],
+input[type="time"],
+textarea,
+select {
+  background-color: #eee;
+  border: none;
+  font-size: 1rem;
+  border-radius: 1rem;
+  color: lightcoral;
+  box-shadow: 0 0.4rem #dfd9d9;
+  cursor: pointer;
+}
+
+/* Padding is set at zero specificity via :where(), so a field that carries its
+   own padding utility keeps it. Fields with a leading search icon reserve
+   space for it with pl-9; a flat `padding: 1rem` here would win that fight and
+   drop the placeholder on top of the icon. */
+:where(
+  input:not([type]),
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="number"],
+  input[type="date"],
+  input[type="time"],
+  textarea,
+  select
+) {
+  padding: 1rem;
+}
+
+input:not([type]):focus,
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="search"]:focus,
+input[type="tel"]:focus,
+input[type="url"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+input[type="time"]:focus,
+textarea:focus,
+select:focus {
+  outline-color: lightcoral;
+}
+
+/* The native calendar/clock affordance has to stay findable against the light
+   fill — Chrome renders it near-black by default, which reads as a smudge. */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.55;
+}
+
+/* A textarea is resized, not clicked into — the pointer cursor inherited from
+   the shared rule would promise the wrong interaction. */
+textarea {
+  cursor: text;
+  resize: vertical;
+}
+
+/* The placeholder has to stay distinguishable from a typed value, which is
+   itself lightcoral — so it takes the same hue at reduced strength. */
+input::placeholder,
+textarea::placeholder {
+  color: lightcoral;
+  opacity: 0.55;
+}
+
+/* ── Auth form ───────────────────────────────────────────────────────────── */
+/* Scoped to the login and sign-up card. These selectors are more specific than
+   the global input rules above, so the cascade hands the auth fields to this
+   block without needing !important. */
+.form {
+  --bg-light: #efefef;
+  --bg-dark: #707070;
+  --clr: #58bc82;
+  --clr-alpha: #9c9c9c60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  max-width: 300px;
+}
+
+.form .input-span {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form input:not([type]),
+.form input[type="email"],
+.form input[type="password"],
+.form input[type="tel"],
+.form input[type="text"] {
+  border-radius: 0.5rem;
+  padding: 1rem 0.75rem;
+  width: 100%;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--clr-alpha);
+  outline: 2px solid var(--bg-dark);
+  box-shadow: none;
+  color: var(--bg-light);
+  font-size: 1rem;
+}
+
+.form input:not([type]):focus,
+.form input[type="email"]:focus,
+.form input[type="password"]:focus,
+.form input[type="tel"]:focus,
+.form input[type="text"]:focus {
+  outline: 2px solid var(--clr);
+}
+
+.form input::placeholder {
+  color: var(--bg-light);
+  opacity: 0.5;
+}
+
+.label {
+  align-self: flex-start;
+  color: var(--clr);
+  font-weight: 600;
+}
+
+.form .submit {
+  padding: 1rem 0.75rem;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 3rem;
+  background-color: var(--bg-dark);
+  color: var(--bg-light);
+  border: none;
+  cursor: pointer;
+  transition: all 300ms;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.form .submit:hover:not(:disabled) {
+  background-color: var(--clr);
+  color: var(--bg-dark);
+}
+
+.form .submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* `.span` is also used for the "already have an account?" line, which sits
+   outside `.form` — so the custom properties have to resolve there too. */
+.span {
+  --bg-light: #efefef;
+  --bg-dark: #707070;
+  --clr: #58bc82;
+  text-decoration: none;
+  color: var(--bg-dark);
+}
+
+.span a {
+  color: var(--clr);
+}
+
+/* ── Push button ─────────────────────────────────────────────────────────── */
+/* Same key mechanics as the Button component, exposed as a class so the raw
+   <button> elements written directly into page markup can adopt it without
+   each one being rewritten to use the component. */
+.btn-push {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  padding: 0.5rem 1.5rem;
+  border-radius: 0.5rem;
+  border: none;
+  border-bottom: 4px solid #2563eb;
+  background-color: #3b82f6;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: none;
+  transition: all 150ms;
+}
+
+.btn-push:hover:not(:disabled) {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+  border-bottom-width: 6px;
+}
+
+.btn-push:active:not(:disabled) {
+  filter: brightness(0.9);
+  transform: translateY(2px);
+  border-bottom-width: 2px;
+}
+
+.btn-push:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }

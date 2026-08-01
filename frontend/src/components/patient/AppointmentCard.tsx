@@ -70,7 +70,7 @@ export function AppointmentCard({ appointment }: AppointmentCardProps) {
         className="flex w-full items-start justify-between gap-4 pl-5 pr-5 pt-5 pb-4 text-left"
       >
         <div className="flex flex-1 items-start gap-4">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700">
+          <div className="tile h-11 w-11 text-sm">
             {initials(firstName, lastName)}
           </div>
           <div className="min-w-0 flex-1">

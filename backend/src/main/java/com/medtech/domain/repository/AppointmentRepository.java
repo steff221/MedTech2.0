@@ -83,6 +83,24 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     List<Appointment> findAllByAppointmentDate(@Param("date") LocalDate date);
 
     /**
+     * The times a doctor is already taken on a given date.
+     *
+     * Deliberately projects times only. A patient choosing a slot has to know
+     * which ones are gone, but must never learn who is in them — so this
+     * returns no appointment, patient or reason, and is safe to expose to the
+     * patient role in a way the full appointment listing is not.
+     */
+    @Query("""
+           SELECT a.appointmentTime FROM Appointment a
+           WHERE a.doctor.id = :doctorId
+             AND a.appointmentDate = :date
+             AND a.status IN :statuses
+           """)
+    List<java.time.LocalTime> findBookedTimes(@Param("doctorId") Long doctorId,
+                                              @Param("date") LocalDate date,
+                                              @Param("statuses") java.util.Collection<AppointmentStatus> statuses);
+
+    /**
      * Returns same-day appointments for a doctor that overlap the proposed slot.
      * Pessimistically locked to prevent two patients booking the identical slot
      * during concurrent transactions.

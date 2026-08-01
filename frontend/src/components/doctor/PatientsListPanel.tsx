@@ -203,17 +203,17 @@ function PatientRow({
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-base font-semibold text-slate-900">{summary.patientName}</span>
           {summary.hasUrgent && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rose-700">
+            <span className="chip chip-alert">
               <AlertCircle className="h-3 w-3" /> {t.doctorPatients.urgentCase}
             </span>
           )}
           {isCritical && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rose-700">
+            <span className="chip chip-alert">
               <AlertTriangle className="h-3 w-3" /> {t.doctorPatients.criticalValue}
             </span>
           )}
           {isWarning && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700">
+            <span className="chip chip-wait">
               <AlertTriangle className="h-3 w-3" /> {t.doctorPatients.warning}
             </span>
           )}
@@ -231,24 +231,24 @@ function PatientRow({
 
         {/* Stat chips */}
         <div className="mt-2 flex flex-wrap gap-2">
-          <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-600">
+          <span className="chip chip-mute">
             <Calendar className="h-3 w-3 text-slate-400" />
             {summary.appointments.length} {t.doctorPatients.appointments}
           </span>
           {totalCompleted > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs text-emerald-700">
+            <span className="chip chip-ok">
               <CheckCircle2 className="h-3 w-3" />
               {totalCompleted} {t.doctorPatients.completed}
             </span>
           )}
           {totalCancelled > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-500">
+            <span className="chip chip-mute">
               <XCircle className="h-3 w-3" />
               {totalCancelled} {t.doctorPatients.cancelled}
             </span>
           )}
           {summary.lastSeen && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-500">
+            <span className="chip chip-mute">
               <Clock className="h-3 w-3 text-slate-400" />
               {t.doctorPatients.lastSeen} {formatDate(summary.lastSeen, "d MMM")}
             </span>

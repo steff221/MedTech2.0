@@ -1,15 +1,14 @@
 // React компонента: копче (button) за повеќекратна употреба.
 "use client";
 
-import { motion, type HTMLMotionProps } from "framer-motion";
 import { Loader2 } from "lucide-react";
-import { forwardRef } from "react";
+import { forwardRef, type ButtonHTMLAttributes } from "react";
 import { cn } from "@/utils/cn";
 
 type Variant = "primary" | "secondary" | "danger" | "ghost";
 type Size    = "sm" | "md" | "lg";
 
-interface ButtonProps extends Omit<HTMLMotionProps<"button">, "ref" | "children"> {
+interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children"> {
   variant?:  Variant;
   size?:     Size;
   loading?:  boolean;
@@ -17,29 +16,35 @@ interface ButtonProps extends Omit<HTMLMotionProps<"button">, "ref" | "children"
   children?: React.ReactNode;
 }
 
-// Flat ink blocks. The vertical gradients and glow were the most "template"
-// thing in the old system; a control on a clinical form should look printed.
+/**
+ * The push button.
+ *
+ * A thick bottom border stands in for the side of a physical key: hover grows
+ * it to 6px and lifts the face 1px, active shrinks it to 2px and presses the
+ * face 2px down, so the travel reads as the key going in and springing back.
+ * The border colour has to stay a step darker than the face, otherwise the
+ * edge reads as a stray outline rather than as the side of the key.
+ *
+ * Framer Motion is deliberately gone from this component: `whileHover` /
+ * `whileTap` write a transform onto the same element the CSS `active:` state
+ * translates, and the two fight over the press.
+ */
+const PUSH =
+  "border-b-[4px] hover:brightness-110 hover:-translate-y-[1px] hover:border-b-[6px] " +
+  "active:border-b-[2px] active:brightness-90 active:translate-y-[2px]";
+
 const variantStyles: Record<Variant, string> = {
-  primary:
-    "bg-brand-600 text-white border border-brand-700 " +
-    "hover:bg-brand-700 active:bg-brand-800",
-  secondary:
-    "bg-white text-slate-700 border border-slate-300 " +
-    "hover:bg-slate-50 hover:border-slate-400",
-  // Destructive stays on rose, not carmine — carmine is now the institutional
-  // brand mark, so it must not double as the "this deletes data" signal.
-  danger:
-    "bg-rose-600 text-white border border-rose-700 " +
-    "hover:bg-rose-700 active:bg-rose-800",
-  ghost:
-    "bg-transparent text-slate-700 " +
-    "hover:bg-slate-100 hover:text-slate-900",
+  primary:   "bg-blue-500 text-white border-blue-600 " + PUSH,
+  secondary: "bg-white text-slate-700 border-slate-300 " + PUSH,
+  danger:    "bg-rose-500 text-white border-rose-600 " + PUSH,
+  // Ghost stays flat — there is no key face to press.
+  ghost:     "bg-transparent text-slate-700 border-transparent hover:bg-slate-100 hover:text-slate-900",
 };
 
 const sizeStyles: Record<Size, string> = {
-  sm: "px-3 py-1.5 text-xs font-medium gap-1.5 rounded",
-  md: "px-4 py-2 text-sm font-medium gap-2 rounded",
-  lg: "px-6 py-2.5 text-sm font-semibold gap-2 rounded-md",
+  sm: "px-4 py-1.5 text-xs font-medium gap-1.5 rounded-lg",
+  md: "px-6 py-2 text-sm font-medium gap-2 rounded-lg",
+  lg: "px-8 py-2.5 text-base font-medium gap-2 rounded-lg",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
@@ -49,18 +54,16 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   const isDisabled = disabled || loading;
 
   return (
-    <motion.button
+    <button
       ref={ref}
-      // No hover lift — only a press. Buttons that rise to meet the cursor read
-      // as consumer-app playfulness; the tap feedback still confirms the click.
-      whileTap={!isDisabled ? { scale: 0.985 } : undefined}
-      transition={{ duration: 0.12, ease: [0.16, 1, 0.3, 1] }}
       disabled={isDisabled}
       className={cn(
-        "relative inline-flex items-center justify-center",
-        "font-medium transition-all duration-150",
+        "relative inline-flex cursor-pointer items-center justify-center",
+        "border-solid transition-all",
+        // A disabled key cannot be pressed, so it keeps a flat edge.
         "disabled:cursor-not-allowed disabled:opacity-50",
-        "focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:outline-none",
+        "disabled:hover:translate-y-0 disabled:hover:border-b-[4px] disabled:hover:brightness-100",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2",
         variantStyles[variant],
         sizeStyles[size],
         fullWidth && "w-full",
@@ -76,6 +79,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       ) : (
         children
       )}
-    </motion.button>
+    </button>
   );
 });

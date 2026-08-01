@@ -166,7 +166,7 @@ export default function GPMedicalJournalPage() {
                 transition={{ duration: 0.25 }}
               >
                 <div className="mb-2 flex items-center gap-2">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-teal-100 text-xs font-bold text-teal-700">
+                  <div className="tile h-7 w-7 text-xs">
                     {name[0]}
                   </div>
                   <h3 className="text-sm font-semibold text-slate-800">{name}</h3>

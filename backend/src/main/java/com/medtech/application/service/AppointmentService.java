@@ -269,6 +269,16 @@ public class AppointmentService {
         return appointmentRepository.findByDoctorIdAndAppointmentDate(doctorId, date, pageable);
     }
 
+    /**
+     * Times already taken for this doctor on this date. Only statuses that
+     * actually hold a slot count — a cancelled or no-show appointment frees it.
+     */
+    public List<java.time.LocalTime> bookedTimesFor(Long doctorId, LocalDate date) {
+        return appointmentRepository.findBookedTimes(
+                doctorId, date,
+                List.of(AppointmentStatus.SCHEDULED, AppointmentStatus.RESCHEDULED));
+    }
+
     public Page<Appointment> listForDoctorInRange(Long doctorId, LocalDate from, LocalDate to, Pageable pageable) {
         return appointmentRepository.findByDoctorIdAndAppointmentDateBetween(doctorId, from, to, pageable);
     }

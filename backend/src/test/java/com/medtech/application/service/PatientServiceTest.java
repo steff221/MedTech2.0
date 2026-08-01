@@ -123,8 +123,11 @@ class PatientServiceTest {
         when(patientRepository.findById(10L)).thenReturn(Optional.of(existing));
 
         // Only city is updated — allergies must remain unchanged
+        // Positional: dateOfBirth, gender, bloodType, allergies,
+        // chronicConditions, insuranceProvider, insuranceNumber, embg, ezbo,
+        // emergencyContact, emergencyPhone, address, city, postalCode, country
         UpdatePatientRequest req = new UpdatePatientRequest(
-                null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null,
                 null, null, null, "Bitola", null, null);
         service.update(10L, req);
 

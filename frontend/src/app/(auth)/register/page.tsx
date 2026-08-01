@@ -7,7 +7,6 @@ import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Input } from "@/components/common/Input";
 import { useAuth } from "@/hooks/useAuth";
 import { useT } from "@/hooks/useT";
 
@@ -29,9 +28,6 @@ const schema = z.object({
 });
 
 type FormData = z.infer<typeof schema>;
-
-const DARK_INPUT =
-  "bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-emerald-400 focus:ring-emerald-400/30";
 
 export default function RegisterPage() {
   const { register: registerUser } = useAuth();
@@ -66,7 +62,7 @@ export default function RegisterPage() {
   if (registered) {
     return (
       <div className="text-center">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/10">
+        <div className="mx-auto mb-4 tile h-14 w-14 !border-emerald-500/30 !bg-emerald-500/10">
           <CheckCircle2 className="h-7 w-7 text-emerald-400" />
         </div>
         <h1 className="text-2xl font-bold tracking-tight text-white">
@@ -94,76 +90,60 @@ export default function RegisterPage() {
         Закажи прегледи и управувај со твојата здравствена историја.
       </p>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="mt-7 space-y-4">
-        <div className="grid grid-cols-2 gap-3">
+      <form onSubmit={handleSubmit(onSubmit)} className="form mt-7 !max-w-none">
+        {/* Name is one question asked in two fields, so the pair shares a row
+            while each half keeps the standard label/field/error stack. */}
+        <div className="grid w-full grid-cols-2 gap-3">
           <Field label="Име" error={errors.firstName?.message}>
-            <Input
-              autoComplete="given-name"
-              {...register("firstName")}
-              error={errors.firstName?.message}
-              className={DARK_INPUT}
-            />
+            <input type="text" autoComplete="given-name" aria-invalid={!!errors.firstName} {...register("firstName")} />
           </Field>
           <Field label="Презиме" error={errors.lastName?.message}>
-            <Input
-              autoComplete="family-name"
-              {...register("lastName")}
-              error={errors.lastName?.message}
-              className={DARK_INPUT}
-            />
+            <input type="text" autoComplete="family-name" aria-invalid={!!errors.lastName} {...register("lastName")} />
           </Field>
         </div>
+
         <Field label="Е-пошта" error={errors.email?.message}>
-          <Input
+          <input
             type="email"
             autoComplete="email"
             placeholder="ime@primer.mk"
+            aria-invalid={!!errors.email}
             {...register("email")}
-            error={errors.email?.message}
-            className={DARK_INPUT}
           />
         </Field>
+
         <Field label="Телефон (незадолжително)" error={errors.phoneNumber?.message}>
-          <Input
-            type="tel"
-            autoComplete="tel"
-            {...register("phoneNumber")}
-            error={errors.phoneNumber?.message}
-            className={DARK_INPUT}
-          />
+          <input type="tel" autoComplete="tel" aria-invalid={!!errors.phoneNumber} {...register("phoneNumber")} />
         </Field>
+
         <Field
           label="Лозинка"
           error={errors.password?.message}
           hint="12+ карактери · голема · мала · цифра · симбол"
         >
-          <div className="relative">
-            <Input
+          <span className="relative block">
+            <input
               type={showPwd ? "text" : "password"}
               autoComplete="new-password"
+              aria-invalid={!!errors.password}
+              className="!pr-11"
               {...register("password")}
-              error={errors.password?.message}
-              className={`${DARK_INPUT} pr-10`}
             />
             <button
               type="button"
               onClick={() => setShowPwd((v) => !v)}
               aria-label={showPwd ? t.auth.hidePassword : t.auth.showPassword}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 transition-colors hover:text-white/80"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#efefef]/60 transition-colors hover:text-[#58bc82]"
             >
               {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
-          </div>
+          </span>
         </Field>
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-500 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition-all hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
-        >
+        <button type="submit" className="submit" disabled={isSubmitting}>
           {isSubmitting ? (
             <>
-              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
               Се креира профил…
             </>
           ) : (
@@ -172,14 +152,8 @@ export default function RegisterPage() {
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-white/60">
-        Веќе имаш профил?{" "}
-        <Link
-          href="/login"
-          className="font-semibold text-emerald-300 underline-offset-4 hover:text-emerald-200 hover:underline"
-        >
-          Најави се
-        </Link>
+      <p className="span mt-6 text-center text-sm !text-white/60">
+        Веќе имаш профил? <Link href="/login">Најави се</Link>
       </p>
     </div>
   );
@@ -197,16 +171,14 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <div>
-      <label className="mb-1.5 block text-sm font-medium text-white/70">
-        {label}
-      </label>
+    <label className="input-span">
+      <span className="label">{label}</span>
       {children}
       {error ? (
-        <p className="mt-1 text-xs text-rose-400">{error}</p>
+        <span className="text-xs text-rose-300">{error}</span>
       ) : hint ? (
-        <p className="mt-1 text-xs text-white/50">{hint}</p>
+        <span className="text-xs text-white/50">{hint}</span>
       ) : null}
-    </div>
+    </label>
   );
 }

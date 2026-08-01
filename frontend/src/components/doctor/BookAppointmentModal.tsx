@@ -205,7 +205,7 @@ export function BookAppointmentModal({ open, onClose }: Props) {
                             onClick={() => { setSelectedPatient(p); setShowResults(false); }}
                             className="flex w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-slate-50"
                           >
-                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">
+                            <div className="tile h-8 w-8 text-xs">
                               {p.firstName[0]}{p.lastName[0]}
                             </div>
                             <div>

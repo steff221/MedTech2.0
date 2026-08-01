@@ -8,7 +8,6 @@ import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useSearchParams } from "next/navigation";
 import { z } from "zod";
-import { Input } from "@/components/common/Input";
 import { useAuth } from "@/hooks/useAuth";
 import { useT } from "@/hooks/useT";
 
@@ -18,9 +17,6 @@ const schema = z.object({
 });
 
 type FormData = z.infer<typeof schema>;
-
-const DARK_INPUT =
-  "bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-emerald-400 focus:ring-emerald-400/30";
 
 function LoginForm() {
   const { login } = useAuth();
@@ -54,60 +50,59 @@ function LoginForm() {
         Пристапи до твојот здравствен профил.
       </p>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="mt-7 space-y-4">
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-white/70">
-            Е-пошта
-          </label>
-          <Input
+      <form onSubmit={handleSubmit(onSubmit)} className="form mt-7 !max-w-none">
+        <label className="input-span">
+          <span className="label">Е-пошта</span>
+          <input
             type="email"
             autoComplete="email"
             placeholder="ime@primer.mk"
+            aria-invalid={!!errors.email}
             {...register("email")}
-            error={errors.email?.message}
-            className={DARK_INPUT}
           />
-        </div>
-        <div>
-          <div className="mb-1.5 flex items-center justify-between">
-            <label className="block text-sm font-medium text-white/70">
-              Лозинка
-            </label>
-            <Link
-              href="/forgot-password"
-              className="text-xs text-white/50 transition-colors hover:text-white/80"
-            >
-              {t.auth.forgotPassword}
-            </Link>
-          </div>
-          <div className="relative">
-            <Input
+          {errors.email && (
+            <span className="text-xs text-rose-300">{errors.email.message}</span>
+          )}
+        </label>
+
+        <label className="input-span">
+          <span className="label">Лозинка</span>
+          {/* The reveal control sits inside the field, so the wrapper carries
+              the relative positioning rather than the input itself — the input
+              geometry is owned by `.form` and must not be overridden here. */}
+          <span className="relative block">
+            <input
               type={showPwd ? "text" : "password"}
               autoComplete="current-password"
               placeholder="••••••••"
+              aria-invalid={!!errors.password}
+              className="!pr-11"
               {...register("password")}
-              error={errors.password?.message}
-              className={`${DARK_INPUT} pr-10`}
             />
             <button
               type="button"
               onClick={() => setShowPwd((v) => !v)}
               aria-label={showPwd ? t.auth.hidePassword : t.auth.showPassword}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 transition-colors hover:text-white/80"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#efefef]/60 transition-colors hover:text-[#58bc82]"
             >
               {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
-          </div>
-        </div>
+          </span>
+          {errors.password && (
+            <span className="text-xs text-rose-300">{errors.password.message}</span>
+          )}
+        </label>
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-500 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition-all hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
-        >
+        <span className="span self-start !text-white/50">
+          <Link href="/forgot-password" className="!text-[#58bc82]">
+            {t.auth.forgotPassword}
+          </Link>
+        </span>
+
+        <button type="submit" className="submit" disabled={isSubmitting}>
           {isSubmitting ? (
             <>
-              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
               Најавување…
             </>
           ) : (
@@ -116,14 +111,8 @@ function LoginForm() {
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-white/60">
-        Немаш профил?{" "}
-        <Link
-          href="/register"
-          className="font-semibold text-emerald-300 underline-offset-4 hover:text-emerald-200 hover:underline"
-        >
-          Регистрирај се
-        </Link>
+      <p className="span mt-6 text-center text-sm !text-white/60">
+        Немаш профил? <Link href="/register">Регистрирај се</Link>
       </p>
     </div>
   );

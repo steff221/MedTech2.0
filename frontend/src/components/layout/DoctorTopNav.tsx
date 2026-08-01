@@ -72,7 +72,7 @@ export function DoctorTopNav() {
             {user && (
               <>
                 <div className="hidden items-center gap-2 sm:flex">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-rose-100 text-[11px] font-bold text-rose-700">
+                  <div className="tile h-7 w-7 text-[11px]">
                     {initials(user.firstName, user.lastName)}
                   </div>
                   <div className="text-right">
@@ -80,7 +80,7 @@ export function DoctorTopNav() {
                       Д-р {user.firstName} {user.lastName}
                     </p>
                     {doctor && (
-                      <p className="-mt-0.5 text-[10px] text-slate-500">{doctor.specialization}</p>
+                      <p className="-mt-0.5 text-[10px] text-slate-500">{t.specialties[doctor.specialization] ?? doctor.specialization}</p>
                     )}
                   </div>
                 </div>
@@ -190,12 +190,12 @@ export function DoctorTopNav() {
               {user && (
                 <div className="border-t border-slate-100 px-5 py-4">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-rose-100 text-sm font-bold text-rose-700">
+                    <div className="tile h-9 w-9 text-sm">
                       {initials(user.firstName, user.lastName)}
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-slate-800">Д-р {user.firstName} {user.lastName}</p>
-                      {doctor && <p className="text-xs text-slate-500">{doctor.specialization}</p>}
+                      {doctor && <p className="text-xs text-slate-500">{t.specialties[doctor.specialization] ?? doctor.specialization}</p>}
                     </div>
                   </div>
                   <button

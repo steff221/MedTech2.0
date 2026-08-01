@@ -52,10 +52,8 @@ function BloodTypeBadge({ value }: { value: string | null | undefined }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold",
-        isNeg
-          ? "bg-blue-50 text-blue-700 ring-1 ring-blue-200"
-          : "bg-red-50 text-red-700 ring-1 ring-red-200"
+        "chip",
+        isNeg ? "chip-info" : "chip-alert",
       )}
     >
       <Droplet className={cn("h-3 w-3", isNeg ? "text-blue-500" : "text-red-500")} />
@@ -177,7 +175,7 @@ export function PatientDetailDrawer({
               <div className="border-b border-slate-200 px-6 py-5">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-100 text-base font-semibold text-brand-700">
+                    <div className="tile h-12 w-12 text-base">
                       {initials(
                         patientName.split(" ")[0] ?? "",
                         patientName.split(" ").slice(1).join(" ") || "",
@@ -370,7 +368,7 @@ function OverviewPanel({
               <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{t.doctorDrawer.currentTherapy}</p>
               <div className="mt-1 flex flex-wrap gap-1">
                 {activeMeds.map((m) => (
-                  <span key={m} className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+                  <span key={m} className="chip chip-ok">
                     {m}
                   </span>
                 ))}
@@ -501,7 +499,7 @@ function AppointmentItem({ a }: { a: AppointmentResponse }) {
           <button
             onClick={() => saveMutation.mutate()}
             disabled={saveMutation.isPending || !url}
-            className="rounded-md bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-600 disabled:opacity-50"
+            className="btn-push px-3 py-1.5 text-xs disabled:opacity-50"
           >
             {saveMutation.isPending ? "…" : t.doctorDrawer.save}
           </button>

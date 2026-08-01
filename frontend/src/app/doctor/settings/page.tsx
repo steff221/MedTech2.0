@@ -21,6 +21,8 @@ const schema = z.object({
   qualification:     z.string().max(500).optional(),
   experienceYears:   z.coerce.number().nonnegative().optional().or(z.literal("")),
   officeNumber:      z.string().max(50).optional(),
+  // Печати се до потписот на секој ФЗОМ образец.
+  facsimileNumber:   z.string().max(20).optional(),
   consultationFee:   z.coerce.number().nonnegative().optional().or(z.literal("")),
   availabilityHours: z.string().max(255).optional(),
   bio:               z.string().max(5000).optional(),
@@ -49,6 +51,7 @@ export default function DoctorSettingsPage() {
         qualification:     data.qualification || undefined,
         experienceYears:   data.experienceYears === "" ? undefined : (data.experienceYears as number | undefined),
         officeNumber:      data.officeNumber || undefined,
+        facsimileNumber:   data.facsimileNumber || undefined,
         consultationFee:   data.consultationFee === "" ? undefined : (data.consultationFee as number | undefined),
         availabilityHours: data.availabilityHours || undefined,
         bio:               data.bio || undefined,
@@ -67,6 +70,7 @@ export default function DoctorSettingsPage() {
       qualification:     p?.qualification ?? "",
       experienceYears:   p?.experienceYears ?? "",
       officeNumber:      p?.officeNumber ?? "",
+      facsimileNumber:   p?.facsimileNumber ?? "",
       consultationFee:   p?.consultationFee ?? "",
       availabilityHours: p?.availabilityHours ?? "",
       bio:               p?.bio ?? "",
@@ -93,7 +97,7 @@ export default function DoctorSettingsPage() {
                 <Field label={ds.fullName}       value={`${user?.firstName ?? ""} ${user?.lastName ?? ""}`} />
                 <Field label={ds.email}          value={user?.email ?? "—"} />
                 <Field label={ds.licenseNumber}  value={profile.data?.licenseNumber ?? "—"} />
-                <Field label={ds.specialization} value={profile.data?.specialization ?? "—"} />
+                <Field label={ds.specialization} value={profile.data?.specialization ? (t.specialties[profile.data.specialization] ?? profile.data.specialization) : "—"} />
                 <Field label={ds.hospital}       value={profile.data?.hospitalName ?? "—"} />
                 <Field label={ds.city}           value={profile.data?.hospitalCity ?? "—"} />
               </dl>
@@ -116,7 +120,7 @@ export default function DoctorSettingsPage() {
                       <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="inline-flex items-center gap-1 rounded-md bg-emerald-500 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-emerald-400 disabled:opacity-60"
+                        className="btn-push inline-flex items-center gap-1 px-2.5 py-1.5 text-xs disabled:opacity-60"
                       >
                         <Check className="h-3.5 w-3.5" />
                         {isSubmitting ? t.common.saving : t.common.save}
@@ -129,6 +133,9 @@ export default function DoctorSettingsPage() {
                     </EditField>
                     <EditField label={ds.experienceYears}>
                       <input type="number" min={0} {...register("experienceYears")} className={inputCls} />
+                    </EditField>
+                    <EditField label="Факсимил">
+                      <input {...register("facsimileNumber")} className={inputCls} />
                     </EditField>
                     <EditField label={ds.officeNumber}>
                       <input {...register("officeNumber")} className={inputCls} />

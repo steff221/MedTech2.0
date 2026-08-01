@@ -13,12 +13,12 @@ import type { UserResponse } from "@/types/api";
 // ─── Status badge ─────────────────────────────────────────────────────────────
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
-    ACTIVE:    "bg-emerald-100 text-emerald-700",
-    SUSPENDED: "bg-rose-100 text-rose-700",
-    INACTIVE:  "bg-slate-100 text-slate-500",
+    ACTIVE:    "chip-ok",
+    SUSPENDED: "chip-alert",
+    INACTIVE:  "chip-mute",
   };
   return (
-    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${map[status] ?? map.INACTIVE}`}>
+    <span className={`chip ${map[status] ?? map.INACTIVE}`}>
       {status}
     </span>
   );
@@ -26,14 +26,16 @@ function StatusBadge({ status }: { status: string }) {
 
 // ─── Role badge ───────────────────────────────────────────────────────────────
 function RoleBadge({ role }: { role: string }) {
+  // Roles are not states, so they all take the neutral rule; the label itself
+  // is the distinguishing information.
   const map: Record<string, string> = {
-    DOCTOR:                "bg-sky-100 text-sky-700",
-    GENERAL_PRACTITIONER:  "bg-teal-100 text-teal-700",
-    NURSE:                 "bg-emerald-100 text-emerald-700",
-    ADMIN:                 "bg-violet-100 text-violet-700",
+    DOCTOR:                "chip-info",
+    GENERAL_PRACTITIONER:  "chip-info",
+    NURSE:                 "chip-info",
+    ADMIN:                 "chip-alert",
   };
   return (
-    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${map[role] ?? "bg-slate-100 text-slate-500"}`}>
+    <span className={`chip ${map[role] ?? "chip-mute"}`}>
       {role}
     </span>
   );
@@ -229,7 +231,7 @@ export default function AdminPage() {
             ))}
           </select>
           {filterHospitalId && (
-            <span className="rounded-full bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-700">
+            <span className="chip chip-info">
               Прикажани само доктори
             </span>
           )}

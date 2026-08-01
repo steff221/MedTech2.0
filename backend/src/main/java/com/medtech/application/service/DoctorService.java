@@ -100,6 +100,7 @@ public class DoctorService {
         if (req.qualification()     != null) doctor.setQualification(req.qualification());
         if (req.experienceYears()   != null) doctor.setExperienceYears(req.experienceYears());
         if (req.officeNumber()      != null) doctor.setOfficeNumber(req.officeNumber());
+        if (req.facsimileNumber()   != null) doctor.setFacsimileNumber(req.facsimileNumber());
         if (req.consultationFee()   != null) doctor.setConsultationFee(req.consultationFee());
         if (req.availabilityHours() != null) doctor.setAvailabilityHours(req.availabilityHours());
         if (req.bio()               != null) doctor.setBio(req.bio());

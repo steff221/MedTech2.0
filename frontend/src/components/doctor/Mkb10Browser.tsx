@@ -188,7 +188,7 @@ export function Mkb10Browser() {
                   >
                     <span className="w-10 shrink-0 text-center font-mono">{ROMAN[ch.number - 1] ?? ch.number}</span>
                     <span className="flex-1 uppercase tracking-wide">{ch.title}</span>
-                    <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-semibold">
+                    <span className="chip chip-onink">
                       {ch.codeCount}
                     </span>
                     <ChevronDown className={cn("h-4 w-4 transition-transform", open && "rotate-180")} />

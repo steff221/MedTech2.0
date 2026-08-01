@@ -57,7 +57,7 @@ export default function NotificationsPage() {
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold text-slate-900">{t.notifications.title}</h1>
             {unreadCount > 0 && (
-              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-500 px-1.5 text-xs font-bold text-white">
+              <span className="btn-push inline-flex h-5 min-w-5 items-center justify-center px-1.5 text-xs font-bold">
                 {unreadCount}
               </span>
             )}
@@ -84,7 +84,7 @@ export default function NotificationsPage() {
           title={t.notifications.emptyTitle}
           description={t.notifications.emptyDesc}
           action={
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
+            <div className="tile h-14 w-14">
               <Bell className="h-7 w-7 text-slate-400" />
             </div>
           }
@@ -111,7 +111,7 @@ export default function NotificationsPage() {
                   notif.read ? "border-slate-200" : "border-brand-200",
                 )}
               >
-                <div className={cn("mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full", meta.bg)}>
+                <div className={cn("mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-sm", meta.bg)}>
                   <Icon className={cn("h-4 w-4", meta.color)} />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -121,7 +121,7 @@ export default function NotificationsPage() {
                     </p>
                     <div className="flex shrink-0 items-center gap-2">
                       <span className="text-xs text-slate-400">{format(date, "d MMM")}</span>
-                      {!notif.read && <span className="h-2 w-2 rounded-full bg-brand-500" />}
+                      {!notif.read && <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-brand-600">ново</span>}
                     </div>
                   </div>
                   {notif.body && <p className="mt-0.5 text-sm text-slate-500">{notif.body}</p>}

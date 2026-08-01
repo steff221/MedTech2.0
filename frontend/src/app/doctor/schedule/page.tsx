@@ -104,11 +104,11 @@ const STATUS_ORDER: WaitingStatus[] = ["waiting", "in_room", "completed", "no_sh
 
 function WaitingRoom({ doctorId }: { doctorId: number }) {
   const t = useT();
-  const STATUS_META = useMemo<Record<WaitingStatus, { label: string; bg: string; text: string }>>(() => ({
-    waiting:   { label: t.doctorSchedule.statusWaiting,   bg: "bg-amber-100",   text: "text-amber-700"  },
-    in_room:   { label: t.doctorSchedule.statusInRoom,    bg: "bg-blue-100",    text: "text-blue-700"   },
-    completed: { label: t.doctorSchedule.statusCompleted, bg: "bg-emerald-100", text: "text-emerald-700"},
-    no_show:   { label: t.doctorSchedule.statusNoShow,    bg: "bg-rose-100",    text: "text-rose-600"   },
+  const STATUS_META = useMemo<Record<WaitingStatus, { label: string; tone: string }>>(() => ({
+    waiting:   { label: t.doctorSchedule.statusWaiting,   tone: "chip-wait"  },
+    in_room:   { label: t.doctorSchedule.statusInRoom,    tone: "chip-info"  },
+    completed: { label: t.doctorSchedule.statusCompleted, tone: "chip-ok"    },
+    no_show:   { label: t.doctorSchedule.statusNoShow,    tone: "chip-alert" },
   }), [t]);
 
   const { data: todayAppts, isLoading } = useQuery({
@@ -212,7 +212,7 @@ function WaitingRoom({ doctorId }: { doctorId: number }) {
             {STATUS_ORDER.map((s) => {
               const m = STATUS_META[s];
               return (
-                <span key={s} className={cn("rounded-full px-2 py-0.5 font-medium", m.bg, m.text)}>
+                <span key={s} className={cn("chip", m.tone)}>
                   {m.label}: {counts[s]}
                 </span>
               );
@@ -256,7 +256,7 @@ function WaitingRoom({ doctorId }: { doctorId: number }) {
               type="button"
               onClick={addWalkIn}
               disabled={!walkInName.trim()}
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+              className="btn-push px-4 py-2 text-sm disabled:opacity-50"
             >
               {t.doctorSchedule.walkInAddBtn}
             </button>
@@ -319,7 +319,7 @@ function WaitingRoom({ doctorId }: { doctorId: number }) {
                     <div className="flex items-center gap-1.5">
                       <span className="font-medium text-slate-900">{p.patientName}</span>
                       {isVirtual && (
-                        <span className="inline-flex items-center gap-0.5 rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700">
+                        <span className="chip chip-info">
                           <Video className="h-2.5 w-2.5" /> Виртуелен
                         </span>
                       )}
@@ -336,9 +336,8 @@ function WaitingRoom({ doctorId }: { doctorId: number }) {
                         onClick={() => cycle(p.id)}
                         title={t.doctorSchedule.clickToCycle}
                         className={cn(
-                          "rounded-full px-3 py-1 text-xs font-semibold transition-all hover:opacity-80 active:scale-95",
-                          m.bg,
-                          m.text,
+                          "chip transition-colors hover:bg-slate-50",
+                          m.tone,
                         )}
                       >
                         {m.label}
@@ -348,10 +347,8 @@ function WaitingRoom({ doctorId }: { doctorId: number }) {
                           type="button"
                           onClick={() => setVideoModalAppt(p)}
                           className={cn(
-                            "flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold transition-colors",
-                            p.videoCallUrl
-                              ? "bg-violet-100 text-violet-700 hover:bg-violet-200"
-                              : "bg-slate-100 text-slate-500 hover:bg-violet-100 hover:text-violet-700",
+                            "chip transition-colors hover:bg-slate-50",
+                            p.videoCallUrl ? "chip-info" : "chip-mute",
                           )}
                           title="Постави видео линк"
                         >

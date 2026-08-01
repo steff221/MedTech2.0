@@ -220,7 +220,7 @@ export function WeeklyCalendar({ doctorId }: WeeklyCalendarProps) {
             <div className="flex items-center gap-2">
               <Badge tone={appointmentStatusTone(selected.status)}>{selected.status}</Badge>
               {selected.appointmentType === "VIRTUAL" && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-semibold text-violet-700">
+                <span className="chip chip-info">
                   <Video className="h-3 w-3" /> Виртуелен
                 </span>
               )}
@@ -345,7 +345,7 @@ function SlotButton({
             className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-56 -translate-x-1/2 rounded-lg border border-slate-200 bg-white p-2.5 shadow-xl"
           >
             <div className="flex items-start gap-2">
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-100 text-[10px] font-bold text-brand-700">
+              <div className="tile h-7 w-7 text-[10px]">
                 {apt.patientName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
               </div>
               <div className="min-w-0 flex-1">
@@ -361,7 +361,7 @@ function SlotButton({
             <div className="mt-2 flex items-center gap-1.5">
               <Badge tone={appointmentStatusTone(apt.status)}>{apt.status}</Badge>
               {isVirtual && (
-                <span className="inline-flex items-center gap-0.5 rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700">
+                <span className="chip chip-info">
                   <Video className="h-2.5 w-2.5" /> Виртуелен
                 </span>
               )}

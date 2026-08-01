@@ -25,6 +25,10 @@ const schema = z.object({
   chronicConditions: z.string().max(2000).optional(),
   insuranceProvider: z.string().max(255).optional(),
   insuranceNumber:   z.string().max(100).optional(),
+  // ЕМБГ is 13 digits. Empty is allowed — a patient may not have supplied it
+  // yet — but a wrong-length value would print an invalid ФЗОМ form.
+  embg:              z.string().regex(/^$|^[0-9]{13}$/, "ЕМБГ мора да содржи точно 13 цифри").optional(),
+  ezbo:              z.string().max(30).optional(),
   emergencyContact:  z.string().max(255).optional(),
   emergencyPhone:    z.string().max(20).optional(),
   address:           z.string().max(500).optional(),
@@ -41,7 +45,7 @@ export default function ProfilePage() {
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
 
-  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<FormData>({
+  const { register, handleSubmit, reset, formState: { isSubmitting, errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
 
@@ -73,6 +77,8 @@ export default function ProfilePage() {
       chronicConditions: p.chronicConditions ?? "",
       insuranceProvider: p.insuranceProvider ?? "",
       insuranceNumber:   p.insuranceNumber ?? "",
+      embg:              p.embg ?? "",
+      ezbo:              p.ezbo ?? "",
       emergencyContact:  p.emergencyContact ?? "",
       emergencyPhone:    p.emergencyPhone ?? "",
       address:           p.address ?? "",
@@ -126,7 +132,7 @@ export default function ProfilePage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="inline-flex items-center gap-1 rounded-md bg-emerald-500 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-emerald-400 disabled:opacity-60"
+                  className="btn-push inline-flex items-center gap-1 px-2.5 py-1.5 text-xs disabled:opacity-60"
                 >
                   <Check className="h-3.5 w-3.5" />
                   {isSubmitting ? "Се зачувува…" : "Зачувај"}
@@ -173,6 +179,15 @@ export default function ProfilePage() {
               <EditField label="Хронични заболувања" fullWidth>
                 <textarea {...register("chronicConditions")} rows={2} className={inputCls} />
               </EditField>
+              {/* Printed on every ФЗОМ referral; without them the form is
+                  not valid to submit to the Fund. */}
+              <EditField label="ЕМБГ">
+                <input {...register("embg")} inputMode="numeric" maxLength={13} className={inputCls} />
+                {errors.embg && <p className="mt-1 text-xs text-rose-600">{errors.embg.message}</p>}
+              </EditField>
+              <EditField label="ЕЗБО">
+                <input {...register("ezbo")} className={inputCls} />
+              </EditField>
               <EditField label="Осигурувач">
                 <input {...register("insuranceProvider")} className={inputCls} />
               </EditField>
@@ -202,6 +217,8 @@ export default function ProfilePage() {
             <Field label="Адреса"                value={p.address ?? "—"} />
             <Field label="Алергии"               value={p.allergies ?? "—"} />
             <Field label="Хронични заболувања"   value={p.chronicConditions ?? "—"} />
+            <Field label="ЕМБГ"                  value={p.embg ?? "—"} />
+            <Field label="ЕЗБО"                  value={p.ezbo ?? "—"} />
             <Field label="Осигурувач"            value={p.insuranceProvider ?? "—"} />
             <Field label="Контакт при итност"    value={p.emergencyContact ?? "—"} />
             <Field label="Тел. при итност"       value={p.emergencyPhone ?? "—"} />
@@ -218,8 +235,8 @@ function BloodTypeBadge({ value }: { value: string | null | undefined }) {
   const label = value.replace("_POS", "+").replace("_NEG", "−");
   return (
     <span className={cn(
-      "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold",
-      isNeg ? "bg-blue-50 text-blue-700 ring-1 ring-blue-200" : "bg-red-50 text-red-700 ring-1 ring-red-200"
+      "chip",
+      isNeg ? "chip-info" : "chip-alert",
     )}>
       <Droplet className={cn("h-3 w-3", isNeg ? "text-blue-500" : "text-red-500")} />
       {label}

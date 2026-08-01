@@ -3,6 +3,8 @@ import { api } from "./api";
 import type { AppointmentResponse, DoctorResponse, Page } from "@/types/api";
 
 export interface UpdateDoctorRequest {
+  /** Факсимил — printed beside the signature on every ФЗОМ form. */
+  facsimileNumber?: string;
   qualification?: string;
   experienceYears?: number;
   officeNumber?: string;
@@ -34,6 +36,17 @@ export const doctorService = {
 
   updateMe: (body: UpdateDoctorRequest) =>
     api.put<DoctorResponse>("/doctors/me", body).then((r) => r.data),
+
+  /**
+   * Times the doctor is already taken on a date. Separate from
+   * `appointmentsOn` because that endpoint is care-team only — a patient
+   * calling it gets a 403, which silently emptied the booked-slot set and let
+   * the wizard offer slots that were already gone.
+   */
+  bookedTimes: (doctorId: number, isoDate: string) =>
+    api
+      .get<string[]>(`/appointments/doctor/${doctorId}/booked-times`, { params: { date: isoDate } })
+      .then((r) => r.data),
 
   appointmentsOn: (doctorId: number, isoDate: string, page = 0, size = 100) =>
     api

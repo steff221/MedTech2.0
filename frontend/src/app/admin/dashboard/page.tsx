@@ -8,6 +8,7 @@ import { format, parseISO } from "date-fns";
 import { mk as mkLocale } from "date-fns/locale";
 import { statsService } from "@/services/stats.service";
 import { Skeleton } from "@/components/common/Skeleton";
+import { useT } from "@/hooks/useT";
 import { cn } from "@/utils/cn";
 
 // ── KPI card ──────────────────────────────────────────────────────────────────
@@ -232,6 +233,7 @@ function HBarChart({
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
+  const t = useT();
   const { data } = useQuery({
     queryKey: ["stats-overview"],
     queryFn: statsService.overview,
@@ -254,7 +256,7 @@ export default function DashboardPage() {
   }));
 
   const specData = data?.topSpecializations?.map((s) => ({
-    label: s.specialization,
+    label: t.specialties[s.specialization] ?? s.specialization,
     count: s.count,
   }));
 

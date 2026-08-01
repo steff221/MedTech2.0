@@ -202,7 +202,7 @@ export default function DoctorAvailabilityPage() {
               type="button"
               onClick={() => save.mutate()}
               disabled={save.isPending}
-              className="flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60 transition-colors"
+              className="btn-push flex items-center gap-2 px-6 py-2.5 text-sm disabled:opacity-60"
             >
               <Save className="h-4 w-4" />
               {save.isPending ? "Зачувување…" : at.save}

@@ -356,7 +356,7 @@ export function PrescriptionForm({
                 key={t.name}
                 type="button"
                 onClick={() => applyTemplate(t)}
-                className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 transition-all hover:border-emerald-400 hover:bg-emerald-100"
+                className="chip chip-ok transition-colors hover:bg-slate-50"
               >
                 {t.name}
               </button>

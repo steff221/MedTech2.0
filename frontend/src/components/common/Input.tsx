@@ -25,13 +25,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         <label
           htmlFor={inputId}
           className={cn(
-            // Field labels read as form captions: mono, letterspaced, small.
-            "eyebrow mb-1.5 block transition-colors duration-150",
+            "mb-1.5 block text-xs font-medium transition-colors duration-150",
             error
-              ? "!text-rose-600"
+              ? "text-rose-600"
               : focused
-                ? "!text-brand-600"
-                : "!text-slate-600",
+                ? "text-brand-600"
+                : "text-slate-600",
           )}
         >
           {label}
@@ -51,19 +50,20 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           onBlur?.(e);
         }}
         className={cn(
-          "w-full rounded border bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400",
-          // The stray cyan focus glow is gone; the border simply inks in.
-          "transition-colors duration-150 ease-out focus:outline-none focus:ring-1 focus:ring-offset-0",
-          error
-            ? "border-rose-400 focus:border-rose-500 focus:ring-rose-300"
-            : "border-slate-300 focus:border-brand-600 focus:ring-brand-300",
+          // Fill, radius, padding, ink and the drop shadow all come from the
+          // global input rule in globals.css so that raw <input> elements in
+          // page markup match this component exactly. Only width and the error
+          // state are set here — anything else would silently diverge from the
+          // fields that don't use this component.
+          "w-full",
+          error && "outline outline-2 outline-rose-500",
           className,
         )}
         {...props}
       />
       {error ? (
         <p id={`${inputId}-error`} className="mt-1.5 flex items-center gap-1 text-xs text-rose-600">
-          <span className="inline-block h-1 w-1 rounded-full bg-rose-500" />
+          <span aria-hidden>✳</span>
           {error}
         </p>
       ) : hint ? (

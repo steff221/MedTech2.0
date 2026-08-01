@@ -22,10 +22,10 @@ function relativeTime(iso: string, t: ReturnType<typeof useT>["doctorNotifBell"]
 }
 
 function typeColor(type: string): string {
-  if (type === "ANOMALY") return "bg-rose-100 text-rose-700";
-  if (type === "APPOINTMENT_REMINDER") return "bg-blue-100 text-blue-700";
-  if (type === "APPOINTMENT_CANCELLED") return "bg-amber-100 text-amber-700";
-  return "bg-slate-100 text-slate-600";
+  if (type === "ANOMALY") return "chip-alert";
+  if (type === "APPOINTMENT_REMINDER") return "chip-info";
+  if (type === "APPOINTMENT_CANCELLED") return "chip-wait";
+  return "chip-mute";
 }
 
 export function NotificationBell() {
@@ -81,7 +81,7 @@ export function NotificationBell() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative flex h-7 w-7 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+        className="relative flex h-7 w-7 items-center justify-center rounded-sm text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
         aria-label={nt.title}
       >
         {hasUnread ? (
@@ -90,7 +90,7 @@ export function NotificationBell() {
           <Bell className="h-4 w-4" />
         )}
         {hasUnread && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[9px] font-bold text-white">
+          <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-sm bg-rose-500 text-[9px] font-bold text-white">
             {unread > 9 ? "9+" : unread}
           </span>
         )}
@@ -149,7 +149,7 @@ export function NotificationBell() {
                   >
                     <span
                       className={cn(
-                        "mt-0.5 shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider",
+                        "chip mt-0.5 shrink-0 !text-[9px]",
                         typeColor(n.type),
                       )}
                     >

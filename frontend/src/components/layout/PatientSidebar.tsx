@@ -64,7 +64,7 @@ export function PatientSidebar() {
               <span className="relative">
                 <item.icon className="h-4 w-4" />
                 {item.href === "/notifications" && unreadCount > 0 && (
-                  <span className="absolute -right-1.5 -top-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-rose-500 px-0.5 text-[8px] font-bold text-white leading-none">
+                  <span className="absolute -right-1.5 -top-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-sm bg-rose-500 px-0.5 text-[8px] font-bold text-white leading-none">
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}

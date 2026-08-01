@@ -72,14 +72,14 @@ export default function NotFound() {
         >
           <Link
             href="/"
-            className="inline-flex items-center gap-2 rounded-full bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition-all hover:bg-emerald-400"
+            className="btn-push inline-flex items-center gap-2 px-5 py-2.5 text-sm"
           >
             <Home className="h-4 w-4" /> Почетна
           </Link>
           <button
             type="button"
             onClick={() => history.back()}
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-5 py-2.5 text-sm font-semibold text-white/70 backdrop-blur transition-colors hover:bg-white/10 hover:text-white"
+            className="inline-flex items-center gap-2 rounded-sm border border-white/10 bg-white/[0.03] px-5 py-2.5 text-sm font-semibold text-white/70 backdrop-blur transition-colors hover:bg-white/10 hover:text-white"
           >
             <ArrowLeft className="h-4 w-4" /> Назад
           </button>

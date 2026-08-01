@@ -139,8 +139,8 @@ export function BookAppointmentWizard({ open, onClose, patientId, initialDoctor 
   });
 
   const bookedQuery = useQuery({
-    queryKey: ["appointments-on", doctor?.id, date],
-    queryFn: () => doctorService.appointmentsOn(doctor!.id, date!),
+    queryKey: ["booked-times", doctor?.id, date],
+    queryFn: () => doctorService.bookedTimes(doctor!.id, date!),
     enabled: step >= 3 && !!doctor && !!date,
   });
 
@@ -150,11 +150,10 @@ export function BookAppointmentWizard({ open, onClose, patientId, initialDoctor 
     const slot = availQuery.data.find((s) => s.dayOfWeek === jsToIso(jsDay) && s.active);
     if (!slot) return [];
     const all = generateSlots(slot.startTime, slot.endTime);
-    const booked = new Set(
-      (bookedQuery.data?.content ?? [])
-        .filter((a) => a.status === "SCHEDULED" || a.status === "RESCHEDULED")
-        .map((a) => a.appointmentTime.slice(0, 5)),
-    );
+    // The endpoint already excludes cancelled and no-show appointments, which
+    // do not hold their slot. Times arrive as HH:mm:ss, the generated slots are
+    // HH:mm — trim before comparing or nothing ever matches.
+    const booked = new Set((bookedQuery.data ?? []).map((time) => time.slice(0, 5)));
     return all.map((t) => ({ time: t, disabled: booked.has(t) }));
   }, [date, availQuery.data, bookedQuery.data]);
 
@@ -334,7 +333,7 @@ export function BookAppointmentWizard({ open, onClose, patientId, initialDoctor 
                         }}
                         className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left transition-all hover:border-brand-300 hover:bg-brand-50/50"
                       >
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700">
+                        <div className="tile h-9 w-9 text-sm">
                           {initials(d.firstName, d.lastName)}
                         </div>
                         <div className="min-w-0">
@@ -387,7 +386,7 @@ export function BookAppointmentWizard({ open, onClose, patientId, initialDoctor 
                           : "border-slate-200 hover:border-brand-300 hover:bg-brand-50/40",
                       )}
                     >
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700">
+                      <div className="tile h-10 w-10 text-sm">
                         {initials(d.firstName, d.lastName)}
                       </div>
                       <div className="min-w-0 flex-1">

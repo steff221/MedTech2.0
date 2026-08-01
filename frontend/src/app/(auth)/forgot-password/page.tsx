@@ -44,7 +44,7 @@ export default function ForgotPasswordPage() {
   if (submitted) {
     return (
       <div className="text-center">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/10">
+        <div className="mx-auto mb-4 tile h-14 w-14 !border-emerald-500/30 !bg-emerald-500/10">
           <CheckCircle2 className="h-7 w-7 text-emerald-400" />
         </div>
         <h1 className="text-2xl font-bold tracking-tight text-white">

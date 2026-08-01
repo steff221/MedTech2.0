@@ -93,6 +93,15 @@ public class AppointmentController {
                 appointmentService.listForDoctorOn(doctorId, date, pageable).map(mapper::toResponse));
     }
 
+    @GetMapping("/doctor/{doctorId}/booked-times")
+    @PreAuthorize(Roles.PATIENT_OR_CARE_TEAM)
+    @Operation(summary = "Times a doctor is already booked on a given date")
+    public ResponseEntity<List<java.time.LocalTime>> bookedTimes(
+            @PathVariable Long doctorId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return ResponseEntity.ok(appointmentService.bookedTimesFor(doctorId, date));
+    }
+
     @GetMapping("/doctor/{doctorId}/range")
     @PreAuthorize(Roles.CARE_TEAM)
     @Operation(summary = "List a doctor's appointments within a date range")

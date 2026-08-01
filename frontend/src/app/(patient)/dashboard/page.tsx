@@ -18,7 +18,7 @@ import {
 import Link from "next/link";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { differenceInDays, format, parseISO } from "date-fns";
+import { differenceInCalendarDays, format, parseISO } from "date-fns";
 import { BookAppointmentWizard } from "@/components/patient/BookAppointmentWizard";
 import { CompleteProfilePrompt } from "@/components/patient/CompleteProfilePrompt";
 import { Skeleton } from "@/components/common/Skeleton";
@@ -40,7 +40,12 @@ function greet(t: ReturnType<typeof import("@/hooks/useT").useT>): string {
 // ── Next appointment countdown card ──────────────────────────────────────────
 function NextAppointmentCard({ appt }: { appt: AppointmentResponse }) {
   const t = useT();
-  const days = differenceInDays(
+  // Calendar days, not elapsed 24h periods: at 21:00 on the 1st, an
+  // appointment on the 3rd is ~27 hours away, which differenceInDays floors to
+  // 1 and the card then claims "tomorrow". The dates being compared are
+  // date-only values parsed to midnight, so the calendar difference is the
+  // one that matches what the user sees on a calendar.
+  const days = differenceInCalendarDays(
     parseISO(appt.appointmentDate),
     new Date(),
   );
@@ -179,7 +184,7 @@ function ActiveRxCard({ prescriptions }: { prescriptions: PrescriptionResponse[]
               <p className="truncate text-sm font-semibold text-slate-900">{p.medicationName}</p>
               <p className="text-xs text-slate-400">{p.dosage} · {p.frequency}</p>
             </div>
-            <span className="shrink-0 rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-700">
+            <span className="chip chip-info shrink-0">
               Активен
             </span>
           </li>
@@ -209,7 +214,7 @@ function HealthSnapshot({ patient }: { patient: { bloodType?: string | null; all
         {patient.bloodType && (
           <div className="flex items-center justify-between">
             <span className="text-xs text-slate-500">Крвна група</span>
-            <span className="rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-bold text-rose-700">
+            <span className="chip chip-alert">
               {patient.bloodType.replace("_POS", "+").replace("_NEG", "−")}
             </span>
           </div>
@@ -294,7 +299,7 @@ export default function DashboardPage() {
         </div>
         <button
           onClick={() => setBookOpen(true)}
-          className="hidden items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 transition-colors sm:flex"
+          className="btn-push hidden items-center gap-2 px-4 py-2.5 text-sm sm:flex"
         >
           <Plus className="h-4 w-4" /> {t.dashboard.bookBtn}
         </button>
@@ -332,7 +337,7 @@ export default function DashboardPage() {
                 </div>
                 <button
                   onClick={() => setBookOpen(true)}
-                  className="flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-2 text-sm font-semibold text-white hover:bg-brand-700 transition-colors"
+                  className="btn-push flex items-center gap-2 px-5 py-2 text-sm"
                 >
                   <Plus className="h-4 w-4" /> {t.dashboard.bookBtn}
                 </button>
@@ -398,7 +403,7 @@ export default function DashboardPage() {
                 <ul className="divide-y divide-slate-50">
                   {upcoming.slice(0, 4).map((appt) => (
                     <li key={appt.id} className="flex items-center gap-4 px-5 py-3.5">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-xs font-bold text-brand-700">
+                      <div className="tile h-10 w-10 text-xs">
                         {appt.doctorName.split(" ").map(w => w[0]).join("").slice(0, 2)}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -408,7 +413,7 @@ export default function DashboardPage() {
                           {appt.doctorSpecialization ? ` · ${appt.doctorSpecialization}` : ""}
                         </p>
                       </div>
-                      <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                      <span className="chip chip-ok shrink-0">
                         {t.dashboard.scheduledBadge}
                       </span>
                     </li>

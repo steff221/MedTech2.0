@@ -98,6 +98,8 @@ public class PatientService {
         if (req.chronicConditions() != null) patient.setChronicConditions(req.chronicConditions());
         if (req.insuranceProvider() != null) patient.setInsuranceProvider(req.insuranceProvider());
         if (req.insuranceNumber() != null)   patient.setInsuranceNumber(req.insuranceNumber());
+        if (req.embg() != null)              patient.setEmbg(req.embg());
+        if (req.ezbo() != null)              patient.setEzbo(req.ezbo());
         if (req.emergencyContact() != null)  patient.setEmergencyContact(req.emergencyContact());
         if (req.emergencyPhone() != null)    patient.setEmergencyPhone(req.emergencyPhone());
         if (req.address() != null)           patient.setAddress(req.address());

@@ -18,7 +18,7 @@ function AlertCard({ n }: { n: NotificationResponse }) {
         <div className="flex flex-wrap items-baseline gap-2">
           <h3 className="font-semibold text-slate-900">{n.title}</h3>
           {!n.read && (
-            <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs font-semibold text-white">
+            <span className="chip chip-alert">
               Ново
             </span>
           )}
@@ -74,7 +74,7 @@ export default function AnomalyAlertsPage() {
         </div>
       ) : alerts.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white py-16 text-center shadow-sm">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100">
+          <div className="tile h-14 w-14">
             <AlertTriangle className="h-7 w-7 text-emerald-600" />
           </div>
           <h3 className="mt-4 text-lg font-semibold text-slate-800">Нема детектирани аномалии</h3>

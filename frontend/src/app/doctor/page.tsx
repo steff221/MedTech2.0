@@ -129,10 +129,13 @@ export default function DoctorHomePage() {
   const activeReferrals = referrals.data?.totalElements ?? 0;
   const avgRating       = rating.data?.averageRating;
 
-  const STATUS_META: Record<ApptStatus, { label: string; dot: string; row: string; badge: string }> = {
-    completed:  { label: dh.apptStatusCompleted,  dot: "bg-emerald-500",           row: "",            badge: "bg-emerald-100 text-emerald-700" },
-    inProgress: { label: dh.apptStatusInProgress, dot: "bg-blue-500 animate-pulse", row: "bg-blue-50/50", badge: "bg-blue-100 text-blue-700"     },
-    upcoming:   { label: dh.apptStatusUpcoming,   dot: "bg-slate-300",              row: "",            badge: "bg-slate-100 text-slate-500"     },
+  // The status dot is gone: the chip already names the state, and a coloured
+  // pip beside it was the same information twice. In-progress keeps a faint
+  // row wash, which is the one state a clinician scans the column for.
+  const STATUS_META: Record<ApptStatus, { label: string; row: string; badge: string }> = {
+    completed:  { label: dh.apptStatusCompleted,  row: "",              badge: "chip-ok"   },
+    inProgress: { label: dh.apptStatusInProgress, row: "bg-teal-50/70", badge: "chip-info" },
+    upcoming:   { label: dh.apptStatusUpcoming,   row: "",              badge: "chip-mute" },
   };
 
   function greet(): string {
@@ -178,7 +181,7 @@ export default function DoctorHomePage() {
               </h2>
               {doctor && (
                 <p className="text-sm text-slate-500">
-                  {doctor.specialization}
+                  {t.specialties[doctor.specialization] ?? doctor.specialization}
                   {doctor.hospitalName ? ` · ${doctor.hospitalName}` : ""}
                 </p>
               )}
@@ -272,7 +275,6 @@ export default function DoctorHomePage() {
                           <span className="w-12 shrink-0 font-mono text-sm font-semibold text-slate-700">
                             {a.appointmentTime.slice(0, 5)}
                           </span>
-                          <span className={cn("h-2 w-2 shrink-0 rounded-full", s.dot)} />
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-medium text-slate-900">{a.patientName}</p>
                             <p className="truncate text-xs text-slate-500">
@@ -284,7 +286,7 @@ export default function DoctorHomePage() {
                               )}
                             </p>
                           </div>
-                          <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-medium", s.badge)}>
+                          <span className={cn("chip shrink-0", s.badge)}>
                             {s.label}
                           </span>
                         </li>
@@ -317,7 +319,7 @@ export default function DoctorHomePage() {
                   <li key={p.id} className="px-5 py-3.5">
                     <div className="flex items-start gap-3">
                       <div className={cn(
-                        "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full",
+                        "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-sm",
                         p.level === "critical" ? "bg-rose-100" : "bg-amber-100",
                       )}>
                         <AlertTriangle className={cn("h-3.5 w-3.5", p.level === "critical" ? "text-rose-600" : "text-amber-600")} />

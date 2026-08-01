@@ -62,6 +62,10 @@ export interface PatientResponse {
   bloodType: BloodType | null;
   allergies: string | null;
   chronicConditions: string | null;
+  /** ЕМБГ — printed on ФЗОМ forms. */
+  embg: string | null;
+  /** ЕЗБО — printed on ФЗОМ forms. */
+  ezbo: string | null;
   insuranceProvider: string | null;
   insuranceNumber: string | null;
   emergencyContact: string | null;
@@ -103,7 +107,7 @@ export interface AppointmentResponse {
   status: AppointmentStatus;
   appointmentType: AppointmentType | null;
   reason: string | null;
-  cancellationReason: string | null;
+  cancellationReason?: string | null;
   videoCallUrl: string | null;
   createdAt: string;
   ratingId: number | null;
@@ -128,6 +132,8 @@ export interface DoctorResponse {
   firstName: string;
   lastName: string;
   licenseNumber: string;
+  /** Факсимил — printed beside the signature on ФЗОМ forms. */
+  facsimileNumber: string | null;
   specialization: string;
   subSpecialization: string | null;
   qualification: string | null;
@@ -393,11 +399,15 @@ export interface ApiError {
   errors?: Array<{ field: string; message: string; rejectedValue: unknown }>;
 }
 
+/**
+ * Clinical intent — where the patient is being sent. The concrete ФЗОМ form
+ * (СУ / ЛУ-1 / ЛУ-2 / РДУ-1 / РДУ-2 / БУ) is resolved on the server from this
+ * plus the issuing doctor's role, and returned as `fzomFormCode`.
+ */
 export type ReferralType =
-  | "GENERAL_MEDICINE"
-  | "SPECIALIST"
+  | "SPECIALIST_EXAM"
   | "LABORATORY"
-  | "DIAGNOSTICS"
+  | "RADIOLOGY"
   | "HOSPITAL";
 
 export type ReferralStatus = "ACTIVE" | "COMPLETED" | "CANCELLED";
@@ -417,6 +427,18 @@ export interface ReferralResponse {
   status: ReferralStatus;
   outcomeNote: string | null;
   outcomeDate: string | null;
+  /** Resolved ФЗОМ form: СУ, ЛУ-1, ЛУ-2, РДУ-1, РДУ-2, БУ. */
+  fzomFormCode?: string | null;
+  referredSpecialty?: string | null;
+  serviceDetail?: string | null;
+  /** Образец СУ „УПАТ ЗА": 1 специјалист, 2 лабораторија, 3 процедура. */
+  formSubtype?: number | null;
+  wardUnit?: string | null;
+  medicalJournalNo?: string | null;
+  cancellationReason?: string | null;
+  cancelledAt?: string | null;
+  /** Non-null once a paper copy has been produced. */
+  printedAt?: string | null;
   createdAt: string;
 }
 
@@ -427,6 +449,20 @@ export interface CreateReferralRequest {
   mkb10Code?: string;
   description?: string;
   scheduledDate: string;
+  /** Работна единица — Одделение. Required for БУ. */
+  wardUnit?: string;
+  /** Број на лекарски дневник. */
+  medicalJournalNo?: string;
+  /** Специјалност. Required for СУ and БУ. */
+  referredSpecialty?: string;
+  /** Вид на услуга (ЛУ) / назив на апарат (РДУ). */
+  serviceDetail?: string;
+  /** Образец СУ „УПАТ ЗА" — 1, 2 или 3. */
+  formSubtype?: number;
+}
+
+export interface CancelReferralRequest {
+  reason: string;
 }
 
 export interface CompleteReferralRequest {

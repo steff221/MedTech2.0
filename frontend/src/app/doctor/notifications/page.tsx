@@ -96,7 +96,7 @@ export default function DoctorNotificationsPage() {
               >
                 <span
                   className={cn(
-                    "mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+                    "chip mt-0.5 shrink-0",
                     typeColor(n.type),
                   )}
                 >
