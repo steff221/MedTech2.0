@@ -18,12 +18,14 @@ import { patientService } from "@/services/patient.service";
 import { referralService } from "@/services/referral.service";
 import type { PatientResponse, ReferralResponse, ReferralType } from "@/types/api";
 
+// Clinical intents, worded as destinations. The ФЗОМ form code is resolved
+// server-side from this plus the doctor's role and returned as fzomFormCode —
+// the doctor is never asked to know the Fund's numbering.
 const REFERRAL_TYPES: { value: ReferralType; label: string }[] = [
-  { value: "GENERAL_MEDICINE", label: "Општа медицина" },
-  { value: "SPECIALIST",       label: "Специјалист" },
-  { value: "LABORATORY",       label: "Лабораторија" },
-  { value: "DIAGNOSTICS",      label: "Дијагностика" },
-  { value: "HOSPITAL",         label: "Болница" },
+  { value: "SPECIALIST_EXAM", label: "Специјалистички преглед" },
+  { value: "LABORATORY",      label: "Лабораторија" },
+  { value: "RADIOLOGY",       label: "Радиодијагностика" },
+  { value: "HOSPITAL",        label: "Болница" },
 ];
 
 const REFERRAL_TYPE_VALUES = REFERRAL_TYPES.map((t) => t.value) as [ReferralType, ...ReferralType[]];
@@ -35,25 +37,25 @@ const ALLERGY_RULES: Array<{
 }> = [
   {
     keywords: ["контраст", "јодн"],
-    types: ["DIAGNOSTICS", "HOSPITAL"],
+    types: ["RADIOLOGY", "HOSPITAL"],
     warning:
       "Пациентот има алергија на јодни контрастни средства. Предупреди го радиологот и разгледај алтернативна техника (МРИ наместо CT со контраст).",
   },
   {
     keywords: ["пеницилин", "амоксицилин", "ампицилин"],
-    types: ["HOSPITAL", "SPECIALIST"],
+    types: ["HOSPITAL", "SPECIALIST_EXAM"],
     warning:
       "Алергија на пеницилин. Предупреди ги колегите за можна вкрстена реакција со цефалоспорини при хоспитализација.",
   },
   {
     keywords: ["аспирин", "ибупрофен", "нсаил", "диклофенак"],
-    types: ["HOSPITAL", "SPECIALIST", "DIAGNOSTICS"],
+    types: ["HOSPITAL", "SPECIALIST_EXAM", "RADIOLOGY"],
     warning:
       "Алергија на НСАИЛ. Потенцијален ризик при постоперативна аналгезија. Информирај го примателот на упатот.",
   },
   {
     keywords: ["сулфонамид", "сулфа"],
-    types: ["HOSPITAL", "SPECIALIST"],
+    types: ["HOSPITAL", "SPECIALIST_EXAM"],
     warning:
       "Алергија на сулфонамиди. Информирај ги при евентуална антибиотска терапија или диуретска терапија (фуросемид).",
   },
@@ -70,15 +72,39 @@ function getAllergyWarning(allergies: string | null, type: ReferralType): string
   return null;
 }
 
-const schema = z.object({
-  patientId:     z.coerce.number({ invalid_type_error: "Задолжително" }).positive("Задолжително"),
-  referralType:  z.enum(REFERRAL_TYPE_VALUES, { required_error: "Задолжително" }),
-  referredTo:    z.string().min(1, "Задолжително").max(200),
-  scheduledDate: z.string().min(1, "Задолжително"),
-  description:   z.string().max(1000).optional(),
-  mkb10Code:     z.string().optional(),
-  mkb10Label:    z.string().optional(),
-});
+/**
+ * Which extra box each ФЗОМ form requires. Mirrors ReferralType.requiredFields
+ * on the server — the server re-checks, so a client that drifts is caught
+ * rather than silently issuing an incomplete form.
+ */
+const REQUIRED_BY_TYPE: Record<ReferralType, Array<"referredSpecialty" | "serviceDetail" | "wardUnit">> = {
+  SPECIALIST_EXAM: ["referredSpecialty"],
+  LABORATORY:      ["serviceDetail"],
+  RADIOLOGY:       ["serviceDetail"],
+  HOSPITAL:        ["referredSpecialty", "wardUnit"],
+};
+
+const schema = z
+  .object({
+    patientId:     z.coerce.number({ invalid_type_error: "Задолжително" }).positive("Задолжително"),
+    referralType:  z.enum(REFERRAL_TYPE_VALUES, { required_error: "Задолжително" }),
+    referredTo:    z.string().min(1, "Задолжително").max(200),
+    scheduledDate: z.string().min(1, "Задолжително"),
+    description:   z.string().max(1000).optional(),
+    mkb10Code:     z.string().optional(),
+    mkb10Label:    z.string().optional(),
+    referredSpecialty: z.string().max(200).optional(),
+    serviceDetail:     z.string().max(1000).optional(),
+    wardUnit:          z.string().max(200).optional(),
+    formSubtype:       z.coerce.number().min(1).max(3).optional(),
+  })
+  .superRefine((val, ctx) => {
+    for (const field of REQUIRED_BY_TYPE[val.referralType] ?? []) {
+      if (!val[field]?.trim()) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: [field], message: "Задолжително за овој образец" });
+      }
+    }
+  });
 
 type FormData = z.infer<typeof schema>;
 
@@ -145,7 +171,8 @@ export function NewReferralForm({ open, onClose, onCreated, existingReferrals = 
     resolver: zodResolver(schema),
     defaultValues: {
       scheduledDate: format(new Date(), "yyyy-MM-dd"),
-      referralType:  "SPECIALIST",
+      referralType:  "SPECIALIST_EXAM",
+      formSubtype:   1,
     },
   });
 
@@ -164,8 +191,11 @@ export function NewReferralForm({ open, onClose, onCreated, existingReferrals = 
       toast.success(t.doctorReferrals.successToast);
       handleClose();
     },
-    onError: () => {
-      toast.error(t.doctorReferrals.issueError);
+    onError: (err: unknown) => {
+      // The server re-checks the per-form required boxes and answers 409 with
+      // the exact missing box, which is more useful than a generic failure.
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(msg || t.doctorReferrals.issueError);
     },
   });
 
@@ -190,6 +220,10 @@ export function NewReferralForm({ open, onClose, onCreated, existingReferrals = 
       mkb10Code:     data.mkb10Code || undefined,
       description:   data.description || undefined,
       scheduledDate: data.scheduledDate,
+      referredSpecialty: data.referredSpecialty || undefined,
+      serviceDetail:     data.serviceDetail || undefined,
+      wardUnit:          data.wardUnit || undefined,
+      formSubtype:       data.referralType === "SPECIALIST_EXAM" ? data.formSubtype : undefined,
     });
   };
 
@@ -324,15 +358,67 @@ export function NewReferralForm({ open, onClose, onCreated, existingReferrals = 
           )}
         </div>
 
-        {/* Referred-to */}
+        {/* Здравствена установа — its own box on every ФЗОМ form. */}
         <div>
           <Input
-            label={t.doctorReferrals.newReferredToLabel}
-            placeholder="пр. Кардиолог, ЈЗУ Клиничка болница"
+            label={t.doctorReferrals.newInstitutionLabel}
+            placeholder="пр. ЈЗУ Клиничка болница Тетово"
             {...register("referredTo")}
             error={errors.referredTo?.message}
           />
         </div>
+
+        {/* Специјалност — separate box on СУ and БУ. */}
+        {(watchedType === "SPECIALIST_EXAM" || watchedType === "HOSPITAL") && (
+          <div>
+            <Input
+              label={t.doctorReferrals.newSpecialtyLabel}
+              placeholder="пр. Кардиологија"
+              {...register("referredSpecialty")}
+              error={errors.referredSpecialty?.message}
+            />
+          </div>
+        )}
+
+        {/* Работна единица — Одделение. БУ only. */}
+        {watchedType === "HOSPITAL" && (
+          <div>
+            <Input
+              label={t.doctorReferrals.newWardLabel}
+              placeholder="пр. Кардиолошко одделение"
+              {...register("wardUnit")}
+              error={errors.wardUnit?.message}
+            />
+          </div>
+        )}
+
+        {/* Вид на услуга (ЛУ) / назив на апарат (РДУ). */}
+        {(watchedType === "LABORATORY" || watchedType === "RADIOLOGY") && (
+          <div>
+            <Input
+              label={watchedType === "LABORATORY"
+                ? t.doctorReferrals.newServiceKindLabel
+                : t.doctorReferrals.newApparatusLabel}
+              placeholder={watchedType === "LABORATORY" ? "пр. Хематолошки статус" : "пр. КТ на абдомен"}
+              {...register("serviceDetail")}
+              error={errors.serviceDetail?.message}
+            />
+          </div>
+        )}
+
+        {/* УПАТ ЗА — the three numbered choices printed on Образец СУ. */}
+        {watchedType === "SPECIALIST_EXAM" && (
+          <div className="md:col-span-2">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
+              {t.doctorReferrals.newSubtypeLabel}
+            </label>
+            <select {...register("formSubtype")} className="w-full">
+              <option value={1}>1 · Специјалист / супспецијалист</option>
+              <option value={2}>2 · Дијагностичка лабораторија</option>
+              <option value={3}>3 · Дијагностичка процедура</option>
+            </select>
+          </div>
+        )}
 
         {/* MKB-10 */}
         <div className="md:col-span-2">

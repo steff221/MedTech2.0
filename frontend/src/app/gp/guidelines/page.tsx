@@ -4,6 +4,7 @@
 import { motion } from "framer-motion";
 import { BookOpen, Download, ExternalLink, Search } from "lucide-react";
 import { useState } from "react";
+import { FilterChips } from "@/components/common/FilterChips";
 import { PageBanner } from "@/components/layout/PageBanner";
 import { cn } from "@/utils/cn";
 
@@ -113,23 +114,14 @@ export default function GuidelinesPage() {
               className="w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-9 pr-3 text-sm placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
             />
           </div>
-          <div className="flex flex-wrap gap-1.5">
-            {CATEGORIES.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setCategory(c)}
-                className={cn(
-                  "rounded-full border px-3 py-1.5 text-xs font-medium transition-all",
-                  category === c
-                    ? "border-emerald-500 bg-emerald-500 text-white"
-                    : "border-slate-200 bg-white text-slate-700 hover:border-emerald-300",
-                )}
-              >
-                {c}
-              </button>
-            ))}
-          </div>
+          <FilterChips
+            label="Категорија"
+            hideLabel
+            value={category}
+            onChange={setCategory}
+            size="md"
+            options={CATEGORIES.map((c) => ({ value: c, label: c }))}
+          />
         </div>
 
         {/* Count */}

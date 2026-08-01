@@ -5,103 +5,35 @@ import { motion } from "framer-motion";
 import { Calendar, CheckCircle2, Filter, Plus, Printer, Search, XCircle } from "lucide-react";
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { differenceInDays, parseISO } from "date-fns";
+import { differenceInCalendarDays, parseISO } from "date-fns";
 import toast from "react-hot-toast";
 import { Badge } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
 import { Card } from "@/components/common/Card";
+import { FilterChips } from "@/components/common/FilterChips";
 import { Input } from "@/components/common/Input";
 import { Modal } from "@/components/common/Modal";
 import { PageBanner } from "@/components/layout/PageBanner";
 import { Skeleton } from "@/components/common/Skeleton";
 import { NewReferralForm, referralResponseToRow, type ReferralRow } from "@/components/doctor/NewReferralForm";
 import { referralService } from "@/services/referral.service";
+import { patientService } from "@/services/patient.service";
+import { useDoctorProfile } from "@/hooks/useDoctor";
+import { printReferralDocument } from "@/utils/referralPrint";
 import { useT } from "@/hooks/useT";
 import { cn } from "@/utils/cn";
+import { matchesSearch } from "@/utils/search";
 import type { ReferralType } from "@/types/api";
 
 type StatusFilter = "ALL" | "active" | "completed" | "cancelled";
 
 const TYPE_VALUES: Array<{ value: ReferralType | "ALL" }> = [
   { value: "ALL" },
-  { value: "GENERAL_MEDICINE" },
-  { value: "SPECIALIST" },
+  { value: "SPECIALIST_EXAM" },
   { value: "LABORATORY" },
-  { value: "DIAGNOSTICS" },
+  { value: "RADIOLOGY" },
   { value: "HOSPITAL" },
 ];
-
-function printReferral(r: ReferralRow) {
-  const win = window.open("", "_blank", "width=800,height=600");
-  if (!win) return;
-  win.document.write(`
-    <html>
-      <head>
-        <title>Упат · MedTech</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 40px; color: #1e293b; }
-          .header { border-bottom: 2px solid #1e5f63; padding-bottom: 16px; margin-bottom: 24px; }
-          .hospital { font-size: 12px; color: #64748b; }
-          .title { font-size: 22px; font-weight: bold; margin-top: 8px; }
-          .ref-number { font-size: 13px; color: #64748b; margin-top: 4px; font-family: monospace; }
-          .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-          .section { margin-bottom: 16px; }
-          .label { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
-          .value { font-size: 15px; font-weight: 500; margin-top: 2px; }
-          .desc { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-top: 16px; }
-          .footer { margin-top: 60px; border-top: 1px solid #e2e8f0; padding-top: 16px;
-                    display: flex; justify-content: space-between; font-size: 12px; color: #94a3b8; }
-          .signature-line { border-bottom: 1px solid #1e293b; width: 200px; margin-top: 40px; }
-          @media print { body { padding: 20px; } }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <div class="hospital">MedTech Здравствен Систем</div>
-          <div class="title">МЕДИЦИНСКИ УПАТ</div>
-          <div class="ref-number">Бр. ${r.id}</div>
-        </div>
-        <div class="grid">
-          <div class="section">
-            <div class="label">Пациент</div>
-            <div class="value">${r.patientName}</div>
-          </div>
-          <div class="section">
-            <div class="label">Се упатува кон</div>
-            <div class="value">${r.referredTo}</div>
-          </div>
-          <div class="section">
-            <div class="label">Тип на упат</div>
-            <div class="value">${r.referralType}</div>
-          </div>
-          <div class="section">
-            <div class="label">МКБ10</div>
-            <div class="value">${r.mkb10Code !== "—" ? r.mkb10Code : "/"}</div>
-          </div>
-          <div class="section">
-            <div class="label">Издаден на</div>
-            <div class="value">${r.createdAt}</div>
-          </div>
-          <div class="section">
-            <div class="label">Закажано за</div>
-            <div class="value">${r.scheduledDate}</div>
-          </div>
-        </div>
-        ${r.description !== "—" ? `<div class="desc"><div class="label">Причина / опис</div><div class="value" style="margin-top:6px;">${r.description}</div></div>` : ""}
-        <div style="margin-top:40px;">
-          <div class="label">Потпис на доктор</div>
-          <div class="signature-line"></div>
-        </div>
-        <div class="footer">
-          <span>Издадено преку MedTech платформата</span>
-          <span>${r.id}</span>
-        </div>
-        <script>window.onload = () => { window.print(); window.close(); }</script>
-      </body>
-    </html>
-  `);
-  win.document.close();
-}
 
 export default function ReferralsPage() {
   const t = useT();
@@ -115,11 +47,10 @@ export default function ReferralsPage() {
 
   const TYPE_LABELS: Record<ReferralType | "ALL", string> = {
     ALL:              t.common.all,
-    GENERAL_MEDICINE: t.doctorReferrals.typeGeneral,
-    SPECIALIST:       t.doctorReferrals.typeSpecialist,
-    LABORATORY:       t.doctorReferrals.typeLab,
-    DIAGNOSTICS:      t.doctorReferrals.typeDiag,
-    HOSPITAL:         t.doctorReferrals.typeHospital,
+    SPECIALIST_EXAM: t.doctorReferrals.typeSpecialist,
+    LABORATORY:      t.doctorReferrals.typeLab,
+    RADIOLOGY:       t.doctorReferrals.typeRadiology,
+    HOSPITAL:        t.doctorReferrals.typeHospital,
   };
 
   const COLUMNS = [
@@ -146,8 +77,14 @@ export default function ReferralsPage() {
   const [outcomeDate, setOutcomeDate]     = useState(new Date().toISOString().slice(0, 10));
 
   const [cancelTarget, setCancelTarget] = useState<ReferralRow | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
+  // Referrals whose row is saved but whose document never reached the printer.
+  // Tracked so the doctor is never left holding a number and no paper.
+  const [unprinted, setUnprinted] = useState<Set<number>>(new Set());
 
-  const { data, isLoading } = useQuery({
+  const { data: doctorProfile } = useDoctorProfile();
+
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["doctor-referrals"],
     queryFn:  () => referralService.myReferrals(undefined, 0, 200),
     staleTime: 5 * 60_000,
@@ -167,14 +104,64 @@ export default function ReferralsPage() {
   });
 
   const cancelMutation = useMutation({
-    mutationFn: referralService.cancel,
+    mutationFn: ({ id, reason }: { id: number; reason: string }) =>
+      referralService.cancel(id, { reason }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["doctor-referrals"] });
       toast.success(t.doctorReferrals.cancelSuccess);
       setCancelTarget(null);
+      setCancelReason("");
     },
     onError: () => toast.error(t.doctorReferrals.cancelError),
   });
+
+  /**
+   * Печати. The referral row already exists at this point, so a failure here
+   * has to be reported precisely — a bare "error" would leave the doctor
+   * unsure whether the referral was issued at all.
+   */
+  const handlePrint = async (row: ReferralRow) => {
+    const full = data?.content.find((x) => x.id === row.backendId);
+    if (!full) return;
+
+    // ФЗОМ boxes need ЕМБГ/ЕЗБО, which the list response does not carry.
+    let patient;
+    try {
+      patient = await patientService.byId(full.patientId);
+    } catch {
+      patient = undefined; // identity boxes print as ruled blanks
+    }
+
+    const result = printReferralDocument({
+      referral: full,
+      doctor:   doctorProfile ?? undefined,
+      patient,
+      doctorSpecialtyMk: doctorProfile
+        ? t.specialties[doctorProfile.specialization] ?? doctorProfile.specialization
+        : undefined,
+    });
+
+    if (!result.ok) {
+      setUnprinted((prev) => new Set(prev).add(row.backendId!));
+      toast.error(
+        result.reason === "popup-blocked"
+          ? t.doctorReferrals.printBlocked
+          : t.doctorReferrals.printFailed,
+      );
+      return;
+    }
+
+    setUnprinted((prev) => {
+      const next = new Set(prev);
+      next.delete(row.backendId!);
+      return next;
+    });
+    // Records printedAt server-side. A failure to record must not look like a
+    // failure to print — the paper exists either way.
+    if (row.backendId) {
+      referralService.markPrinted(row.backendId).catch(() => {});
+    }
+  };
 
   const handleCreated = () => {
     queryClient.invalidateQueries({ queryKey: ["doctor-referrals"] });
@@ -193,7 +180,8 @@ export default function ReferralsPage() {
 
   const confirmCancel = () => {
     if (!cancelTarget?.backendId) return;
-    cancelMutation.mutate(cancelTarget.backendId);
+    if (!cancelReason.trim()) return;
+    cancelMutation.mutate({ id: cancelTarget.backendId, reason: cancelReason.trim() });
   };
 
   const filtered = referrals.filter((r) => {
@@ -202,10 +190,10 @@ export default function ReferralsPage() {
     if (dateFrom && r.scheduledDateIso < dateFrom) return false;
     if (
       search &&
-      !r.patientName.toLowerCase().includes(search.toLowerCase()) &&
-      !r.referredTo.toLowerCase().includes(search.toLowerCase()) &&
-      !r.id.toLowerCase().includes(search.toLowerCase()) &&
-      !r.mkb10Code.toLowerCase().includes(search.toLowerCase())
+      !matchesSearch(
+        [r.patientName, r.referredTo, r.id, r.mkb10Code].join(" "),
+        search,
+      )
     )
       return false;
     return true;
@@ -216,10 +204,10 @@ export default function ReferralsPage() {
   const completedCount= referrals.filter((r) => r.status === "completed").length;
 
   function getDaysBadge(isoDate: string) {
-    const days = differenceInDays(parseISO(isoDate), new Date());
-    if (days === 0) return <span className="ml-1 rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700">Денес</span>;
-    if (days < 0)   return <span className="ml-1 rounded-full bg-rose-100 px-1.5 py-0.5 text-xs font-medium text-rose-600">+{Math.abs(days)}д</span>;
-    if (days <= 3)  return <span className="ml-1 rounded-full bg-emerald-100 px-1.5 py-0.5 text-xs font-medium text-emerald-700">за {days}д</span>;
+    const days = differenceInCalendarDays(parseISO(isoDate), new Date());
+    if (days === 0) return <span className="chip chip-wait ml-1">Денес</span>;
+    if (days < 0)   return <span className="chip chip-alert ml-1">+{Math.abs(days)}д</span>;
+    if (days <= 3)  return <span className="chip chip-ok ml-1">за {days}д</span>;
     return null;
   }
 
@@ -295,7 +283,7 @@ export default function ReferralsPage() {
             <Button variant="secondary" onClick={() => setCancelTarget(null)}>{t.common.cancel}</Button>
             <Button
               onClick={confirmCancel}
-              disabled={cancelMutation.isPending}
+              disabled={cancelMutation.isPending || !cancelReason.trim()}
               className="!bg-rose-600 hover:!bg-rose-700"
             >
               {cancelMutation.isPending ? "Се откажува…" : t.doctorReferrals.cancelConfirmBtn}
@@ -304,6 +292,22 @@ export default function ReferralsPage() {
         }
       >
         <p className="text-sm text-slate-600">{t.doctorReferrals.cancelConfirmDesc}</p>
+
+        {/* The number stays reserved, so the record has to say why it was
+            voided — otherwise nobody can later answer what happened to it. */}
+        <label className="mt-4 block">
+          <span className="mb-1.5 block text-sm font-medium text-slate-700">
+            {t.doctorReferrals.cancelReasonLabel} *
+          </span>
+          <textarea
+            value={cancelReason}
+            onChange={(e) => setCancelReason(e.target.value)}
+            rows={3}
+            className="w-full"
+            placeholder={t.doctorReferrals.cancelReasonPlaceholder}
+          />
+        </label>
+        <p className="mt-1.5 text-xs text-slate-500">{t.doctorReferrals.cancelReasonHint}</p>
       </Modal>
 
       <div className="mx-auto max-w-7xl px-6 py-6">
@@ -317,7 +321,7 @@ export default function ReferralsPage() {
             <div key={s.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-card">
               <p className="text-xs text-slate-500">{s.label}</p>
               <p className="mt-1 text-2xl font-bold text-slate-900">
-                {isLoading ? <Skeleton className="h-7 w-12" /> : s.value}
+                {isLoading ? <Skeleton className="h-7 w-12" /> : isError ? "—" : s.value}
               </p>
             </div>
           ))}
@@ -331,48 +335,23 @@ export default function ReferralsPage() {
 
           <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4">
             {/* Type filter — uses raw enum values, labels from translations */}
-            <div>
-              <p className="mb-1.5 text-sm font-medium text-slate-700">{t.doctorReferrals.filterType}</p>
-              <div className="flex flex-wrap gap-1.5">
-                {TYPE_VALUES.map(({ value }) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => setTypeFilter(value)}
-                    className={cn(
-                      "rounded-full border px-2.5 py-1 text-xs font-medium transition-all",
-                      typeFilter === value
-                        ? "border-emerald-500 bg-emerald-500 text-white shadow-sm"
-                        : "border-slate-200 bg-white text-slate-700 hover:border-emerald-300",
-                    )}
-                  >
-                    {TYPE_LABELS[value]}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <FilterChips
+              label={t.doctorReferrals.filterType}
+              value={typeFilter}
+              onChange={setTypeFilter}
+              options={TYPE_VALUES.map(({ value }) => ({ value, label: TYPE_LABELS[value] }))}
+            />
 
             {/* Status filter */}
-            <div>
-              <p className="mb-1.5 text-sm font-medium text-slate-700">{t.doctorReferrals.filterStatus}</p>
-              <div className="flex flex-wrap gap-1.5">
-                {(["ALL", "active", "completed", "cancelled"] as StatusFilter[]).map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => setStatusFilter(s)}
-                    className={cn(
-                      "rounded-full border px-2.5 py-1 text-xs font-medium transition-all",
-                      statusFilter === s
-                        ? "border-emerald-500 bg-emerald-500 text-white shadow-sm"
-                        : "border-slate-200 bg-white text-slate-700 hover:border-emerald-300",
-                    )}
-                  >
-                    {s === "ALL" ? t.common.all : STATUS_META[s as ReferralRow["status"]].label}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <FilterChips
+              label={t.doctorReferrals.filterStatus}
+              value={statusFilter}
+              onChange={setStatusFilter}
+              options={(["ALL", "active", "completed", "cancelled"] as StatusFilter[]).map((s) => ({
+                value: s,
+                label: s === "ALL" ? t.common.all : STATUS_META[s as ReferralRow["status"]].label,
+              }))}
+            />
 
             <Input label={t.doctorReferrals.filterDateFrom} type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
 
@@ -475,20 +454,43 @@ export default function ReferralsPage() {
                         <td className="px-3 py-2.5 font-mono text-xs text-slate-700">{r.mkb10Code}</td>
                         <td className="max-w-[180px] truncate px-3 py-2.5 text-slate-600">{r.description}</td>
                         <td className="px-3 py-2.5">
-                          <Badge tone={s.tone}>{s.label}</Badge>
+                          <div className="flex flex-col items-start gap-1">
+                            <Badge tone={s.tone}>{s.label}</Badge>
+                            {r.backendId && unprinted.has(r.backendId) && (
+                              <span className="chip chip-wait" title={t.doctorReferrals.notPrintedHint}>
+                                {t.doctorReferrals.notPrinted}
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-3 py-2.5">
                           <div className="flex items-center gap-1">
-                            {/* Print — available for all */}
-                            <button
-                              type="button"
-                              onClick={() => printReferral(r)}
-                              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100"
-                              title={t.doctorReferrals.printBtn}
-                            >
-                              <Printer className="h-3.5 w-3.5" />
-                              <span className="hidden xl:inline">{t.doctorReferrals.printBtn}</span>
-                            </button>
+                            {/* Печати. A voided referral keeps its number but
+                                must not produce a fresh document — the control
+                                states the reason rather than sitting dead. */}
+                            {r.status === "cancelled" ? (
+                              <span
+                                className="inline-flex items-center gap-1 px-2 py-1 text-xs text-slate-400"
+                                title={t.doctorReferrals.printCancelled}
+                              >
+                                <Printer className="h-3.5 w-3.5" />
+                                <span className="hidden xl:inline">{t.doctorReferrals.printCancelled}</span>
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handlePrint(r)}
+                                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100"
+                                title={t.doctorReferrals.printBtn}
+                              >
+                                <Printer className="h-3.5 w-3.5" />
+                                <span className="hidden xl:inline">
+                                  {r.backendId && unprinted.has(r.backendId)
+                                    ? t.doctorReferrals.printRetry
+                                    : t.doctorReferrals.printBtn}
+                                </span>
+                              </button>
+                            )}
                             {r.status === "active" && (
                               <>
                                 <button
@@ -526,7 +528,22 @@ export default function ReferralsPage() {
                   );
                 })}
 
-                {!isLoading && displayed.length === 0 && (
+                {!isLoading && isError && (
+                  <tr>
+                    <td colSpan={COLUMNS.length} className="px-3 py-10 text-center">
+                      <p className="text-sm text-slate-600">{t.doctorReferrals.loadError}</p>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="mt-3"
+                        onClick={() => refetch()}
+                      >
+                        {t.doctorReferrals.retry}
+                      </Button>
+                    </td>
+                  </tr>
+                )}
+                {!isLoading && !isError && displayed.length === 0 && (
                   <tr>
                     <td colSpan={COLUMNS.length} className="px-4 py-10 text-center text-sm text-slate-400">
                       {t.doctorReferrals.noReferrals}
