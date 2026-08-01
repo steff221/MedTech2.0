@@ -13,6 +13,7 @@ import { PageBanner } from "@/components/layout/PageBanner";
 import { Skeleton } from "@/components/common/Skeleton";
 import { medicalRecordService } from "@/services/medicalRecord.service";
 import { useT } from "@/hooks/useT";
+import { matchesSearch } from "@/utils/search";
 import { cn } from "@/utils/cn";
 import type { MedicalRecordResponse } from "@/types/api";
 
@@ -123,9 +124,9 @@ export default function DoctorMedicalJournalPage() {
     if (!q) return items;
     return items.filter(
       (r) =>
-        (r.diagnosis ?? "").toLowerCase().includes(q) ||
-        (r.mkb10Code ?? "").toLowerCase().includes(q) ||
-        (r.patientName ?? "").toLowerCase().includes(q) ||
+        matchesSearch(
+          [r.diagnosis ?? "", r.mkb10Code ?? "", r.patientName ?? ""].join(" "), q,
+        ) ||
         (r.clinicalNotes ?? "").toLowerCase().includes(q),
     );
   }, [items, search]);
@@ -182,7 +183,7 @@ export default function DoctorMedicalJournalPage() {
                 transition={{ duration: 0.25 }}
               >
                 <div className="mb-2 flex items-center gap-2">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">
+                  <div className="tile h-7 w-7 text-xs">
                     {name[0]}
                   </div>
                   <h3 className="text-sm font-semibold text-slate-800">{name}</h3>

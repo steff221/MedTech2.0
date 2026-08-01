@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { Badge } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
+import { FilterChips } from "@/components/common/FilterChips";
 import { Card } from "@/components/common/Card";
 import { Input } from "@/components/common/Input";
 import { Mkb10Autocomplete } from "@/components/doctor/Mkb10Autocomplete";
@@ -18,6 +19,7 @@ import { patientService } from "@/services/patient.service";
 import { hospitalService } from "@/services/hospital.service";
 import type { HospitalResponse, OperationResponse, OperationStatus, PatientResponse, ScheduleOperationRequest } from "@/types/api";
 import { cn } from "@/utils/cn";
+import { matchesSearch } from "@/utils/search";
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -326,9 +328,9 @@ export default function OperationsPage() {
       if (date && op.operationDate !== date) return false;
       if (search) {
         const q = search.toLowerCase();
-        if (!op.operationName.toLowerCase().includes(q) &&
-            !op.doctorName.toLowerCase().includes(q) &&
-            !(op.operationRoom ?? "").toLowerCase().includes(q)) return false;
+        if (!matchesSearch(
+              [op.operationName, op.doctorName, op.operationRoom ?? ""].join(" "), q,
+            )) return false;
       }
       return true;
     }),
@@ -385,23 +387,20 @@ export default function OperationsPage() {
               {t.doctorOperations.scheduleBtn}
             </Button>
 
-            <div>
-              <p className="mb-1.5 block text-sm font-medium text-slate-700">{t.doctorOperations.filterStatus}</p>
-              <div className="flex flex-wrap gap-1.5">
-                {STATUSES.map((s) => (
-                  <button key={s} type="button" onClick={() => setStatusFilter(s)}
-                    className={cn(
-                      "rounded-full border px-2.5 py-1 text-xs font-medium transition-all",
-                      statusFilter === s
-                        ? "border-emerald-500 bg-emerald-500 text-white"
-                        : "border-slate-200 bg-white text-slate-700 hover:border-emerald-300",
-                    )}
-                  >
-                    {statusLabel(s)}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <FilterChips
+              label={t.doctorOperations.filterStatus}
+              value={statusFilter}
+              onChange={setStatusFilter}
+              options={STATUSES.map((s) => ({
+                value: s,
+                label: statusLabel(s),
+                // The tally is the reason to pick a filter, so it belongs on
+                // the control rather than only in the result header.
+                count: s === "ALL"
+                  ? operations.length
+                  : operations.filter((o) => o.status === s).length,
+              }))}
+            />
 
             <div>
               <p className="mb-1.5 block text-sm font-medium text-slate-700">{t.doctorOperations.filterDate}</p>
@@ -476,7 +475,7 @@ export default function OperationsPage() {
                             <Badge tone={s.tone}>{s.label}</Badge>
                             {op.status === "IN_PROGRESS" && (
                               <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600">
-                                <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-amber-500" />
+                                
                                 {t.doctorOperations.activeLabel}
                               </span>
                             )}

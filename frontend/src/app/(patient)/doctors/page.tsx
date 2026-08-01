@@ -2,7 +2,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowUpDown, Building2, Calendar, Filter, MapPin, Stethoscope, X } from "lucide-react";
+import { ArrowUpDown, Building2, Calendar, Check, Filter, MapPin, Stethoscope, X } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -21,6 +21,7 @@ import { usePatientProfile } from "@/hooks/usePatient";
 import { useT } from "@/hooks/useT";
 import { cn } from "@/utils/cn";
 import { initials } from "@/utils/format";
+import { matchesSearch } from "@/utils/search";
 import { PROCEDURES, parseDoctorProcedures } from "@/utils/procedures";
 import type { DoctorResponse, HospitalResponse } from "@/types/api";
 
@@ -94,7 +95,7 @@ export default function DoctorsPage() {
       if (selectedHospitalId !== null && d.hospitalId !== selectedHospitalId) return false;
       if (procedure && !parseDoctorProcedures(d.subSpecialization).some(
         (p) => p.toLowerCase() === procedure.toLowerCase())) return false;
-      if (q && !doctorHaystack(d, t).includes(q)) return false;
+      if (q && !matchesSearch(doctorHaystack(d, t), q)) return false;
       return true;
     });
 
@@ -114,7 +115,7 @@ export default function DoctorsPage() {
       if (specialty && d.specialization !== specialty) return;
       if (procedure && !parseDoctorProcedures(d.subSpecialization).some(
         (p) => p.toLowerCase() === procedure.toLowerCase())) return;
-      if (q && !doctorHaystack(d, t).includes(q)) return;
+      if (q && !matchesSearch(doctorHaystack(d, t), q)) return;
       if (d.hospitalId != null) ids.add(d.hospitalId);
     });
     return ids;
@@ -308,18 +309,27 @@ function FilterGroup({ icon: Icon, title, children }: { icon: React.ComponentTyp
   );
 }
 
+/**
+ * Unlike the status filters elsewhere, these clear themselves when clicked
+ * again — so they are toggles, not a single-choice group, and take
+ * `aria-pressed` rather than radio semantics. The check mark makes the on
+ * state legible without depending on the fill colour.
+ */
 function Pill({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={active}
       className={cn(
-        "rounded-full border px-2.5 py-1 text-xs font-medium transition-all",
+        "inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-1",
         active
-          ? "border-brand-500 bg-brand-500 text-white shadow-sm"
+          ? "border-brand-600 bg-brand-500 text-white"
           : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:bg-brand-50",
       )}
     >
+      {active && <Check className="h-3 w-3 shrink-0" aria-hidden />}
       {children}
     </button>
   );
@@ -339,7 +349,7 @@ function DoctorCard({
   return (
     <Card hover>
       <div className="flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700">
+        <div className="tile h-11 w-11 text-sm">
           {initials(doctor.firstName, doctor.lastName)}
         </div>
         <div className="min-w-0 flex-1">
@@ -380,7 +390,7 @@ function DoctorCard({
         <button
           type="button"
           onClick={onBook}
-          className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-brand-500 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-600"
+          className="btn-push mt-3 flex w-full items-center justify-center gap-1.5 px-3 py-2 text-sm"
         >
           <Calendar className="h-3.5 w-3.5" />
           {t.doctorsPage.bookBtn}
