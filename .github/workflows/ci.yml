@@ -293,13 +293,81 @@ jobs:
       name: staging
       url: https://staging.medtech.mk
     steps:
-      - name: Trigger staging deploy
+      # The host, user and key are all secrets — nothing about the target VM is
+      # committed. Set these in Settings > Secrets and variables > Actions:
+      #   AZURE_VM_HOST     static IP of the Azure VM
+      #   AZURE_VM_USER     login name (Azure default is 'azureuser')
+      #   AZURE_VM_SSH_KEY  full contents of medtech-key.pem, BEGIN/END lines included
+      - name: Fail early if deploy secrets are missing
+        env:
+          HOST: ${{ secrets.AZURE_VM_HOST }}
+          USER: ${{ secrets.AZURE_VM_USER }}
+          KEY:  ${{ secrets.AZURE_VM_SSH_KEY }}
         run: |
-          echo "Deploying to staging..."
-          echo "Image: ghcr.io/$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')/medtech-backend:sha-$(echo ${{ github.sha }} | cut -c1-7)"
-          # Replace the echo commands below with your actual deploy steps, e.g.:
-          # ssh deploy@staging.medtech.mk "cd /opt/medtech && docker compose pull && docker compose up -d"
-          echo "Staging deploy complete."
+          set -euo pipefail
+          missing=""
+          [ -n "$HOST" ] || missing="$missing AZURE_VM_HOST"
+          [ -n "$USER" ] || missing="$missing AZURE_VM_USER"
+          [ -n "$KEY"  ] || missing="$missing AZURE_VM_SSH_KEY"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing required deploy secret(s):$missing"
+            exit 1
+          fi
+
+      - name: Install SSH key
+        env:
+          KEY: ${{ secrets.AZURE_VM_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/medtech-key.pem
+          chmod 600 ~/.ssh/medtech-key.pem
+          # Pin the host key on first contact so the deploy is not silently
+          # accepting whatever answers on that IP.
+          ssh-keyscan -H "${{ secrets.AZURE_VM_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Deploy to Azure VM
+        env:
+          HOST: ${{ secrets.AZURE_VM_HOST }}
+          USER: ${{ secrets.AZURE_VM_USER }}
+        run: |
+          set -euo pipefail
+          # -e inside the remote shell so a failed git pull or compose build
+          # aborts there too; without it ssh returns the exit code of the last
+          # command only and a broken deploy reports success.
+          ssh -i ~/.ssh/medtech-key.pem \
+              -o BatchMode=yes \
+              -o StrictHostKeyChecking=yes \
+              -o ConnectTimeout=15 \
+              "$USER@$HOST" \
+              'set -euo pipefail
+               cd /opt/medtech
+               git fetch --all --prune
+               git reset --hard origin/main
+               cd docker
+               docker compose pull
+               docker compose up -d --build
+               docker compose ps'
+
+      - name: Verify the deployed app answers
+        env:
+          HOST: ${{ secrets.AZURE_VM_HOST }}
+        run: |
+          set -euo pipefail
+          # A container can start and still serve nothing. Poll the public
+          # origin so the job only goes green once the app actually responds.
+          for i in $(seq 1 12); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "https://$HOST/" || true)
+            [ "$code" = "200" ] && echo "app responding (HTTP $code)" && exit 0
+            echo "attempt $i: HTTP ${code:-no-response}, retrying in 10s"
+            sleep 10
+          done
+          echo "::error::Deploy finished but the app did not return HTTP 200 within 2 minutes"
+          exit 1
+
+      - name: Remove SSH key
+        if: always()
+        run: rm -f ~/.ssh/medtech-key.pem
 
   # ============================================================================
   # DEPLOY-PRODUCTION — requires manual approval via GitHub Environments.
